@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>Makefile</ConfigurationType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ProjectName>$(MSBuildProjectName)</ProjectName>
+    <ProjectDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)'))\</ProjectDir>
+    <SolutionDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..'))\</SolutionDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AdditionalOptions>$(AdditionalOptions) /Zc:__cplusplus /std:c++latest /std:clatest</AdditionalOptions>
+    <DownloadPath>$(SolutionDir)Downloads\$(Platform)\</DownloadPath>
+    <HomePath>$(HOMEDRIVE)$(HOMEPATH)\</HomePath>
+    <IntDir>$(SolutionDir)$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(SolutionDir)$(Configuration)\$(Platform)\</OutDir>
+    <TargetExt>.bin</TargetExt>
+    <TargetName>$(ProjectName)</TargetName>
+    <TargetType>Binary</TargetType>
+    <Timestamp>$([System.DateTime]::Now.ToString("yyyy-MM-dd HH:mm:ss"))</Timestamp>
+  </PropertyGroup>
+
+  <Import Project="$(SolutionDir)Runtime.$(Architecture)\Configuration\Default.props" Condition="Exists('$(SolutionDir)Runtime.$(Architecture)\Configuration\Default.props')" />
+  <Import Project="$(SolutionDir)$(Vendor)\Configuration\Default.props" Condition="Exists('$(SolutionDir)$(Vendor)\Configuration\Default.props')" />
+  <Import Project="$(SolutionDir)$(Vendor).$(Board)\Configuration\Default.props" Condition="Exists('$(SolutionDir)$(Vendor).$(Board)\Configuration\Default.props')" />
+  <Import Project="$(ProjectDir)Configuration\Default.props" Condition="Exists('$(ProjectDir)Configuration\Default.props')" />
+
+  <Import Project="$(MSBuildThisFileDirectory)Tools.props" />
+  <Import Project="$(MSBuildThisFileDirectory)Debug.props" />
+
+</Project>

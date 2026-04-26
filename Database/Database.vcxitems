@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{A97C200E-F7B7-4D50-BC65-D6CC1AAF00AF}</ItemsProjectGuid>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <NMakeIncludeSearchPath>$(NMakeIncludeSearchPath);$(MSBuildThisFileDirectory)</NMakeIncludeSearchPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Database.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\WearLeveling.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)IntegerClasses.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Database.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Node.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Block.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\WearLeveling.h" />
+  </ItemGroup>
+</Project>

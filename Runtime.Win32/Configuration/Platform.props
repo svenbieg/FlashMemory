@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Platform)'=='Win32'">
+    <Architecture>Win32</Architecture>
+    <Board>Windows</Board>
+    <NMakePreprocessorDefinitions>_WIN32</NMakePreprocessorDefinitions>
+    <Vendor>Microsoft</Vendor>
+  </PropertyGroup>
+
+</Project>

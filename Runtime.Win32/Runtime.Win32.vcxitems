@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="Globals">
+    <HasSharedItems>true</HasSharedItems>
+    <ItemsProjectGuid>{9A914BBE-2EA2-4248-83FD-3445326AA2D0}</ItemsProjectGuid>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(MSBuildThisFileDirectory)</AdditionalIncludeDirectories>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ProjectCapability Include="SourceItemsFromImports" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Compiler.props" />
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Default.props" />
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Platform.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\CriticalSection.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\DispatchedHandler.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\DispatchedQueue.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\Mutex.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\Scheduler.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\ScopedLock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\ReadLock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\Signal.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\SpinLock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\Task.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\WriteLock.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Serial\SerialPort.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\System\Cpu.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Timers\SystemTimer.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Platform.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\FlashMemory.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)UI\Console.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Concurrency\CriticalSection.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Concurrency\DispatchedQueue.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Concurrency\Signal.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Concurrency\Task.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Serial\SerialPort.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\System\Cpu.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Timers\SystemTimer.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)MemoryHelper.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\FlashMemory.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)UI\Console.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Main.cpp" />
+  </ItemGroup>
+</Project>

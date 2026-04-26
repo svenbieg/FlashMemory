@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Devices">
+      <UniqueIdentifier>{75028083-8d02-461c-a8a9-d9cdc62a5367}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\Onfi">
+      <UniqueIdentifier>{56aa29c2-277c-49ec-9809-a63a62d42a26}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Onfi\SpiFlash.h">
+      <Filter>Devices\Onfi</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Onfi\SpiFlash.cpp">
+      <Filter>Devices\Onfi</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

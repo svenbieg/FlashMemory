@@ -1,0 +1,190 @@
+//=========
+// Index.h
+//=========
+
+#pragma once
+
+
+//=======
+// Using
+//=======
+
+#include "Collections/index.hpp"
+#include "Event.h"
+
+
+//===========
+// Namespace
+//===========
+
+namespace Collections {
+
+
+//======================
+// Forward-Declarations
+//======================
+
+template <typename _id_t, typename _size_t, WORD _group_size> class IndexIterator;
+
+
+//=======
+// Index
+//=======
+
+template <typename _id_t, typename _size_t=UINT, WORD _group_size=10>
+class Index: public Object
+{
+private:
+	// Using
+	using _index_t=Index<_id_t, _size_t, _group_size>;
+
+public:
+	// Types
+	using FindFunction=find_func;
+	using Iterator=IndexIterator<_id_t, _size_t, _group_size>;
+
+	// Friends
+	friend Iterator;
+
+	// Con-/Destructors
+	static inline Handle<Index> Create() { return new Index(); }
+	static inline Handle<Index> Create(_index_t const* Copy) { return new Index(Copy); }
+
+	// Access
+	inline Handle<Iterator> Begin(_size_t Position=0) { return new Iterator(this, Position); }
+	inline BOOL Contains(_id_t const& Id)const noexcept { return m_Index.contains(Id); }
+	inline Handle<Iterator> End()
+		{
+		auto it=new Iterator(this, -2);
+		it->End();
+		return it;
+		}
+	inline Handle<Iterator> Find(_id_t const& Id, FindFunction Function=FindFunction::equal)
+		{
+		auto it=new Iterator(this, -2);
+		it->Find(Id, Function);
+		return it;
+		}
+	inline _id_t GetAt(_size_t Position)const { return m_Index.get_at(Position); }
+	inline _size_t GetCount()const noexcept { return m_Index.get_count(); }
+
+	// Modification
+	BOOL Add(_id_t const& Id, BOOL Notify=true)
+		{
+		if(m_Index.add(Id))
+			{
+			if(Notify)
+				{
+				Added(this, Id);
+				Changed(this);
+				}
+			return true;
+			}
+		return false;
+		}
+	Event<Index, _id_t> Added;
+	Event<Index> Changed;
+	BOOL Clear(BOOL Notify=true)
+		{
+		if(m_Index.clear())
+			{
+			if(Notify)
+				Changed(this);
+			return true;
+			}
+		return false;
+		}
+	BOOL Remove(_id_t const& Id, BOOL Notify=true)
+		{
+		if(m_Index.remove(Id))
+			{
+			if(Notify)
+				{
+				Removed(this, Id);
+				Changed(this);
+				}
+			return true;
+			}
+		return false;
+		}
+	BOOL Set(_id_t const& Id, BOOL Notify=true)
+		{
+		if(m_Index.set(Id))
+			{
+			if(Notify)
+				{
+				Added(this, Id);
+				Changed(this);
+				}
+			return true;
+			}
+		return false;
+		}
+	Event<Index, _id_t> Removed;
+
+private:
+	// Con-/Destructors
+	Index()=default;
+	Index(_index_t const* Copy)
+		{
+		if(Copy)
+			m_Index.copy_from(Copy->m_Index);
+		}
+
+	// Common
+	index<_id_t, _size_t, _group_size> m_Index;
+};
+
+
+//==========
+// Iterator
+//==========
+
+template <typename _id_t, typename _size_t, WORD _group_size>
+class IndexIterator: public Object
+{
+private:
+	// Using
+	using _index_t=Index<_id_t, _size_t, _group_size>;
+
+public:
+	// Friends
+	friend _index_t;
+
+	// Using
+	using FindFunction=find_func;
+
+	// Access
+	inline _id_t GetCurrent()const { return *m_It; }
+	inline BOOL HasCurrent()const { return m_It.has_current(); }
+
+	// Navigation
+	inline BOOL Find(_id_t const& Id, FindFunction Function=FindFunction::equal) { return m_It.find(Id, Function); }
+	inline _size_t GetPosition()const noexcept { return m_It.get_position(); }
+	inline BOOL MoveNext() { return m_It.move_next(); }
+	inline BOOL MovePrevious() { return m_It.move_previous(); }
+
+	// Modification
+	BOOL RemoveCurrent(BOOL Notify=true)
+		{
+		if(!Notify)
+			return m_It.remove_current();
+		if(!m_It.has_current())
+			return false;
+		_id_t id=m_It.get_current_id();
+		m_It.remove_current();
+		m_Index->Removed(m_Index, id);
+		m_Index->Changed(m_Index);
+		return true;
+		}
+
+private:
+	// Con-/Destructors
+	IndexIterator(_index_t* Index, _size_t Position): m_It(&Index->m_Index, Position), m_Index(Index) {}
+
+	// Common
+	typename index<_id_t, _size_t, _group_size>::iterator m_It;
+	Handle<_index_t> m_Index;
+};
+
+}

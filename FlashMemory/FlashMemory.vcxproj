@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\Raspberry.Pico2w\Configuration\Platform.props" />
+  <Import Project="..\Runtime.Win32\Configuration\Platform.props" />
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6D5CE8E2-AFB7-4409-BB5A-64A49C03CDF6}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <Import Project="..\Runtime\Configuration\Default.props" />
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <PropertyGroup />
+  <ImportGroup Label="ExtensionSettings" />
+  <ImportGroup Label="Shared">
+    <Import Project="..\Runtime\Runtime.vcxitems" Label="Shared" Condition="'$(Platform)'!='Win32'" />
+    <Import Project="..\Runtime.$(Architecture)\Runtime.$(Architecture).vcxitems" Label="Shared" />
+    <Import Project="..\$(Vendor)\$(Vendor).vcxitems" Condition="Exists('..\$(Vendor)\$(Vendor).vcxitems')" Label="Shared" />
+    <Import Project="..\$(Vendor).$(Board)\$(Vendor).$(Board).vcxitems" Condition="Exists('..\$(Vendor).$(Board)\$(Vendor).$(Board).vcxitems')" Label="Shared" />
+    <Import Project="..\Default\Default.vcxitems" Label="Shared" />
+    <Import Project="..\Scheduler\Scheduler.vcxitems" Label="Shared" Condition="'$(Platform)'!='Win32'" />
+    <Import Project="..\Database\Database.vcxitems" Label="Shared" />
+    <Import Project="..\Micron\Micron.vcxitems" Label="Shared" Condition="'$(Platform)'!='Win32'" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <Import Project="..\Runtime\Configuration\Compiler.props" />
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <ClCompile Include="Application.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Application.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="..\Runtime\Configuration\Default.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <CompilerName>arm-none-eabi</CompilerName>
+    <CompilerPrefix>arm-none-eabi-</CompilerPrefix>
+    <CompilerTag>15.2.rel1</CompilerTag>
+    <CompilerVersion>15.2.1</CompilerVersion>
+    <CompilerPath>$(HomePath)GCC\arm-gnu-toolchain-15.2.rel1-mingw-w64-i686-arm-none-eabi\</CompilerPath>
+  </PropertyGroup>
+
+</Project>

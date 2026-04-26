@@ -1,0 +1,103 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)TypeInfo.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)AsmHelper.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)IntelliSense.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)mutex" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)shared_mutex" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)stdexcept" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\RingBuffer.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Streams\InputBuffer.h">
+      <Filter>Storage\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Streams\OutputBuffer.h">
+      <Filter>Storage\Streams</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)heap.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)UI\Console.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\IoHelper.h">
+      <Filter>Devices</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)new" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\System\InterruptHandler.h">
+      <Filter>Devices\System</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Compiler.props">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Compiler.targets">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Debug.targets">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Default.props">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Default.targets">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Tools.props">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Tools.targets">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\Debug.props">
+      <Filter>Configuration</Filter>
+    </None>
+    <None Include="$(MSBuildThisFileDirectory)Configuration\NinjaBuild.targets">
+      <Filter>Configuration</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)stdlib.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)TypeInfo.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)new.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\RingBuffer.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Streams\InputBuffer.cpp">
+      <Filter>Storage\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Streams\OutputBuffer.cpp">
+      <Filter>Storage\Streams</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)heap.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)UI\Console.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)string.c" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\IoHelper.cpp">
+      <Filter>Devices</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)cxxabi.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Configuration">
+      <UniqueIdentifier>{5805ee56-b3cf-456e-b0b7-1b0b424bc3d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Storage">
+      <UniqueIdentifier>{b8394696-fb9d-47bf-8d7a-0b2054f61620}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Storage\Streams">
+      <UniqueIdentifier>{63b21686-c526-4fb7-961c-a45ad4774e85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="UI">
+      <UniqueIdentifier>{86cab7a1-3892-4f4d-b65b-dcc822557fc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices">
+      <UniqueIdentifier>{7409c0a8-a473-40b4-8a2d-85d77a29c54c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Devices\System">
+      <UniqueIdentifier>{e13db7fb-9c1f-45d5-9912-46b262ed5fdb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
