@@ -9,5 +9,5 @@ This is the construction-site of my <a href="https://github.com/svenbieg/Databas
 <br />
 
 <p>
-You can switch development between Windows and Raspberry Pi.
+You can switch development between Windows and <a href="https://github.com/svenbieg/Blink">Raspberry Pi</a>.
 </p>
