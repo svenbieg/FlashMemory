@@ -121,11 +121,9 @@ m_Spare(spare),
 m_Volume(volume)
 {
 m_Size-=m_Spare*m_BlockSize;
-UINT redir_count=m_Spare*2+1;
-UINT redir_size=(redir_count+1)*sizeof(UINT);
-auto buf=Buffer::Create(redir_size);
+auto buf=Buffer::Create(m_PageSize);
 auto entries=(UINT*)buf->Begin();
-m_Volume->Read(0, entries, redir_size);
+m_Volume->Read(0, entries, m_PageSize);
 if(entries[0]!=REDIR_ID)
 	{
 	if(create==FileCreateMode::OpenExisting)
@@ -135,14 +133,29 @@ if(entries[0]!=REDIR_ID)
 	m_Volume->Write(0, entries, sizeof(UINT));
 	return;
 	}
-for(UINT pos=1; pos<redir_count; pos+=2)
+UINT count=(m_PageSize/sizeof(UINT))-1;
+for(UINT pos=1; pos<count; pos+=2)
 	{
 	if(entries[pos]==-1)
 		break;
-	if(entries[pos+1]!=REDIR_ID)
+	if(entries[pos+1]==REDIR_ID)
+		{
+		m_Redirect.set(entries[pos], m_Count++);
+		m_Position=(pos+2)*sizeof(UINT);
+		continue;
+		}
+	if(entries[pos+1]==0)
+		{
+		m_Position=(pos+2)*sizeof(UINT);
+		continue;
+		}
+	if(entries[pos+2]!=-1)
 		throw ErrorException();
-	m_Redirect.set(entries[pos], m_Count++);
+	entries[pos]=0;
+	entries[pos+1]=0;
+	m_Volume->Write(pos*sizeof(UINT), &entries[pos], 2*sizeof(UINT));
 	m_Position=(pos+2)*sizeof(UINT);
+	break;
 	}
 }
 
