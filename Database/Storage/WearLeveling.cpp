@@ -133,7 +133,7 @@ if(entries[0]!=REDIR_ID)
 	m_Volume->Write(0, entries, sizeof(UINT));
 	return;
 	}
-UINT count=(m_PageSize/sizeof(UINT))-1;
+UINT count=(m_PageSize/sizeof(UINT))-2;
 for(UINT pos=1; pos<count; pos+=2)
 	{
 	if(entries[pos]==-1)
