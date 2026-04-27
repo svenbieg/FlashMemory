@@ -124,6 +124,8 @@ m_Size-=m_Spare*m_BlockSize;
 auto buf=Buffer::Create(m_PageSize);
 auto entries=(UINT*)buf->Begin();
 m_Volume->Read(0, entries, m_PageSize);
+if(create==FileCreateMode::CreateAlways)
+	entries[0]=0;
 if(entries[0]!=REDIR_ID)
 	{
 	if(create==FileCreateMode::OpenExisting)
@@ -133,6 +135,8 @@ if(entries[0]!=REDIR_ID)
 	m_Volume->Write(0, entries, sizeof(UINT));
 	return;
 	}
+if(create==FileCreateMode::CreateNew)
+	throw AlreadyExistsException();
 UINT count=(m_PageSize/sizeof(UINT))-2;
 for(UINT pos=1; pos<count; pos+=2)
 	{
