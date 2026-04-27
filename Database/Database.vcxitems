@@ -19,6 +19,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\VolumeReverse.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\WearLeveling.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -28,6 +29,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Node.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Block.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\VolumeReverse.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\WearLeveling.h" />
   </ItemGroup>
 </Project>
