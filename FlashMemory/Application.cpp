@@ -55,7 +55,7 @@ Console::Print("Creating database...\n");
 #ifndef _WIN32
 auto spi_host=SpiHost::Create();
 auto spi_flash=SpiFlash::Create(spi_host);
-auto volume=WearLeveling::Create(spi_flash, 64);
+auto volume=WearLeveling::Create(spi_flash, FileCreateMode::OpenAlways);
 #else
 auto volume=Storage::FlashMemory::Create("flash.bin");
 #endif

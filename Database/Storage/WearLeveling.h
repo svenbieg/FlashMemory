@@ -13,6 +13,7 @@
 //=======
 
 #include "Collections/map.hpp"
+#include "Storage/File.h"
 #include "Storage/Volume.h"
 
 
@@ -34,7 +35,7 @@ public:
 	friend Object;
 
 	// Con-/Destructors
-	static inline Handle<WearLeveling> Create(Volume* Volume, UINT Spare) { return Object::Create<WearLeveling>(Volume, Spare); }
+	static inline Handle<WearLeveling> Create(Volume* Volume, FileCreateMode Create, UINT Spare=64) { return Object::Create<WearLeveling>(Volume, Create, Spare); }
 
 	// Volume
 	VOID Erase(UINT64 Offset, UINT Size);
@@ -47,7 +48,7 @@ public:
 
 private:
 	// Con-/Destructors
-	WearLeveling(Volume* Volume, UINT Spare);
+	WearLeveling(Volume* Volume, FileCreateMode Create, UINT Spare);
 
 	// Common
 	UINT64 Redirect(UINT64 Offset);
@@ -56,7 +57,7 @@ private:
 	UINT m_Count;
 	UINT m_PageSize;
 	UINT m_Position;
-	Collections::map<UINT, UINT> m_Redirect;
+	Collections::map<UINT, UINT, BYTE, 8> m_Redirect;
 	UINT64 m_Size;
 	UINT m_Spare;
 	Handle<Volume> m_Volume;

@@ -22,6 +22,13 @@
 namespace Storage {
 
 
+//==========
+// Settings
+//==========
+
+const UINT REDIR_ID='RDIR';
+
+
 //========
 // Volume
 //========
@@ -104,7 +111,7 @@ m_Volume->Write(redir, buf, size);
 // Con-/Destructors Private
 //==========================
 
-WearLeveling::WearLeveling(Volume* volume, UINT spare):
+WearLeveling::WearLeveling(Volume* volume, FileCreateMode create, UINT spare):
 m_BlockSize(volume->GetBlockSize()),
 m_Count(1),
 m_PageSize(volume->GetPageSize()),
@@ -114,24 +121,28 @@ m_Spare(spare),
 m_Volume(volume)
 {
 m_Size-=m_Spare*m_BlockSize;
-UINT redir_size=m_Spare*2*sizeof(UINT);
+UINT redir_count=m_Spare*2+1;
+UINT redir_size=(redir_count+1)*sizeof(UINT);
 auto buf=Buffer::Create(redir_size);
 auto entries=(UINT*)buf->Begin();
 m_Volume->Read(0, entries, redir_size);
-SIZE_T pos=0;
-for(UINT pos=0; pos<m_Spare; pos++)
+if(entries[0]!=REDIR_ID)
+	{
+	if(create==FileCreateMode::OpenExisting)
+		throw NotFoundException();
+	entries[0]=REDIR_ID;
+	m_Volume->Erase(0, m_BlockSize);
+	m_Volume->Write(0, entries, sizeof(UINT));
+	return;
+	}
+for(UINT pos=1; pos<redir_count; pos+=2)
 	{
 	if(entries[pos]==-1)
 		break;
-	if(entries[pos+1]!='RDIR')
-		{
-		if(pos>0)
-			throw AbortException();
-		volume->Erase(0, m_BlockSize);
-		return;
-		}
+	if(entries[pos+1]!=REDIR_ID)
+		throw ErrorException();
 	m_Redirect.set(entries[pos], m_Count++);
-	m_Position=pos*2*sizeof(UINT);
+	m_Position=(pos+2)*sizeof(UINT);
 	}
 }
 
@@ -163,7 +174,7 @@ UINT redir=m_Count++;
 m_Redirect.set(block, redir);
 UINT entry[2];
 entry[0]=block;
-entry[1]='RDIR';
+entry[1]=REDIR_ID;
 m_Volume->Write(m_Position, entry, 2*sizeof(UINT));
 m_Position+=2*sizeof(UINT);
 UINT block_pos=offset%m_BlockSize;
