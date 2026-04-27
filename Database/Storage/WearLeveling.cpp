@@ -137,7 +137,7 @@ UINT count=(m_PageSize/sizeof(UINT))-2;
 for(UINT pos=1; pos<count; pos+=2)
 	{
 	if(entries[pos]==-1)
-		break;
+		return;
 	if(entries[pos+1]==REDIR_ID)
 		{
 		m_Redirect.set(entries[pos], m_Count++);
@@ -155,8 +155,9 @@ for(UINT pos=1; pos<count; pos+=2)
 	entries[pos+1]=0;
 	m_Volume->Write(pos*sizeof(UINT), &entries[pos], 2*sizeof(UINT));
 	m_Position=(pos+2)*sizeof(UINT);
-	break;
+	return;
 	}
+throw ErrorException();
 }
 
 
