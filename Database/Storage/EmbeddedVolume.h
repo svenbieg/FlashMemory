@@ -3,9 +3,9 @@
 //==================
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
-// https://github.com/svenbieg/Database
+// https://github.com/svenbieg/Database/wiki/Storage#Embedded-Volume
 
-// EmbeddedVolume is a relialble, reversed volume.
+// The embedded volume is a combination of reversed and reliable.
 
 #pragma once
 

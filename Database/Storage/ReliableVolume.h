@@ -3,7 +3,7 @@
 //==================
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
-// https://github.com/svenbieg/Database
+// https://github.com/svenbieg/Database/wiki/Storage#Reliable-Volume
 
 // Wear-leveling is redirecting bad blocks.
 
