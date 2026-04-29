@@ -24,6 +24,8 @@
 #define __builtin_cosl(f) 0
 #define __builtin_isnan(f) false
 #define __builtin_isinf(f) false
+#define __builtin_labs(l) 0
+#define __builtin_llabs(l) 0
 #define __builtin_offsetof(type, member) 0
 #define __has_builtin(b) true
 #define __extension__

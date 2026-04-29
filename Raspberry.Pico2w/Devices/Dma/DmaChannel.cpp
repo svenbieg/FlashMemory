@@ -74,13 +74,6 @@ const UINT CTRL_INCR_READ		=(1<<4);
 const BITS CTRL_DATA_SIZE		={ 0x03, 2 };
 const UINT CTRL_EN				=(1<<0);
 
-enum DATA_SIZE
-{
-DATA_SIZE_8BIT,
-DATA_SIZE_16BIT,
-DATA_SIZE_32BIT
-};
-
 typedef struct
 {
 UINT RES;
@@ -186,6 +179,11 @@ VOID DmaChannel::SetByteSwap(BOOL swap)
 BitHelper::Set(m_Control, CTRL_BSWAP, swap);
 }
 
+VOID DmaChannel::SetDataSize(DmaDataSize size)
+{
+BitHelper::Set(m_Control, CTRL_DATA_SIZE, (UINT)size);
+}
+
 VOID DmaChannel::BeginWrite(DmaRequest dreq, RW32* reg, UINT const* buf, SIZE_T count)
 {
 assert(buf);
@@ -222,7 +220,6 @@ m_Id(id),
 m_Status(Status::Success)
 {
 BitHelper::Set(m_Control, CTRL_CHAIN_TO, m_Id);
-BitHelper::Set(m_Control, CTRL_DATA_SIZE, DATA_SIZE_32BIT);
 BitHelper::Set(m_Control, CTRL_EN);
 Irq irq=(Irq)((UINT)Irq::Dma0+m_Id);
 Interrupts::SetHandler(irq, this, &DmaChannel::OnInterrupt);

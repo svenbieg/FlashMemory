@@ -9,6 +9,7 @@
 // Using
 //=======
 
+using namespace Devices::Dma;
 using namespace Devices::Gpio;
 using namespace Devices::Pio;
 using namespace Devices::Sdio;
@@ -74,10 +75,12 @@ m_StateMachine->SetPins(0);
 m_InputBuffer=m_StateMachine->GetInputBuffer();
 m_InputDma=DmaChannel::Create();
 m_InputDma->SetByteSwap(true);
+m_InputDma->SetDataSize(DmaDataSize::Bits32);
 m_InputRequest=m_StateMachine->GetInputRequest();
 m_OutputBuffer=m_StateMachine->GetOutputBuffer();
 m_OutputDma=DmaChannel::Create();
 m_OutputDma->SetByteSwap(true);
+m_OutputDma->SetDataSize(DmaDataSize::Bits32);
 m_OutputRequest=m_StateMachine->GetOutputRequest();
 }
 

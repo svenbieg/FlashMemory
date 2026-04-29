@@ -46,7 +46,7 @@ public:
 	VOID SetSize(UINT64 Size);
 	VOID Write(UINT64 Position, VOID const* Buffer, SIZE_T Size);
 
-private:
+protected:
 	// Con-/Destructors
 	SpiFlash(SpiHost* Host);
 

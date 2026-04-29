@@ -41,9 +41,6 @@ public:
 	SIZE_T WriteToStream(OutputStream* Stream, INT Level=-1)override;
 
 protected:
-	// Settings
-	static const UINT NODE_ID='NODE';
-
 	// Con-/Destructors
 	Node(Handle<String> Tag);
 };

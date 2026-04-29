@@ -24,6 +24,13 @@ namespace Storage {
 
 
 //==========
+// Settings
+//==========
+
+static const UINT NODE_ID='NODE';
+
+
+//==========
 // XML-Node
 //==========
 

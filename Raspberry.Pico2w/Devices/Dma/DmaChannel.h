@@ -51,6 +51,18 @@ Force
 };
 
 
+//===========
+// Data-Size
+//===========
+
+enum class DmaDataSize
+{
+Bits8,
+Bits16,
+Bits32
+};
+
+
 //=============
 // DMA-Channel
 //=============
@@ -58,9 +70,6 @@ Force
 class DmaChannel: public Object
 {
 public:
-	// Friend
-	friend Object;
-
 	// Using
 	using SpinLock=Concurrency::SpinLock;
 
@@ -72,11 +81,13 @@ public:
 	VOID Abort();
 	VOID BeginRead(DmaRequest Request, RO32* Register, UINT* Buffer, SIZE_T Count);
 	VOID SetByteSwap(BOOL ByteSwap);
+	VOID SetDataSize(DmaDataSize Size);
 	VOID BeginWrite(DmaRequest Request, RW32* Register, UINT const* Buffer, SIZE_T Count);
 	VOID Wait(UINT Timeout=100);
 
 private:
 	// Con-/Destructors
+	friend Object;
 	DmaChannel(UINT Id);
 	static Concurrency::Mutex s_Mutex;
 	static UINT s_Used;
