@@ -12,7 +12,7 @@
 // Using
 //=======
 
-#include "Handle.h"
+#include "Storage/Xml/XmlNode.h"
 
 
 //===========
@@ -23,33 +23,29 @@ namespace Storage {
 	namespace Database {
 
 
-//======================
-// Forward-Declarations
-//======================
-
-class Database;
-class Editor;
-
-
 //======
 // Node
 //======
 
-class Node: public Object
+class Node: public Xml::XmlNode
 {
 public:
 	// Friends
-	friend Editor;
+	friend Object;
+
+	// Con-/Destructors
+	static inline Handle<Node> Create(Handle<String> Tag=nullptr) { return Object::Create<Node>(Tag); }
+
+	// XML-Node
+	SIZE_T ReadFromStream(InputStream* Stream)override;
+	SIZE_T WriteToStream(OutputStream* Stream, INT Level=-1)override;
 
 protected:
-	// Con-/Destructors
-	Node(Database* Database, UINT Block);
+	// Settings
+	static const UINT NODE_ID='NODE';
 
-	// Common
-	Handle<Database> m_Database;
-	UINT m_Block;
-	UINT m_Read;
-	UINT m_Written;
+	// Con-/Destructors
+	Node(Handle<String> Tag);
 };
 
 }}

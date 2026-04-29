@@ -13,10 +13,6 @@
 //=======
 
 #include "Storage/Database/Database.h"
-#include "Storage/Encoding/Dwarf.h"
-#include "Storage/Block.h"
-
-using namespace Storage::Encoding;
 
 
 //===========
@@ -42,7 +38,7 @@ m_Database->m_Mutex.Unlock();
 // Common
 //========
 
-UINT Editor::AllocateBlock()
+UINT Editor::Allocate(UINT count)
 {
 throw NotImplementedException();
 return 0;
@@ -58,7 +54,7 @@ VOID Editor::Flush()
 throw NotImplementedException();
 }
 
-VOID Editor::FreeBlock(UINT block)
+VOID Editor::Free(UINT block, UINT count)
 {
 throw NotImplementedException();
 }

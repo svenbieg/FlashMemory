@@ -7,6 +7,9 @@
     <Filter Include="Storage\Database">
       <UniqueIdentifier>{4a1e7458-5028-48af-868b-8d39fe9f4960}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Storage\Xml">
+      <UniqueIdentifier>{83894191-c614-4252-9e61-2dca8111c9be}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Database.cpp">
@@ -20,6 +23,9 @@
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp">
       <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Xml\XmlNode.cpp">
+      <Filter>Storage\Xml</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -47,6 +53,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h">
       <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Xml\XmlNode.h">
+      <Filter>Storage\Xml</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

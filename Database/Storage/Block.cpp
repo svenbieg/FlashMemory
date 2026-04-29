@@ -13,6 +13,7 @@
 //=======
 
 #include "MemoryHelper.h"
+#include <cassert>
 
 
 //===========
@@ -26,10 +27,10 @@ namespace Storage {
 // Con-/Destructors
 //==================
 
-Handle<Block> Block::Create(Volume* volume, UINT block, UINT pos)
+Handle<Block> Block::Create(Volume* volume)
 {
 UINT page_size=volume->GetPageSize();
-return Object::CreateEx<Block, Volume*>(page_size, sizeof(SIZE_T), volume, block, pos);
+return Object::CreateEx<Block, Volume*>(page_size, sizeof(SIZE_T), volume);
 }
 
 
@@ -37,10 +38,11 @@ return Object::CreateEx<Block, Volume*>(page_size, sizeof(SIZE_T), volume, block
 // Common
 //========
 
-VOID Block::Seek(UINT pos)
+VOID Block::Seek(UINT pos, BlockLimit limit)
 {
-if(m_Position==pos)
-	return;
+SetLimit(pos, limit);
+if(pos>=m_Limit)
+	throw OutOfRangeException();
 m_Position=pos;
 m_Written=0;
 UINT page=m_Position/m_PageSize;
@@ -49,14 +51,17 @@ if(m_Page==page)
 m_Page=-1;
 }
 
-VOID Block::Seek(UINT block, UINT pos)
+VOID Block::Seek(UINT block, UINT pos, BlockLimit limit)
 {
 UINT64 offset=(UINT64)block*m_Size;
 if(offset==m_Offset)
 	{
-	Seek(pos);
+	Seek(pos, limit);
 	return;
 	}
+SetLimit(pos, limit);
+if(pos>=m_Limit)
+	throw OutOfRangeException();
 m_Offset=offset;
 m_Page=-1;
 m_Position=pos;
@@ -84,6 +89,8 @@ while(read<size)
 		m_Page=-1;
 	if(m_Page==-1)
 		{
+		if(m_Position>=m_Limit)
+			throw OutOfRangeException();
 		m_Page=m_Position/m_PageSize;
 		UINT64 offset=m_Offset+(m_Page*m_PageSize);
 		m_Volume->Read(offset, m_Buffer, m_PageSize);
@@ -123,7 +130,11 @@ while(written<size)
 	UINT pos=m_Position+m_Written;
 	UINT page_pos=pos%m_PageSize;
 	if(page_pos==0)
+		{
 		Flush();
+		if(pos>=m_Limit)
+			throw OutOfRangeException();
+		}
 	UINT available=m_PageSize-page_pos;
 	SIZE_T copy=TypeHelper::Min(size-written, available);
 	MemoryHelper::Copy(&m_Buffer[page_pos], &src[written], copy);
@@ -138,17 +149,40 @@ return written;
 // Con-/Destructors Private
 //==========================
 
-Block::Block(BYTE* buf, SIZE_T size, Volume* vol, UINT block, UINT pos):
+Block::Block(BYTE* buf, SIZE_T size, Volume* vol):
 RandomAccessStream(StreamFormat::UTF8),
 m_Buffer(buf),
+m_Limit(size),
+m_Offset(0),
 m_Page(-1),
 m_PageSize(size),
-m_Position(pos),
+m_Position(0),
 m_Size(vol->GetBlockSize()),
 m_Volume(vol),
 m_Written(0)
+{}
+
+
+//================
+// Common Private
+//================
+
+VOID Block::SetLimit(UINT pos, BlockLimit limit)
 {
-m_Offset=(UINT64)block*m_Size;
+switch(limit)
+	{
+	case BlockLimit::Block:
+		{
+		m_Limit=m_Size;
+		break;
+		}
+	case BlockLimit::Page:
+		{
+		UINT page=pos/m_PageSize;
+		m_Limit=(page+1)*m_PageSize;
+		break;
+		}
+	}
 }
 
 }

@@ -23,6 +23,13 @@ namespace Storage {
 	namespace Database {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+class Database;
+
+
 //========
 // Editor
 //========
@@ -30,19 +37,23 @@ namespace Storage {
 class Editor: public Object
 {
 public:
+	// Friends
+	friend Database;
+	friend Object;
+
 	// Con-/Destructors
 	~Editor();
-	static inline Handle<Editor> Create(Database* Database) { return new Editor(Database); }
 
 	// Common
-	UINT AllocateBlock();
+	UINT Allocate(UINT Count=1);
 	VOID Cancel();
 	VOID Flush();
-	VOID FreeBlock(UINT Block);
+	VOID Free(UINT Block, UINT Count=1);
 
 private:
 	// Con-/Destructors
 	Editor(Database* Database);
+	static inline Handle<Editor> Create(Database* Database) { return Object::Create<Editor>(Database); }
 
 	// Common
 	Handle<Database> m_Database;

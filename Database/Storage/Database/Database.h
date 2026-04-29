@@ -48,11 +48,16 @@ public:
 	// Con-/Destructors
 	static inline Handle<Database> Create(Volume* Volume, FileCreateMode Create=FileCreateMode::OpenExisting) { return Object::Create<Database>(Volume, Create); }
 
+	// Common
+	Handle<Editor> Edit();
+
 private:
 	// Con-/Destructors
 	Database(Volume* Volume, FileCreateMode Create);
 
 	// Common
+	Handle<Node> ReadHeader();
+	Handle<Node> m_Header;
 	Concurrency::Mutex m_Mutex;
 	Handle<Node> m_Root;
 	Handle<Volume> m_Volume;
