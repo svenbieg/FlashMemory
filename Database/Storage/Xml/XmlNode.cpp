@@ -32,11 +32,11 @@ namespace Storage {
 
 VOID XmlNode::AddChild(XmlNode* child)
 {
-if(AddChild(child, Notification::None))
+if(AddChild(child, EventNotification::None))
 	Changed(this);
 }
 
-BOOL XmlNode::AddChild(XmlNode* child, Notification notify)
+BOOL XmlNode::AddChild(XmlNode* child, EventNotification notify)
 {
 if(!child)
 	return false;
@@ -56,11 +56,11 @@ return true;
 
 VOID XmlNode::Clear()
 {
-if(Clear(Notification::None))
+if(Clear(EventNotification::None))
 	Changed(this);
 }
 
-BOOL XmlNode::Clear(Notification notify)
+BOOL XmlNode::Clear(EventNotification notify)
 {
 WriteLock lock(m_Mutex);
 bool cleared=false;
@@ -248,11 +248,11 @@ return read;
 
 VOID XmlNode::SetAttribute(Handle<String> name, Handle<String> value)
 {
-if(SetAttribute(name, value, Notification::None))
+if(SetAttribute(name, value, EventNotification::None))
 	Changed(this);
 }
 
-BOOL XmlNode::SetAttribute(Handle<String> name, Handle<String> value, Notification notify)
+BOOL XmlNode::SetAttribute(Handle<String> name, Handle<String> value, EventNotification notify)
 {
 if(StringHelper::Compare(name, "Name", 0, false)==0)
 	return SetName(value, notify);
@@ -262,11 +262,11 @@ return m_Attributes.set(name, value);
 
 VOID XmlNode::SetName(Handle<String> name)
 {
-if(SetName(name, Notification::None))
+if(SetName(name, EventNotification::None))
 	Changed(this);
 }
 
-BOOL XmlNode::SetName(Handle<String> name, Notification notify)
+BOOL XmlNode::SetName(Handle<String> name, EventNotification notify)
 {
 WriteLock lock(m_Mutex);
 auto old_name=m_Attributes.get("Name");
@@ -289,11 +289,11 @@ return true;
 
 VOID XmlNode::SetTag(Handle<String> tag)
 {
-if(SetTag(tag, Notification::None))
+if(SetTag(tag, EventNotification::None))
 	Changed(this);
 }
 
-BOOL XmlNode::SetTag(Handle<String> tag, Notification notify)
+BOOL XmlNode::SetTag(Handle<String> tag, EventNotification notify)
 {
 WriteLock lock(m_Mutex);
 if(m_Tag==tag)
@@ -304,11 +304,11 @@ return true;
 
 VOID XmlNode::SetValue(Handle<String> value)
 {
-if(SetValue(value, Notification::None))
+if(SetValue(value, EventNotification::None))
 	Changed(this);
 }
 
-BOOL XmlNode::SetValue(Handle<String> value, Notification notify)
+BOOL XmlNode::SetValue(Handle<String> value, EventNotification notify)
 {
 WriteLock lock(m_Mutex);
 if(m_Value==value)

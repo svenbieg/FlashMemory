@@ -52,10 +52,10 @@ public:
 
 	// Common
 	VOID AddChild(XmlNode* Child);
-	BOOL AddChild(XmlNode* Child, Notification Notify);
+	BOOL AddChild(XmlNode* Child, EventNotification Notify);
 	Event<XmlNode> Changed;
 	VOID Clear();
-	BOOL Clear(Notification Notify);
+	BOOL Clear(EventNotification Notify);
 	VOID CopyFrom(XmlNode* Copy);
 	Handle<String> GetAttribute(Handle<String> Name);
 	BOOL GetAttribute(Handle<String> Name, UINT* Value);
@@ -72,7 +72,7 @@ public:
 		{
 		SetAttribute(Name, String::Create("%i", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Name, INT Value, Notification Notify)
+	inline BOOL SetAttribute(Handle<String> Name, INT Value, EventNotification Notify)
 		{
 		return SetAttribute(Name, String::Create("%i", Value), Notify);
 		}
@@ -80,7 +80,7 @@ public:
 		{
 		SetAttribute(Name, String::Create("%u", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Name, UINT Value, Notification Notify)
+	inline BOOL SetAttribute(Handle<String> Name, UINT Value, EventNotification Notify)
 		{
 		return SetAttribute(Name, String::Create("%u", Value), Notify);
 		}
@@ -88,18 +88,18 @@ public:
 		{
 		SetAttribute(Name, String::Create("%u", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Name, UINT64 Value, Notification Notify)
+	inline BOOL SetAttribute(Handle<String> Name, UINT64 Value, EventNotification Notify)
 		{
 		return SetAttribute(Name, String::Create("%u", Value), Notify);
 		}
 	VOID SetAttribute(Handle<String> Name, Handle<String> Value);
-	BOOL SetAttribute(Handle<String> Name, Handle<String> Value, Notification Notify);
+	BOOL SetAttribute(Handle<String> Name, Handle<String> Value, EventNotification Notify);
 	VOID SetName(Handle<String> Name);
-	BOOL SetName(Handle<String> Name, Notification Notify);
+	BOOL SetName(Handle<String> Name, EventNotification Notify);
 	VOID SetTag(Handle<String> Tag);
-	BOOL SetTag(Handle<String> Tag, Notification Notify);
+	BOOL SetTag(Handle<String> Tag, EventNotification Notify);
 	VOID SetValue(Handle<String> Value);
-	BOOL SetValue(Handle<String> Value, Notification Notify);
+	BOOL SetValue(Handle<String> Value, EventNotification Notify);
 	virtual SIZE_T WriteToStream(OutputStream* Stream, INT Level=-1);
 
 protected:
