@@ -12,7 +12,10 @@
 // Using
 //=======
 
+#include "Collections/Array.h"
 #include "Storage/Xml/XmlNode.h"
+#include "Storage/Block.h"
+#include "Storage/File.h"
 
 
 //===========
@@ -23,6 +26,13 @@ namespace Storage {
 	namespace Database {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+class Database;
+
+
 //======
 // Node
 //======
@@ -30,19 +40,38 @@ namespace Storage {
 class Node: public Xml::XmlNode
 {
 public:
+	// Using
+	using SkipBitArray=Collections::Array<UINT>;
+
 	// Friends
+	friend Database;
 	friend Object;
-
-	// Con-/Destructors
-	static inline Handle<Node> Create(Handle<String> Tag=nullptr) { return Object::Create<Node>(Tag); }
-
-	// XML-Node
-	SIZE_T ReadFromStream(InputStream* Stream)override;
-	SIZE_T WriteToStream(OutputStream* Stream, INT Level=-1)override;
 
 protected:
 	// Con-/Destructors
-	Node(Handle<String> Tag);
+	Node(Database* Database);
+	Node(Database* Database, UINT Block);
+	static inline Handle<Node> Create(Database* Database)
+		{
+		return Object::Create<Node>(Database);
+		}
+	static inline Handle<Node> Create(Database* Database, UINT Block)
+		{
+		return Object::Create<Node>(Database, Block);
+		}
+
+	// Common
+	Handle<Database> m_Database;
+
+private:
+	// Common
+	UINT ReadFromBlock(Block* Block);
+	UINT ReadUpdates(Block* Block);
+	UINT WriteToBlock(UINT Block);
+	UINT SkipPages();
+	UINT m_BlockId;
+	UINT m_BlockPosition;
+	Handle<SkipBitArray> m_SkipBits;
 };
 
 }}

@@ -30,16 +30,15 @@ namespace Storage {
 // Common
 //========
 
-VOID XmlNode::AddChild(XmlNode* child)
+VOID XmlNode::AppendChild(XmlNode* child)
 {
-if(AddChild(child, EventNotification::None))
-	Changed(this);
+this->AppendChild(child, EventNotification::None);
+Changed(this);
 }
 
-BOOL XmlNode::AddChild(XmlNode* child, EventNotification notify)
+VOID XmlNode::AppendChild(XmlNode* child, EventNotification notify)
 {
-if(!child)
-	return false;
+assert(child);
 auto name=child->GetName();
 if(name)
 	{
@@ -51,7 +50,6 @@ WriteLock lock(m_Mutex);
 m_Children.append(child);
 if(name)
 	m_Index.set(name, child);
-return true;
 }
 
 VOID XmlNode::Clear()
@@ -140,6 +138,12 @@ ReadLock lock(m_Mutex);
 return m_Index.get(name);
 }
 
+Handle<XmlNode> XmlNode::GetChildAt(UINT pos)
+{
+ReadLock lock(m_Mutex);
+return m_Children.get_at(pos);
+}
+
 Handle<XmlNodeChildIterator> XmlNode::GetChildren()
 {
 return new XmlNodeChildIterator(this);
@@ -170,6 +174,30 @@ BOOL XmlNode::HasAttribute(Handle<String> Name)
 {
 ReadLock lock(m_Mutex);
 return m_Attributes.contains(Name);
+}
+
+VOID XmlNode::InsertChildAt(UINT pos, XmlNode* child)
+{
+if(InsertChildAt(pos, child, EventNotification::None))
+	Changed(this);
+}
+
+BOOL XmlNode::InsertChildAt(UINT pos, XmlNode* child, EventNotification notify)
+{
+if(!child)
+	return false;
+auto name=child->GetName();
+if(name)
+	{
+	ReadLock lock(m_Mutex);
+	if(m_Index.contains(name))
+		throw AlreadyExistsException();
+	}
+WriteLock lock(m_Mutex);
+m_Children.insert_at(pos, child);
+if(name)
+	m_Index.set(name, child);
+return true;
 }
 
 SIZE_T XmlNode::ReadFromStream(InputStream* stream)
@@ -246,6 +274,30 @@ m_Tag=tag;
 return read;
 }
 
+VOID XmlNode::RemoveAttributeAt(UINT pos)
+{
+RemoveAttributeAt(pos, EventNotification::None);
+Changed(this);
+}
+
+VOID XmlNode::RemoveAttributeAt(UINT pos, EventNotification notify)
+{
+WriteLock lock(m_Mutex);
+m_Attributes.remove_at(pos);
+}
+
+VOID XmlNode::RemoveChildAt(UINT pos)
+{
+RemoveChildAt(pos, EventNotification::None);
+Changed(this);
+}
+
+VOID XmlNode::RemoveChildAt(UINT pos, EventNotification notify)
+{
+WriteLock lock(m_Mutex);
+m_Children.remove_at(pos);
+}
+
 VOID XmlNode::SetAttribute(Handle<String> name, Handle<String> value)
 {
 if(SetAttribute(name, value, EventNotification::None))
@@ -260,6 +312,23 @@ WriteLock lock(m_Mutex);
 return m_Attributes.set(name, value);
 }
 
+VOID XmlNode::SetAttributeAt(UINT pos, Handle<String> value)
+{
+if(SetAttributeAt(pos, value, EventNotification::None))
+	Changed(this);
+}
+
+BOOL XmlNode::SetAttributeAt(UINT pos, Handle<String> value, EventNotification notify)
+{
+WriteLock lock(m_Mutex);
+auto& attr=m_Attributes.get_at(pos);
+auto const& key=attr.get_key();
+if(StringHelper::Compare(key, "Name", 0, false)==0)
+	return SetNameInternal(value);
+attr.set_value(value);
+return true;
+}
+
 VOID XmlNode::SetName(Handle<String> name)
 {
 if(SetName(name, EventNotification::None))
@@ -269,22 +338,7 @@ if(SetName(name, EventNotification::None))
 BOOL XmlNode::SetName(Handle<String> name, EventNotification notify)
 {
 WriteLock lock(m_Mutex);
-auto old_name=m_Attributes.get("Name");
-if(old_name==name)
-	return false;
-if(m_Parent)
-	{
-	WriteLock parent_lock(m_Parent->m_Mutex);
-	if(name)
-		{
-		if(!m_Parent->m_Index.add(name, this))
-			throw AlreadyExistsException();
-		}
-	if(old_name)
-		m_Parent->m_Index.remove(old_name);
-	}
-m_Attributes.set("Name", name);
-return true;
+return SetNameInternal(name);
 }
 
 VOID XmlNode::SetTag(Handle<String> tag)
@@ -388,5 +442,30 @@ XmlNode::XmlNode(Handle<String> tag):
 m_Parent(nullptr),
 m_Tag(tag)
 {}
+
+
+//==================
+// Common Protected
+//==================
+
+BOOL XmlNode::SetNameInternal(Handle<String> name)
+{
+auto old_name=m_Attributes.get("Name");
+if(old_name==name)
+	return false;
+if(m_Parent)
+	{
+	WriteLock parent_lock(m_Parent->m_Mutex);
+	if(name)
+		{
+		if(!m_Parent->m_Index.add(name, this))
+			throw AlreadyExistsException();
+		}
+	if(old_name)
+		m_Parent->m_Index.remove(old_name);
+	}
+m_Attributes.set("Name", name);
+return true;
+}
 
 }}

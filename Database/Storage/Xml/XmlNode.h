@@ -51,8 +51,8 @@ public:
 	static inline Handle<XmlNode> Create(Handle<String> Tag=nullptr) { return new XmlNode(Tag); }
 
 	// Common
-	VOID AddChild(XmlNode* Child);
-	BOOL AddChild(XmlNode* Child, EventNotification Notify);
+	VOID AppendChild(XmlNode* Child);
+	VOID AppendChild(XmlNode* Child, EventNotification Notify);
 	Event<XmlNode> Changed;
 	VOID Clear();
 	BOOL Clear(EventNotification Notify);
@@ -62,12 +62,19 @@ public:
 	BOOL GetAttribute(Handle<String> Name, UINT64* Value);
 	Handle<XmlNodeAttributeIterator> GetAttributes();
 	Handle<XmlNode> GetChild(Handle<String> Name);
+	Handle<XmlNode> GetChildAt(UINT Position);
 	Handle<XmlNodeChildIterator> GetChildren();
 	Handle<String> GetName();
 	Handle<String> GetTag();
 	Handle<String> GetValue();
 	BOOL HasAttribute(Handle<String> Name);
-	virtual SIZE_T ReadFromStream(InputStream* Stream);
+	VOID InsertChildAt(UINT Position, XmlNode* Child);
+	BOOL InsertChildAt(UINT Position, XmlNode* Child, EventNotification Notify);
+	SIZE_T ReadFromStream(InputStream* Stream);
+	VOID RemoveAttributeAt(UINT Position);
+	VOID RemoveAttributeAt(UINT Position, EventNotification Notify);
+	VOID RemoveChildAt(UINT Position);
+	VOID RemoveChildAt(UINT Position, EventNotification Notify);
 	inline VOID SetAttribute(Handle<String> Name, INT Value)
 		{
 		SetAttribute(Name, String::Create("%i", Value));
@@ -94,19 +101,22 @@ public:
 		}
 	VOID SetAttribute(Handle<String> Name, Handle<String> Value);
 	BOOL SetAttribute(Handle<String> Name, Handle<String> Value, EventNotification Notify);
+	VOID SetAttributeAt(UINT Position, Handle<String> Value);
+	BOOL SetAttributeAt(UINT Position, Handle<String> Value, EventNotification Notify);
 	VOID SetName(Handle<String> Name);
 	BOOL SetName(Handle<String> Name, EventNotification Notify);
 	VOID SetTag(Handle<String> Tag);
 	BOOL SetTag(Handle<String> Tag, EventNotification Notify);
 	VOID SetValue(Handle<String> Value);
 	BOOL SetValue(Handle<String> Value, EventNotification Notify);
-	virtual SIZE_T WriteToStream(OutputStream* Stream, INT Level=-1);
+	SIZE_T WriteToStream(OutputStream* Stream, INT Level=-1);
 
 protected:
 	// Con-/Destructors
 	XmlNode(Handle<String> Tag=nullptr);
 
 	// Common
+	BOOL SetNameInternal(Handle<String> Name);
 	Collections::map<Handle<String>, Handle<String>> m_Attributes;
 	Collections::list<Handle<XmlNode>> m_Children;
 	Collections::map<Handle<String>, XmlNode*> m_Index;
