@@ -57,7 +57,20 @@ switch(create)
 		break;
 		}
 	}
-throw NotImplementedException();
+switch(create)
+	{
+	case FileCreateMode::CreateNew:
+	case FileCreateMode::CreateAlways:
+		{
+		Initialize();
+		break;
+		}
+	case FileCreateMode::OpenExisting:
+		{
+		Validate();
+		break;
+		}
+	}
 }
 
 
@@ -65,35 +78,35 @@ throw NotImplementedException();
 // Common Private
 //================
 
+VOID Database::Initialize()
+{
+m_Header=Node::Create(this);
+m_Header->SetTag("Header");
+m_Header->SetAttribute("Used", 2);
+m_Header->WriteToBlock(0);
+m_Header->WriteToBlock(1);
+}
+
 Handle<Node> Database::ReadHeader()
 {
-auto header=Node::Create("Header");
-auto block=Block::Create(m_Volume);
-block->Seek(0, 0);
-SIZE_T header_size=0;
-try
-	{
-	header_size=header->ReadFromStream(block);
-	}
-catch(InvalidArgumentException)
-	{
-	header_size=0;
-	}
-if(header_size==0)
+Handle<Node> header;
+for(UINT block=0; block<2; block++)
 	{
 	try
 		{
-		block->Seek(1, 0);
-		header_size=header->ReadFromStream(block);
+		header=Node::Create(this, block);
 		}
 	catch(InvalidArgumentException)
 		{
-		header_size=0;
+		continue;
 		}
 	}
-if(header_size==0)
-	return nullptr;
 return header;
+}
+
+VOID Database::Validate()
+{
+throw NotImplementedException();
 }
 
 }}

@@ -50,16 +50,18 @@ public:
 
 	// Common
 	Handle<Editor> Edit();
+	inline Handle<Volume> GetVolume()const { return m_Volume; }
 
 private:
 	// Con-/Destructors
 	Database(Volume* Volume, FileCreateMode Create);
 
 	// Common
+	VOID Initialize();
 	Handle<Node> ReadHeader();
+	VOID Validate();
 	Handle<Node> m_Header;
 	Concurrency::Mutex m_Mutex;
-	Handle<Node> m_Root;
 	Handle<Volume> m_Volume;
 };
 
