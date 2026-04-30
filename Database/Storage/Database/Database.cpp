@@ -80,11 +80,10 @@ switch(create)
 
 VOID Database::Initialize()
 {
-m_Header=Node::Create(this);
-m_Header->SetTag("Header");
+m_Header=Node::Create("Header");
 m_Header->SetAttribute("Used", 2);
-m_Header->WriteToBlock(0);
-m_Header->WriteToBlock(1);
+m_Header->WriteToBlock(this, 0);
+m_Header->WriteToBlock(this, 1);
 }
 
 Handle<Node> Database::ReadHeader()

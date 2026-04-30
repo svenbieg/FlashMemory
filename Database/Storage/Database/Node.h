@@ -49,29 +49,28 @@ public:
 
 protected:
 	// Con-/Destructors
-	Node(Database* Database);
+	Node(Handle<String> Tag=nullptr);
 	Node(Database* Database, UINT Block);
-	static inline Handle<Node> Create(Database* Database)
+	static inline Handle<Node> Create(Handle<String> Tag=nullptr)
 		{
-		return Object::Create<Node>(Database);
+		return Object::Create<Node>(Tag);
 		}
 	static inline Handle<Node> Create(Database* Database, UINT Block)
 		{
 		return Object::Create<Node>(Database, Block);
 		}
 
-	// Common
-	Handle<Database> m_Database;
-
 private:
 	// Common
-	UINT ReadFromBlock(Block* Block);
+	Handle<SkipBitArray> CreateSkipBits(Volume* Volume);
+	VOID ReadFromBlock(Database* Database, UINT Block);
+	UINT ReadFromPage(Block* Block);
 	UINT ReadUpdates(Block* Block);
-	UINT WriteToBlock(UINT Block);
-	UINT SkipPages();
+	UINT SkipPages(Block* Block, SkipBitArray* SkipBits);
+	VOID WriteToBlock(Database* Database, UINT Block);
+	UINT WriteToPage(Block* Block);
 	UINT m_BlockId;
 	UINT m_BlockPosition;
-	Handle<SkipBitArray> m_SkipBits;
 };
 
 }}

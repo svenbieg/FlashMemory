@@ -50,6 +50,7 @@ public:
 
 	// Common
 	inline UINT GetPageSize()const { return m_PageSize; }
+	inline UINT GetPosition()const { return m_Position; }
 	inline UINT GetSize()const { return m_Size; }
 	VOID Seek(UINT Position, BlockLimit Limit=BlockLimit::Page);
 	VOID Seek(UINT Block, UINT Position, BlockLimit Limit=BlockLimit::Page);

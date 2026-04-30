@@ -57,9 +57,9 @@ public:
 	VOID Clear();
 	BOOL Clear(EventNotification Notify);
 	VOID CopyFrom(XmlNode* Copy);
-	Handle<String> GetAttribute(Handle<String> Name);
-	BOOL GetAttribute(Handle<String> Name, UINT* Value);
-	BOOL GetAttribute(Handle<String> Name, UINT64* Value);
+	Handle<String> GetAttribute(Handle<String> Key);
+	BOOL GetAttribute(Handle<String> Key, UINT* Value);
+	BOOL GetAttribute(Handle<String> Key, UINT64* Value);
 	Handle<XmlNodeAttributeIterator> GetAttributes();
 	Handle<XmlNode> GetChild(Handle<String> Name);
 	Handle<XmlNode> GetChildAt(UINT Position);
@@ -67,42 +67,40 @@ public:
 	Handle<String> GetName();
 	Handle<String> GetTag();
 	Handle<String> GetValue();
-	BOOL HasAttribute(Handle<String> Name);
+	BOOL HasAttribute(Handle<String> Key);
 	VOID InsertChildAt(UINT Position, XmlNode* Child);
 	BOOL InsertChildAt(UINT Position, XmlNode* Child, EventNotification Notify);
 	SIZE_T ReadFromStream(InputStream* Stream);
-	VOID RemoveAttributeAt(UINT Position);
-	VOID RemoveAttributeAt(UINT Position, EventNotification Notify);
+	VOID RemoveAttribute(Handle<String> Key);
+	BOOL RemoveAttribute(Handle<String> Key, EventNotification Notify);
 	VOID RemoveChildAt(UINT Position);
 	VOID RemoveChildAt(UINT Position, EventNotification Notify);
-	inline VOID SetAttribute(Handle<String> Name, INT Value)
+	inline VOID SetAttribute(Handle<String> Key, INT Value)
 		{
-		SetAttribute(Name, String::Create("%i", Value));
+		SetAttribute(Key, String::Create("%i", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Name, INT Value, EventNotification Notify)
+	inline BOOL SetAttribute(Handle<String> Key, INT Value, EventNotification Notify)
 		{
-		return SetAttribute(Name, String::Create("%i", Value), Notify);
+		return SetAttribute(Key, String::Create("%i", Value), Notify);
 		}
-	inline VOID SetAttribute(Handle<String> Name, UINT Value)
+	inline VOID SetAttribute(Handle<String> Key, UINT Value)
 		{
-		SetAttribute(Name, String::Create("%u", Value));
+		SetAttribute(Key, String::Create("%u", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Name, UINT Value, EventNotification Notify)
+	inline BOOL SetAttribute(Handle<String> Key, UINT Value, EventNotification Notify)
 		{
-		return SetAttribute(Name, String::Create("%u", Value), Notify);
+		return SetAttribute(Key, String::Create("%u", Value), Notify);
 		}
-	inline VOID SetAttribute(Handle<String> Name, UINT64 Value)
+	inline VOID SetAttribute(Handle<String> Key, UINT64 Value)
 		{
-		SetAttribute(Name, String::Create("%u", Value));
+		SetAttribute(Key, String::Create("%u", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Name, UINT64 Value, EventNotification Notify)
+	inline BOOL SetAttribute(Handle<String> Key, UINT64 Value, EventNotification Notify)
 		{
-		return SetAttribute(Name, String::Create("%u", Value), Notify);
+		return SetAttribute(Key, String::Create("%u", Value), Notify);
 		}
-	VOID SetAttribute(Handle<String> Name, Handle<String> Value);
-	BOOL SetAttribute(Handle<String> Name, Handle<String> Value, EventNotification Notify);
-	VOID SetAttributeAt(UINT Position, Handle<String> Value);
-	BOOL SetAttributeAt(UINT Position, Handle<String> Value, EventNotification Notify);
+	VOID SetAttribute(Handle<String> Key, Handle<String> Value);
+	BOOL SetAttribute(Handle<String> Key, Handle<String> Value, EventNotification Notify);
 	VOID SetName(Handle<String> Name);
 	BOOL SetName(Handle<String> Name, EventNotification Notify);
 	VOID SetTag(Handle<String> Tag);
@@ -116,6 +114,8 @@ protected:
 	XmlNode(Handle<String> Tag=nullptr);
 
 	// Common
+	BOOL RemoveAttributeInternal(Handle<String> Key);
+	BOOL SetAttributeInternal(Handle<String> Key, Handle<String> Value);
 	BOOL SetNameInternal(Handle<String> Name);
 	Collections::map<Handle<String>, Handle<String>> m_Attributes;
 	Collections::list<Handle<XmlNode>> m_Children;

@@ -15,6 +15,7 @@
 #include "Storage/Database/Database.h"
 #include "Storage/Encoding/Dwarf.h"
 #include "Storage/Streams/StreamReader.h"
+#include "Storage/Streams/StreamWriter.h"
 #include <bit>
 
 using namespace Storage::Encoding;
@@ -36,18 +37,22 @@ namespace Storage {
 static const UINT NODE_ID='NODE';
 
 
-//========
-// Update
-//========
+//===========
+// Operation
+//===========
 
-enum class UpdateOperation: BYTE
+enum class NodeOperation: BYTE
 {
 None=0,
 AttributeRemove,
 AttributeSet,
+ChildAppend,
 ChildInsert,
 ChildRemove,
+NodeBegin,
+NodeEnd,
 TargetSet,
+ValueSet,
 Done=255
 };
 
@@ -56,27 +61,17 @@ Done=255
 // Con-/Destructors Protected
 //============================
 
-Node::Node(Database* database):
+Node::Node(Handle<String> tag):
+XmlNode(tag),
 m_BlockId(-1),
-m_BlockPosition(0),
-m_Database(database)
-{
-auto volume=m_Database->GetVolume();
-UINT block_size=volume->GetBlockSize();
-UINT page_size=volume->GetPageSize();
-UINT skip_bits=block_size/page_size;
-m_SkipBits=SkipBitArray::Create(skip_bits/32);
-m_SkipBits->Fill(-1);
-}
+m_BlockPosition(0)
+{}
 
 Node::Node(Database* database, UINT block_id):
-Node(database)
+m_BlockId(-1),
+m_BlockPosition(0)
 {
-m_BlockId=block_id;
-auto volume=m_Database->GetVolume();
-auto block=Block::Create(volume);
-block->Seek(m_BlockId, 0);
-m_BlockPosition=ReadFromBlock(block);
+ReadFromBlock(database, block_id);
 }
 
 
@@ -84,143 +79,266 @@ m_BlockPosition=ReadFromBlock(block);
 // Common Private
 //================
 
-UINT Node::ReadFromBlock(Block* block)
+Handle<Node::SkipBitArray> Node::CreateSkipBits(Volume* volume)
 {
+UINT block_size=volume->GetBlockSize();
+UINT page_size=volume->GetPageSize();
+UINT page_count=block_size/page_size;
+return SkipBitArray::Create(page_count/32);
+}
+
+VOID Node::ReadFromBlock(Database* database, UINT block_id)
+{
+auto volume=database->GetVolume();
+auto block=Block::Create(volume);
+block->Seek(block_id, 0);
 UINT id=0;
 SIZE_T size=block->Read(&id, sizeof(UINT));
 if(id!=NODE_ID)
 	throw InvalidArgumentException();
-size+=m_SkipBits->ReadFromStream(block);
-UINT page=SkipPages();
-if(page>0)
-	{
-	UINT page_size=block->GetPageSize();
-	UINT pos=page*page_size;
-	block->Seek(pos);
-	size=pos;
-	}
-try
-	{
-	size+=XmlNode::ReadFromStream(block);
-	}
-catch(OutOfRangeException)
-	{
-	throw InvalidArgumentException();
-	}
+auto skip_bits=CreateSkipBits(volume);
+size+=skip_bits->ReadFromStream(block);
+size+=SkipPages(block, skip_bits);
+size+=ReadFromPage(block);
 size+=ReadUpdates(block);
-return (UINT)size;
+m_BlockId=block_id;
+m_BlockPosition=(UINT)size;
+}
+
+UINT Node::ReadFromPage(Block* block)
+{
+StreamReader reader(block);
+SIZE_T size=0;
+NodeOperation op;
+size+=block->Read(&op, sizeof(NodeOperation));
+if(op!=NodeOperation::NodeBegin)
+	throw InvalidArgumentException();
+m_Tag=reader.ReadString(&size);
+while(block->Available())
+	{
+	NodeOperation op;
+	size+=block->Read(&op, sizeof(NodeOperation));
+	if(op==NodeOperation::NodeEnd)
+		break;
+	switch(op)
+		{
+		case NodeOperation::AttributeSet:
+			{
+			UINT attr_id=0;
+			size+=Dwarf::ReadUnsigned(block, &attr_id);
+			if(attr_id!=0)
+				throw InvalidArgumentException();
+			auto key=reader.ReadString(&size);
+			auto value=reader.ReadString(&size);
+			m_Attributes.set(key, value);
+			break;
+			}
+		case NodeOperation::ChildAppend:
+			{
+			auto child=Node::Create();
+			size+=child->ReadFromPage(block);
+			child->m_Parent=this;
+			m_Children.append(child);
+			auto name=child->GetName();
+			if(name)
+				m_Index.set(name, child);
+			break;
+			}
+		case NodeOperation::ValueSet:
+			{
+			m_Value=reader.ReadString(&size);
+			break;
+			}
+		default:
+			{
+			throw InvalidArgumentException();
+			}
+		}
+	}
+return size;
 }
 
 UINT Node::ReadUpdates(Block* block)
 {
 StreamReader reader(block);
 SIZE_T size=0;
-XmlNode* node=this;
+Node* node=this;
 while(block->Available())
 	{
-	UpdateOperation op;
-	size+=block->Read(&op, 1);
-	if(op==UpdateOperation::Done)
+	NodeOperation op;
+	size+=block->Read(&op, sizeof(NodeOperation));
+	if(op==NodeOperation::Done)
 		break;
-	if(op==UpdateOperation::None)
-		continue;
 	switch(op)
 		{
-		case UpdateOperation::AttributeRemove:
+		case NodeOperation::AttributeRemove:
 			{
-			UINT attr_id=0;
-			size+=Dwarf::ReadUnsigned(block, &attr_id);
-			node->RemoveAttributeAt(attr_id, EventNotification::None);
-			break;
-			}
-		case UpdateOperation::AttributeSet:
-			{
-			UINT attr_id=0;
-			size+=Dwarf::ReadUnsigned(block, &attr_id);
-			if(attr_id==0)
+			UINT id=0;
+			size+=Dwarf::ReadUnsigned(block, &id);
+			Handle<String> key;
+			if(id==0)
 				{
-				auto key=reader.ReadString(&size);
-				auto value=reader.ReadString(&size);
-				node->SetAttribute(key, value, EventNotification::None);
+				key=reader.ReadString(&size);
 				}
 			else
 				{
-				auto value=reader.ReadString(&size);
-				node->SetAttributeAt(attr_id-1, value, EventNotification::None);
+				auto const& attr=node->m_Attributes.get_at(id-1);
+				key=attr.get_key();
 				}
+			node->RemoveAttributeInternal(key);
 			break;
 			}
-		case UpdateOperation::ChildInsert:
+		case NodeOperation::AttributeSet:
+			{
+			UINT id=0;
+			size+=Dwarf::ReadUnsigned(block, &id);
+			Handle<String> key;
+			if(id==0)
+				{
+				key=reader.ReadString(&size);
+				}
+			else
+				{
+				auto const& attr=node->m_Attributes.get_at(id-1);
+				key=attr.get_key();
+				}
+			auto value=reader.ReadString(&size);
+			node->SetAttributeInternal(key, value);
+			break;
+			}
+		case NodeOperation::ChildAppend:
+			{
+			auto child=Node::Create();
+			size+=child->ReadFromPage(block);
+			child->m_Parent=node;
+			node->m_Children.append(child);
+			break;
+			}
+		case NodeOperation::ChildInsert:
 			{
 			UINT pos=0;
-			UINT count=0;
 			size+=Dwarf::ReadUnsigned(block, &pos);
-			size+=Dwarf::ReadUnsigned(block, &count);
-			for(UINT u=0; u<count; u++)
+			auto child=Node::Create();
+			size+=child->ReadFromPage(block);
+			child->m_Parent=node;
+			node->m_Children.insert_at(pos, child);
+			break;
+			}
+		case NodeOperation::ChildRemove:
+			{
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(block, &pos);
+			node->m_Children.remove_at(pos);
+			break;
+			}
+		case NodeOperation::None:
+			{
+			continue;
+			}
+		case NodeOperation::TargetSet:
+			{
+			node=this;
+			UINT id=0;
+			size+=Dwarf::ReadUnsigned(block, &id);
+			while(id!=0)
 				{
-				auto child=XmlNode::Create();
-				size+=child->ReadFromStream(block);
-				node->InsertChildAt(pos++, child);
+				auto child=node->GetChildAt(id-1);
+				node=child.As<Node>();
+				size+=Dwarf::ReadUnsigned(block, &id);
 				}
 			break;
 			}
-		case UpdateOperation::ChildRemove:
+		case NodeOperation::ValueSet:
 			{
-			UINT child_id=0;
-			size+=Dwarf::ReadUnsigned(block, &child_id);
-			node->RemoveChildAt(child_id, EventNotification::None);
-			}
-		case UpdateOperation::TargetSet:
-			{
-			node=this;
-			UINT child_id=0;
-			size+=Dwarf::ReadUnsigned(block, &child_id);
-			while(child_id!=0)
-				{
-				node=node->GetChildAt(child_id-1);
-				size+=Dwarf::ReadUnsigned(block, &child_id);
-				}
+			m_Value=reader.ReadString(&size);
 			break;
 			}
 		}
 	}
-return (UINT)size;
+return size;
 }
 
-UINT Node::SkipPages()
+UINT Node::SkipPages(Block* block, SkipBitArray* skip_bits)
 {
-UINT count=m_SkipBits->GetCount();
-UINT pos=0;
-for(auto it=m_SkipBits->First(); it->HasCurrent(); it->MoveNext())
+UINT count=skip_bits->GetCount();
+UINT page=0;
+for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
 	{
 	UINT bits=it->GetCurrent();
 	if(bits)
 		{
 		INT lsb=std::countr_zero(bits);
-		return pos+lsb;
+		page+=lsb;
+		break;
 		}
-	pos+=32;
+	page+=32;
 	}
-return 0;
+if(page==0)
+	return 0;
+UINT block_pos=block->GetPosition();
+UINT page_size=block->GetPageSize();
+UINT pos=page*page_size;
+block->Seek(pos);
+return pos-block_pos;
 }
 
-UINT Node::WriteToBlock(UINT block_id)
+VOID Node::WriteToBlock(Database* database, UINT block_id)
 {
-auto volume=m_Database->GetVolume();
+auto volume=database->GetVolume();
 auto block=Block::Create(volume);
 block->Seek(block_id, 0);
-m_SkipBits->Fill(-1);
 SIZE_T size=0;
 size+=block->Write(&NODE_ID, sizeof(UINT));
-size+=m_SkipBits->WriteToStream(block);
-size+=XmlNode::WriteToStream(block, -1);
+auto skip_bits=CreateSkipBits(volume);
+skip_bits->Fill(-1);
+size+=skip_bits->WriteToStream(block);
+size+=WriteToPage(block);
 if(size%2)
 	{
 	BYTE zero=0;
 	size+=block->Write(&zero, 1);
 	}
 block->Flush();
-return (UINT)size;
+m_BlockId=block_id;
+m_BlockPosition=(UINT)size;
+}
+
+UINT Node::WriteToPage(Block* block)
+{
+if(!m_Tag)
+	throw InvalidArgumentException();
+StreamWriter writer(block);
+SIZE_T size=0;
+NodeOperation op=NodeOperation::NodeBegin;
+size+=writer.Write(&op, sizeof(NodeOperation));
+size+=writer.WriteString(m_Tag);
+for(auto const& it: m_Attributes)
+	{
+	op=NodeOperation::AttributeSet;
+	size+=writer.Write(&op, sizeof(NodeOperation));
+	size+=Dwarf::WriteUnsigned(block, 0U);
+	size+=writer.WriteString(it.get_key());
+	size+=writer.WriteString(it.get_value());
+	}
+if(m_Value)
+	{
+	op=NodeOperation::ValueSet;
+	size+=writer.Write(&op, sizeof(NodeOperation));
+	size+=writer.WriteString(m_Value);
+	if(size%2)
+		size+=writer.PrintChar('\0');
+	return size;
+	}
+for(auto const& it: m_Children)
+	{
+	op=NodeOperation::ChildAppend;
+	size+=writer.Write(&op, sizeof(NodeOperation));
+	auto child=it.As<Node>();
+	size+=child->WriteToPage(block);
+	}
+if(size%2)
+	size+=writer.PrintChar('\0');
+return size;
 }
 
 }}

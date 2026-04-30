@@ -101,27 +101,27 @@ else
 	}
 }
 
-Handle<String> XmlNode::GetAttribute(Handle<String> name)
+Handle<String> XmlNode::GetAttribute(Handle<String> key)
 {
 ReadLock lock(m_Mutex);
-return m_Attributes.get(name);
+return m_Attributes.get(key);
 }
 
-BOOL XmlNode::GetAttribute(Handle<String> name, UINT* value_ptr)
+BOOL XmlNode::GetAttribute(Handle<String> key, UINT* value_ptr)
 {
 ReadLock lock(m_Mutex);
 Handle<String> value;
-if(!m_Attributes.try_get(name, &value))
+if(!m_Attributes.try_get(key, &value))
 	return false;
 lock.Unlock();
 return value->Scan("%u", value_ptr)==1;
 }
 
-BOOL XmlNode::GetAttribute(Handle<String> name, UINT64* value_ptr)
+BOOL XmlNode::GetAttribute(Handle<String> key, UINT64* value_ptr)
 {
 ReadLock lock(m_Mutex);
 Handle<String> value;
-if(!m_Attributes.try_get(name, &value))
+if(!m_Attributes.try_get(key, &value))
 	return false;
 lock.Unlock();
 return value->Scan("%u", value_ptr)==1;
@@ -170,10 +170,10 @@ ReadLock lock(m_Mutex);
 return m_Value;
 }
 
-BOOL XmlNode::HasAttribute(Handle<String> Name)
+BOOL XmlNode::HasAttribute(Handle<String> key)
 {
 ReadLock lock(m_Mutex);
-return m_Attributes.contains(Name);
+return m_Attributes.contains(key);
 }
 
 VOID XmlNode::InsertChildAt(UINT pos, XmlNode* child)
@@ -274,16 +274,16 @@ m_Tag=tag;
 return read;
 }
 
-VOID XmlNode::RemoveAttributeAt(UINT pos)
+VOID XmlNode::RemoveAttribute(Handle<String> key)
 {
-RemoveAttributeAt(pos, EventNotification::None);
-Changed(this);
+if(RemoveAttribute(key, EventNotification::None))
+	Changed(this);
 }
 
-VOID XmlNode::RemoveAttributeAt(UINT pos, EventNotification notify)
+BOOL XmlNode::RemoveAttribute(Handle<String> key, EventNotification notify)
 {
 WriteLock lock(m_Mutex);
-m_Attributes.remove_at(pos);
+return RemoveAttributeInternal(key);
 }
 
 VOID XmlNode::RemoveChildAt(UINT pos)
@@ -298,35 +298,16 @@ WriteLock lock(m_Mutex);
 m_Children.remove_at(pos);
 }
 
-VOID XmlNode::SetAttribute(Handle<String> name, Handle<String> value)
+VOID XmlNode::SetAttribute(Handle<String> key, Handle<String> value)
 {
-if(SetAttribute(name, value, EventNotification::None))
+if(SetAttribute(key, value, EventNotification::None))
 	Changed(this);
 }
 
-BOOL XmlNode::SetAttribute(Handle<String> name, Handle<String> value, EventNotification notify)
-{
-if(StringHelper::Compare(name, "Name", 0, false)==0)
-	return SetName(value, notify);
-WriteLock lock(m_Mutex);
-return m_Attributes.set(name, value);
-}
-
-VOID XmlNode::SetAttributeAt(UINT pos, Handle<String> value)
-{
-if(SetAttributeAt(pos, value, EventNotification::None))
-	Changed(this);
-}
-
-BOOL XmlNode::SetAttributeAt(UINT pos, Handle<String> value, EventNotification notify)
+BOOL XmlNode::SetAttribute(Handle<String> key, Handle<String> value, EventNotification notify)
 {
 WriteLock lock(m_Mutex);
-auto& attr=m_Attributes.get_at(pos);
-auto const& key=attr.get_key();
-if(StringHelper::Compare(key, "Name", 0, false)==0)
-	return SetNameInternal(value);
-attr.set_value(value);
-return true;
+return SetAttributeInternal(key, value);
 }
 
 VOID XmlNode::SetName(Handle<String> name)
@@ -448,9 +429,24 @@ m_Tag(tag)
 // Common Protected
 //==================
 
+BOOL XmlNode::RemoveAttributeInternal(Handle<String> key)
+{
+if(StringHelper::Compare(key, "Name", 0, false)==0)
+	return SetNameInternal(nullptr);
+return m_Attributes.remove(key);
+}
+
+BOOL XmlNode::SetAttributeInternal(Handle<String> key, Handle<String> value)
+{
+if(StringHelper::Compare(key, "Name", 0, false)==0)
+	return SetNameInternal(value);
+return m_Attributes.set(key, value);
+}
+
 BOOL XmlNode::SetNameInternal(Handle<String> name)
 {
-auto old_name=m_Attributes.get("Name");
+Handle<String> old_name;
+m_Attributes.try_get("Name", &old_name);
 if(old_name==name)
 	return false;
 if(m_Parent)
@@ -464,7 +460,14 @@ if(m_Parent)
 	if(old_name)
 		m_Parent->m_Index.remove(old_name);
 	}
-m_Attributes.set("Name", name);
+if(name)
+	{
+	m_Attributes.set("Name", name);
+	}
+else
+	{
+	m_Attributes.remove("Name");
+	}
 return true;
 }
 
