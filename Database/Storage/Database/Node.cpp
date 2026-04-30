@@ -12,12 +12,13 @@
 // Using
 //=======
 
+#include "Devices/System/Cpu.h"
 #include "Storage/Database/Database.h"
 #include "Storage/Encoding/Dwarf.h"
 #include "Storage/Streams/StreamReader.h"
 #include "Storage/Streams/StreamWriter.h"
-#include <bit>
 
+using namespace Devices::System;
 using namespace Storage::Encoding;
 using namespace Storage::Streams;
 
@@ -267,8 +268,7 @@ for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
 	UINT bits=it->GetCurrent();
 	if(bits)
 		{
-		INT lsb=std::countr_zero(bits);
-		page+=lsb;
+		page+=Cpu::CountTrailingZeros(bits);
 		break;
 		}
 	page+=32;
