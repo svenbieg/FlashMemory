@@ -52,10 +52,8 @@ public:
 
 	// Common
 	VOID AppendChild(XmlNode* Child);
-	VOID AppendChild(XmlNode* Child, EventNotification Notify);
 	Event<XmlNode> Changed;
-	VOID Clear();
-	BOOL Clear(EventNotification Notify);
+	BOOL Clear();
 	VOID CopyFrom(XmlNode* Copy);
 	Handle<String> GetAttribute(Handle<String> Key);
 	BOOL GetAttribute(Handle<String> Key, UINT* Value);
@@ -69,44 +67,25 @@ public:
 	Handle<String> GetValue();
 	BOOL HasAttribute(Handle<String> Key);
 	VOID InsertChildAt(UINT Position, XmlNode* Child);
-	BOOL InsertChildAt(UINT Position, XmlNode* Child, EventNotification Notify);
 	SIZE_T ReadFromStream(InputStream* Stream);
-	VOID RemoveAttribute(Handle<String> Key);
-	BOOL RemoveAttribute(Handle<String> Key, EventNotification Notify);
+	BOOL RemoveAttribute(Handle<String> Key);
 	VOID RemoveChildAt(UINT Position);
-	VOID RemoveChildAt(UINT Position, EventNotification Notify);
 	inline VOID SetAttribute(Handle<String> Key, INT Value)
 		{
 		SetAttribute(Key, String::Create("%i", Value));
-		}
-	inline BOOL SetAttribute(Handle<String> Key, INT Value, EventNotification Notify)
-		{
-		return SetAttribute(Key, String::Create("%i", Value), Notify);
 		}
 	inline VOID SetAttribute(Handle<String> Key, UINT Value)
 		{
 		SetAttribute(Key, String::Create("%u", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Key, UINT Value, EventNotification Notify)
-		{
-		return SetAttribute(Key, String::Create("%u", Value), Notify);
-		}
 	inline VOID SetAttribute(Handle<String> Key, UINT64 Value)
 		{
 		SetAttribute(Key, String::Create("%u", Value));
 		}
-	inline BOOL SetAttribute(Handle<String> Key, UINT64 Value, EventNotification Notify)
-		{
-		return SetAttribute(Key, String::Create("%u", Value), Notify);
-		}
-	VOID SetAttribute(Handle<String> Key, Handle<String> Value);
-	BOOL SetAttribute(Handle<String> Key, Handle<String> Value, EventNotification Notify);
-	VOID SetName(Handle<String> Name);
-	BOOL SetName(Handle<String> Name, EventNotification Notify);
-	VOID SetTag(Handle<String> Tag);
-	BOOL SetTag(Handle<String> Tag, EventNotification Notify);
-	VOID SetValue(Handle<String> Value);
-	BOOL SetValue(Handle<String> Value, EventNotification Notify);
+	BOOL SetAttribute(Handle<String> Key, Handle<String> Value);
+	BOOL SetName(Handle<String> Name);
+	BOOL SetTag(Handle<String> Tag);
+	BOOL SetValue(Handle<String> Value);
 	SIZE_T WriteToStream(OutputStream* Stream, INT Level=-1);
 
 protected:
@@ -114,7 +93,11 @@ protected:
 	XmlNode(Handle<String> Tag=nullptr);
 
 	// Common
+	VOID AppendChildInternal(XmlNode* Child);
+	BOOL ClearInternal();
+	VOID InsertChildInternal(UINT Position, XmlNode* Child);
 	BOOL RemoveAttributeInternal(Handle<String> Key);
+	VOID RemoveChildInternal(UINT Position);
 	BOOL SetAttributeInternal(Handle<String> Key, Handle<String> Value);
 	BOOL SetNameInternal(Handle<String> Name);
 	Collections::map<Handle<String>, Handle<String>> m_Attributes;
