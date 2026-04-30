@@ -49,6 +49,8 @@ public:
 	static Handle<Block> Create(Volume* Volume);
 
 	// Common
+	inline UINT GetPageSize()const { return m_PageSize; }
+	inline UINT GetSize()const { return m_Size; }
 	VOID Seek(UINT Position, BlockLimit Limit=BlockLimit::Page);
 	VOID Seek(UINT Block, UINT Position, BlockLimit Limit=BlockLimit::Page);
 

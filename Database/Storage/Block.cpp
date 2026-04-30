@@ -75,7 +75,7 @@ m_Written=0;
 
 SIZE_T Block::Available()
 {
-return m_Size-m_Position;
+return m_Limit-m_Position;
 }
 
 SIZE_T Block::Read(VOID* buf, SIZE_T size)
