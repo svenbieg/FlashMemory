@@ -87,30 +87,6 @@ m_Size(0)
 // Common Private
 //================
 
-Handle<Node::SkipBitArray> Node::CreateSkipBits(Volume* volume, UINT skip)
-{
-UINT block_size=volume->GetBlockSize();
-UINT page_size=volume->GetPageSize();
-UINT page_count=block_size/page_size;
-auto skip_bits=SkipBitArray::Create(page_count/32);
-skip_bits->Fill(-1);
-if(skip==0)
-	return skip_bits;
-UINT pos=0;
-for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
-	{
-	if(pos>=skip)
-		break;
-	UINT mask=-1;
-	UINT shift=TypeHelper::Min(skip-pos, 32);
-	mask>>=shift;
-	mask<<=shift;
-	it->SetCurrent(mask);
-	pos+=32;
-	}
-return skip_bits;
-}
-
 Node* Node::GetBlockNode()
 {
 if(m_BlockId!=-1)
@@ -143,9 +119,9 @@ UINT id=0;
 SIZE_T size=block->Read(&id, sizeof(UINT));
 if(id!=NODE_ID)
 	throw InvalidArgumentException();
-auto skip_bits=CreateSkipBits(volume);
+auto skip_bits=block->CreateSkipBits();
 size+=skip_bits->ReadFromStream(block);
-size+=SkipPages(block, skip_bits);
+size+=block->SkipPages(skip_bits);
 size+=ReadFromPage(block);
 size+=ReadUpdates(block);
 m_BlockId=block_id;
@@ -306,29 +282,6 @@ while(stream->Available())
 return size;
 }
 
-UINT Node::SkipPages(Block* block, SkipBitArray* skip_bits)
-{
-UINT count=skip_bits->GetCount();
-UINT page=0;
-for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
-	{
-	UINT bits=it->GetCurrent();
-	if(bits)
-		{
-		page+=Cpu::CountTrailingZeros(bits);
-		break;
-		}
-	page+=32;
-	}
-if(page==0)
-	return 0;
-UINT block_pos=block->GetPosition();
-UINT page_size=block->GetPageSize();
-UINT pos=page*page_size;
-block->Seek(pos);
-return pos-block_pos;
-}
-
 VOID Node::WriteToBlock(UINT block_id)
 {
 auto volume=m_Database->GetVolume();
@@ -336,7 +289,7 @@ auto block=Block::Create(volume);
 block->Seek(block_id, 0);
 SIZE_T size=0;
 size+=block->Write(&NODE_ID, sizeof(UINT));
-auto skip_bits=CreateSkipBits(volume);
+auto skip_bits=block->CreateSkipBits();
 size+=skip_bits->WriteToStream(block);
 size+=WriteToPage(block);
 if(size%2)

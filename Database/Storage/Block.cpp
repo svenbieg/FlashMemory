@@ -38,17 +38,36 @@ return Object::CreateEx<Block, Volume*>(page_size, sizeof(SIZE_T), volume);
 // Common
 //========
 
+Handle<Block::SkipBitArray> Block::CreateSkipBits(UINT skip)
+{
+UINT page_count=m_Size/m_PageSize;
+auto skip_bits=SkipBitArray::Create(page_count/32);
+skip_bits->Fill(-1);
+if(skip==0)
+	return skip_bits;
+UINT pos=0;
+for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
+	{
+	if(pos>=skip)
+		break;
+	UINT mask=-1;
+	UINT shift=TypeHelper::Min(skip-pos, 32);
+	mask>>=shift;
+	mask<<=shift;
+	it->SetCurrent(mask);
+	pos+=32;
+	}
+return skip_bits;
+}
+
 VOID Block::Seek(UINT pos, BlockLimit limit)
 {
 SetLimit(pos, limit);
-if(pos>=m_Limit)
-	throw OutOfRangeException();
 m_Position=pos;
 m_Written=0;
 UINT page=m_Position/m_PageSize;
-if(m_Page==page)
-	return;
-m_Page=-1;
+if(m_Page!=page)
+	m_Page=-1;
 }
 
 VOID Block::Seek(UINT block, UINT pos, BlockLimit limit)
@@ -60,12 +79,31 @@ if(offset==m_Offset)
 	return;
 	}
 SetLimit(pos, limit);
-if(pos>=m_Limit)
-	throw OutOfRangeException();
 m_Offset=offset;
 m_Page=-1;
 m_Position=pos;
 m_Written=0;
+}
+
+UINT Block::SkipPages(SkipBitArray* skip_bits)
+{
+UINT count=skip_bits->GetCount();
+UINT page=0;
+for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
+	{
+	UINT bits=it->GetCurrent();
+	if(bits)
+		{
+		page+=Cpu::CountTrailingZeros(bits);
+		break;
+		}
+	page+=32;
+	}
+if(page==0)
+	return 0;
+UINT pos=page*m_PageSize;
+Seek(pos);
+return pos-m_Position;
 }
 
 
@@ -180,6 +218,7 @@ switch(limit)
 		{
 		UINT page=pos/m_PageSize;
 		m_Limit=(page+1)*m_PageSize;
+		assert(m_Limit<=m_Size);
 		break;
 		}
 	}

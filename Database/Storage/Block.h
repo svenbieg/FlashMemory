@@ -12,6 +12,7 @@
 // Using
 //=======
 
+#include "Collections/Array.h"
 #include "Storage/Streams/RandomAccessStream.h"
 #include "Storage/Volume.h"
 #include "Handle.h"
@@ -42,6 +43,9 @@ Page
 class Block: public Object, public Storage::Streams::RandomAccessStream
 {
 public:
+	// Using
+	using SkipBitArray=Collections::Array<UINT>;
+
 	// Friends
 	friend Object;
 
@@ -49,11 +53,13 @@ public:
 	static Handle<Block> Create(Volume* Volume);
 
 	// Common
+	Handle<SkipBitArray> CreateSkipBits(UINT Skip=0);
 	inline UINT GetPageSize()const { return m_PageSize; }
 	inline UINT GetPosition()const { return m_Position; }
 	inline UINT GetSize()const { return m_Size; }
 	VOID Seek(UINT Position, BlockLimit Limit=BlockLimit::Page);
 	VOID Seek(UINT Block, UINT Position, BlockLimit Limit=BlockLimit::Page);
+	UINT SkipPages(SkipBitArray* SkipBits);
 
 	// Input-Stream
 	SIZE_T Available()override;

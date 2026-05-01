@@ -12,7 +12,6 @@
 // Using
 //=======
 
-#include "Collections/Array.h"
 #include "Storage/Xml/XmlNode.h"
 #include "Storage/Block.h"
 #include "Storage/File.h"
@@ -41,9 +40,6 @@ class Editor;
 class Node: public Xml::XmlNode
 {
 public:
-	// Using
-	using SkipBitArray=Collections::Array<UINT>;
-
 	// Friends
 	friend Database;
 	friend Object;
@@ -63,13 +59,11 @@ protected:
 
 private:
 	// Common
-	Handle<SkipBitArray> CreateSkipBits(Volume* Volume, UINT Skip=0);
 	Node* GetBlockNode();
 	VOID OnChanged();
 	VOID ReadFromBlock(UINT Block);
 	UINT ReadFromPage(InputStream* Stream);
 	UINT ReadUpdates(InputStream* Stream);
-	UINT SkipPages(Block* Block, SkipBitArray* SkipBits);
 	VOID WriteToBlock(UINT Block);
 	UINT WriteToPage(OutputStream* Stream);
 	UINT m_BlockId;
