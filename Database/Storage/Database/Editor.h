@@ -37,8 +37,12 @@ class Database;
 class Editor: public Object
 {
 public:
+	// Using
+	using NodeIndex=Collections::index<Handle<Node>>;
+
 	// Friends
 	friend Database;
+	friend Node;
 	friend Object;
 
 	// Con-/Destructors
@@ -56,7 +60,8 @@ private:
 	static inline Handle<Editor> Create(Database* Database) { return Object::Create<Editor>(Database); }
 
 	// Common
-	Handle<Database> m_Database;
+	NodeIndex m_ChangedNodes;
+	Database* m_Database;
 };
 
 }}
