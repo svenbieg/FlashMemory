@@ -48,13 +48,13 @@ public:
 	friend XmlNodeChildIterator;
 
 	// Con-/Destructors
+	static inline Handle<XmlNode> Clone(XmlNode* Node) { return new XmlNode(Node); }
 	static inline Handle<XmlNode> Create(Handle<String> Tag=nullptr) { return new XmlNode(Tag); }
 
 	// Common
-	VOID AppendChild(XmlNode* Child);
+	virtual VOID AppendChild(XmlNode* Child);
 	Event<XmlNode> Changed;
 	BOOL Clear();
-	VOID CopyFrom(XmlNode* Copy);
 	Handle<String> GetAttribute(Handle<String> Key);
 	BOOL GetAttribute(Handle<String> Key, UINT* Value);
 	BOOL GetAttribute(Handle<String> Key, UINT64* Value);
@@ -65,6 +65,7 @@ public:
 	Handle<String> GetName();
 	Handle<String> GetTag();
 	Handle<String> GetValue();
+	Handle<XmlNode> GetRoot();
 	BOOL HasAttribute(Handle<String> Key);
 	VOID InsertChildAt(UINT Position, XmlNode* Child);
 	SIZE_T ReadFromStream(InputStream* Stream);
@@ -90,6 +91,7 @@ public:
 
 protected:
 	// Con-/Destructors
+	XmlNode(XmlNode* Clone);
 	XmlNode(Handle<String> Tag=nullptr);
 
 	// Common

@@ -48,35 +48,6 @@ Changed(this);
 return true;
 }
 
-VOID XmlNode::CopyFrom(XmlNode* node)
-{
-if(!node)
-	throw InvalidArgumentException();
-WriteLock lock(m_Mutex);
-ReadLock node_lock(node->m_Mutex);
-m_Tag=node->m_Tag;
-m_Attributes.copy_from(node->m_Attributes);
-m_Children.clear();
-m_Index.clear();
-if(node->m_Value)
-	{
-	m_Value=node->m_Value;
-	}
-else
-	{
-	for(auto it=node->m_Children.cbegin(); it.has_current(); it.move_next())
-		{
-		auto child=XmlNode::Create();
-		child->CopyFrom(it.get_current());
-		m_Children.append(child);
-		child->m_Parent=this;
-		auto name=child->GetName();
-		if(name)
-			m_Index.set(name, child);
-		}
-	}
-}
-
 Handle<String> XmlNode::GetAttribute(Handle<String> key)
 {
 ReadLock lock(m_Mutex);
@@ -146,6 +117,14 @@ ReadLock lock(m_Mutex);
 return m_Value;
 }
 
+Handle<XmlNode> XmlNode::GetRoot()
+{
+XmlNode* node=this;
+while(node->m_Parent)
+	node=node->m_Parent;
+return node;
+}
+
 BOOL XmlNode::HasAttribute(Handle<String> key)
 {
 ReadLock lock(m_Mutex);
@@ -163,11 +142,7 @@ Changed(this);
 SIZE_T XmlNode::ReadFromStream(InputStream* stream)
 {
 WriteLock lock(m_Mutex);
-m_Attributes.clear();
-m_Children.clear();
-m_Index.clear();
-m_Parent=nullptr;
-m_Value=nullptr;
+ClearInternal();
 StreamReader reader(stream);
 SIZE_T read=0;
 auto value=reader.ReadString(&read, "<", "\r\n\t ");
@@ -176,6 +151,8 @@ if(value)
 	if(m_Tag)
 		throw InvalidArgumentException();
 	m_Value=value;
+	lock.Unlock();
+	Changed(this);
 	return read;
 	}
 if(!CharHelper::Equal(reader.LastChar, '<'))
@@ -190,19 +167,21 @@ if(m_Tag)
 	}
 while(CharHelper::Equal(reader.LastChar, ' '))
 	{
-	auto att_name=reader.ReadString(&read, " =/>", " ");
-	if(!att_name)
+	auto key=reader.ReadString(&read, " =/>", " ");
+	if(!key)
 		break;
-	Handle<String> att_value;
+	Handle<String> value;
 	if(CharHelper::Equal(reader.LastChar, '='))
-		att_value=reader.ReadString(&read, "\"", " \"");
-	m_Attributes.set(att_name, att_value);
+		value=reader.ReadString(&read, "\"", " \"");
+	m_Attributes.set(key, value);
 	}
 if(CharHelper::Equal(reader.LastChar, '/'))
 	{
 	read+=reader.ReadChar();
 	if(!CharHelper::Equal(reader.LastChar, '>'))
 		throw InvalidArgumentException();
+	lock.Unlock();
+	Changed(this);
 	return read;
 	}
 while(1)
@@ -220,7 +199,7 @@ while(1)
 	if(!name)
 		continue;
 	if(!m_Index.add(name, child))
-		return 0;
+		throw InvalidArgumentException();
 	}
 read+=reader.ReadChar();
 if(!CharHelper::Equal(reader.LastChar, '/'))
@@ -231,6 +210,8 @@ if(!CharHelper::Equal(reader.LastChar, '>'))
 if(StringHelper::Compare(close, tag, 0, false)!=0)
 	throw InvalidArgumentException();
 m_Tag=tag;
+lock.Unlock();
+Changed(this);
 return read;
 }
 
@@ -360,6 +341,32 @@ return written;
 //============================
 // Con-/Destructors Protected
 //============================
+
+XmlNode::XmlNode(XmlNode* clone):
+m_Parent(nullptr)
+{
+if(!clone)
+	throw InvalidArgumentException();
+ReadLock node_lock(clone->m_Mutex);
+m_Tag=clone->m_Tag;
+m_Attributes.copy_from(clone->m_Attributes);
+if(clone->m_Value)
+	{
+	m_Value=clone->m_Value;
+	}
+else
+	{
+	for(auto it=clone->m_Children.cbegin(); it.has_current(); it.move_next())
+		{
+		auto child=XmlNode::Clone(it.get_current());
+		m_Children.append(child);
+		child->m_Parent=this;
+		auto name=child->GetName();
+		if(name)
+			m_Index.set(name, child);
+		}
+	}
+}
 
 XmlNode::XmlNode(Handle<String> tag):
 m_Parent(nullptr),
