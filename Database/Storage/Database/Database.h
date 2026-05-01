@@ -13,7 +13,7 @@
 //=======
 
 #include "Concurrency/Mutex.h"
-#include "Storage/Database/Node.h"
+#include "Storage/Database/Editor.h"
 #include "Storage/File.h"
 #include "Storage/Volume.h"
 
@@ -24,13 +24,6 @@
 
 namespace Storage {
 	namespace Database {
-
-
-//======================
-// Forward-Declarations
-//======================
-
-class Editor;
 
 
 //==========
@@ -59,7 +52,8 @@ private:
 	// Common
 	VOID Initialize();
 	Handle<Node> ReadHeader();
-	VOID Validate();
+	VOID ValidateHeader(Node* Header);
+	Handle<Editor> m_Editor;
 	Handle<Node> m_Header;
 	Concurrency::Mutex m_Mutex;
 	Handle<Volume> m_Volume;

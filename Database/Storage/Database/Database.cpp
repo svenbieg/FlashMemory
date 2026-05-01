@@ -30,7 +30,8 @@ namespace Storage {
 
 Handle<Editor> Database::Edit()
 {
-return Editor::Create(this);
+m_Editor=Editor::Create(this);
+return m_Editor;
 }
 
 
@@ -65,9 +66,15 @@ switch(create)
 		Initialize();
 		break;
 		}
+	case FileCreateMode::OpenAlways:
+		{
+		if(!header)
+			Initialize();
+		break;
+		}
 	case FileCreateMode::OpenExisting:
 		{
-		Validate();
+		ValidateHeader(header);
 		break;
 		}
 	}
@@ -80,10 +87,10 @@ switch(create)
 
 VOID Database::Initialize()
 {
-m_Header=Node::Create("Header");
+m_Header=Node::Create(this, "Header");
 m_Header->SetAttribute("Used", 2);
-m_Header->WriteToBlock(this, 0);
-m_Header->WriteToBlock(this, 1);
+m_Header->WriteToBlock(0);
+m_Header->WriteToBlock(1);
 }
 
 Handle<Node> Database::ReadHeader()
@@ -103,9 +110,28 @@ for(UINT block=0; block<2; block++)
 return header;
 }
 
-VOID Database::Validate()
+VOID Database::ValidateHeader(Node* header)
 {
-throw NotImplementedException();
+if(header->m_BlockId==0)
+	{
+	try
+		{
+		auto header1=Node::Create(this, 1);
+		if(header1->m_BlockPosition!=header->m_BlockPosition)
+			throw InvalidArgumentException();
+		}
+	catch(InvalidArgumentException)
+		{
+		header->WriteToBlock(1);
+		header->WriteToBlock(0);
+		}
+	}
+else
+	{
+	header->WriteToBlock(0);
+	header->WriteToBlock(1);
+	}
+m_Header=header;
 }
 
 }}
