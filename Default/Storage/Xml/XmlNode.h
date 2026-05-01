@@ -11,9 +11,11 @@
 
 #include "Collections/list.hpp"
 #include "Collections/map.hpp"
-#include "Concurrency/Scheduler.h"
-#include "Storage/Streams/Stream.h"
+#include "Concurrency/Mutex.h"
+#include "Storage/Streams/InputStream.h"
+#include "Storage/Streams/OutputStream.h"
 #include "Event.h"
+#include "StringClass.h"
 
 
 //===========

@@ -19,7 +19,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Xml\XmlNode.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Database.h" />
@@ -30,6 +29,5 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Block.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Xml\XmlNode.h" />
   </ItemGroup>
 </Project>
