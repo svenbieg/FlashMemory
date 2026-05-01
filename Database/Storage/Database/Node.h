@@ -31,6 +31,7 @@ namespace Storage {
 //======================
 
 class Database;
+class Editor;
 
 
 //======
@@ -49,28 +50,33 @@ public:
 
 protected:
 	// Con-/Destructors
-	Node(Handle<String> Tag=nullptr);
 	Node(Database* Database, UINT Block);
-	static inline Handle<Node> Create(Handle<String> Tag=nullptr)
-		{
-		return Object::Create<Node>(Tag);
-		}
+	Node(Database* Database, Handle<String> Tag=nullptr);
 	static inline Handle<Node> Create(Database* Database, UINT Block)
 		{
 		return Object::Create<Node>(Database, Block);
 		}
+	static inline Handle<Node> Create(Database* Database, Handle<String> Tag=nullptr)
+		{
+		return Object::Create<Node>(Database, Tag);
+		}
 
 private:
 	// Common
-	Handle<SkipBitArray> CreateSkipBits(Volume* Volume);
-	VOID ReadFromBlock(Database* Database, UINT Block);
-	UINT ReadFromPage(Block* Block);
-	UINT ReadUpdates(Block* Block);
+	Handle<SkipBitArray> CreateSkipBits(Volume* Volume, UINT Skip=0);
+	Node* GetBlockNode();
+	VOID OnChanged();
+	VOID ReadFromBlock(UINT Block);
+	UINT ReadFromPage(InputStream* Stream);
+	UINT ReadUpdates(InputStream* Stream);
 	UINT SkipPages(Block* Block, SkipBitArray* SkipBits);
-	VOID WriteToBlock(Database* Database, UINT Block);
-	UINT WriteToPage(Block* Block);
+	VOID WriteToBlock(UINT Block);
+	UINT WriteToPage(OutputStream* Stream);
 	UINT m_BlockId;
 	UINT m_BlockPosition;
+	Editor* m_Editor;
+	Database* m_Database;
+	UINT m_Size;
 };
 
 }}
