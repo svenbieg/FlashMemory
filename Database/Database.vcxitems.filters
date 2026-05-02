@@ -18,10 +18,10 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp">
-      <Filter>Storage</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.cpp">
+      <Filter>Storage\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
   </ItemGroup>
@@ -38,9 +38,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h">
       <Filter>Storage</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Block.h">
-      <Filter>Storage</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h">
       <Filter>Storage</Filter>
     </ClInclude>
@@ -51,6 +48,9 @@
       <Filter>Storage</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.h">
+      <Filter>Storage\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
   </ItemGroup>

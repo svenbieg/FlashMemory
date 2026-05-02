@@ -15,13 +15,14 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Database.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp" />
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Database.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Node.h" />
@@ -30,6 +31,5 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReliableVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Block.h" />
   </ItemGroup>
 </Project>
