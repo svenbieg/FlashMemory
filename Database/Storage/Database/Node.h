@@ -48,12 +48,6 @@ public:
 	friend Database;
 	friend NodeOperation;
 	friend Object;
-	
-	// Con-/Destructors
-	static inline Handle<Node> Create(Handle<String> Tag=nullptr)
-		{
-		return Object::Create<Node>(nullptr, Tag);
-		}
 
 protected:
 	// Con-/Destructors

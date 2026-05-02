@@ -69,47 +69,74 @@ while(stream->Available())
 		{
 		case Operation::AttributeRemove:
 			{
-			size+=NodeOperationAttributeRemove::ReadFromStream(selected, stream);
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(stream, &pos);
+			selected->RemoveAttributeInternal(pos);
 			break;
 			}
 		case Operation::AttributeSet:
 			{
-			size+=NodeOperationAttributeSet::ReadFromStream(selected, stream);
-			break;
+			StreamReader reader(stream);
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(stream, &pos);
+			auto value=reader.ReadString(&size);
+			selected->SetAttributeInternal(pos, value);
+			return size;
 			}
 		case Operation::ChildAppend:
 			{
-			size+=NodeOperationChildAppend::ReadFromStream(selected, stream);
+			auto child=Node::Create(selected->m_Database);
+			size+=child->ReadFromStream(stream);
+			selected->AppendChildInternal(child);
 			break;
 			}
 		case Operation::ChildInsert:
 			{
-			size+=NodeOperationChildInsert::ReadFromStream(selected, stream);
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(stream, &pos);
+			auto child=Node::Create(selected->m_Database);
+			size+=child->ReadFromStream(stream);
+			selected->InsertChildInternal(pos, child);
 			break;
 			}
 		case Operation::ChildRemove:
 			{
-			size+=NodeOperationChildRemove::ReadFromStream(selected, stream);
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(stream, &pos);
+			selected->RemoveChildInternal(pos);
 			break;
 			}
 		case Operation::ChildSelect:
 			{
-			size+=NodeOperationChildSelect::ReadFromStream(node, stream, &selected);
+			selected=node;
+			while(1)
+				{
+				UINT pos=0;
+				size+=Dwarf::ReadUnsigned(stream, &pos);
+				if(pos==0)
+					break;
+				auto child=node->GetChildAt(pos-1);
+				selected=child.As<Node>();
+				}
 			break;
 			}
 		case Operation::Clear:
 			{
-			selected->Clear();
+			selected->ClearInternal();
 			break;
 			}
 		case Operation::TagSet:
 			{
-			size+=NodeOperationTagSet::ReadFromStream(selected, stream);
+			StreamReader reader(stream);
+			auto tag=reader.ReadString(&size);
+			selected->SetTagInternal(tag);
 			break;
 			}
 		case Operation::ValueSet:
 			{
-			size+=NodeOperationValueSet::ReadFromStream(selected, stream);
+			StreamReader reader(stream);
+			auto value=reader.ReadString(&size);
+			selected->SetValueInternal(value);
 			break;
 			}
 		default:
@@ -122,40 +149,16 @@ return size;
 }
 
 
-//==================
-// Attribute-Remove
-//==================
-
-SIZE_T NodeOperationAttributeRemove::ReadFromStream(Node* target, InputStream* stream)
-{
-StreamReader reader(stream);
-SIZE_T size=0;
-auto key=reader.ReadString(&size);
-target->RemoveAttribute(key);
-return size;
-}
+//============
+// Operations
+//============
 
 SIZE_T NodeOperationAttributeRemove::WriteToStream(OutputStream* stream)
 {
-StreamWriter writer(stream);
 SIZE_T size=0;
 auto op=Operation::AttributeRemove;
 size+=stream->Write(&op, sizeof(Operation));
-size+=writer.WriteString(m_Key);
-return size;
-}
-
-
-//===============
-// Attribute-Set
-//===============
-
-SIZE_T NodeOperationAttributeSet::ReadFromStream(Node* target, InputStream* stream)
-{
-StreamReader reader(stream);
-SIZE_T size=0;
-auto key=reader.ReadString(&size);
-target->RemoveAttribute(key);
+size+=Dwarf::WriteUnsigned(stream, m_Position);
 return size;
 }
 
@@ -165,22 +168,8 @@ StreamWriter writer(stream);
 SIZE_T size=0;
 auto op=Operation::AttributeSet;
 size+=stream->Write(&op, sizeof(Operation));
-size+=writer.WriteString(m_Key);
+size+=Dwarf::WriteUnsigned(stream, m_Position);
 size+=writer.WriteString(m_Value);
-return size;
-}
-
-
-//==============
-// Child-Append
-//==============
-
-SIZE_T NodeOperationChildAppend::ReadFromStream(Node* target, InputStream* stream)
-{
-SIZE_T size=0;
-auto child=Node::Create();
-size+=child->ReadFromStream(stream);
-target->AppendChild(child);
 return size;
 }
 
@@ -190,22 +179,6 @@ SIZE_T size=0;
 auto op=Operation::ChildAppend;
 size+=stream->Write(&op, sizeof(Operation));
 size+=m_Child->WriteToStream(stream);
-return size;
-}
-
-
-//==============
-// Child-Insert
-//==============
-
-SIZE_T NodeOperationChildInsert::ReadFromStream(Node* target, InputStream* stream)
-{
-SIZE_T size=0;
-UINT pos=0;
-size+=Dwarf::ReadUnsigned(stream, &pos);
-auto child=Node::Create();
-size+=child->ReadFromStream(stream);
-target->InsertChildAt(pos, child);
 return size;
 }
 
@@ -219,48 +192,12 @@ size+=m_Child->WriteToStream(stream);
 return size;
 }
 
-
-//==============
-// Child-Remove
-//==============
-
-SIZE_T NodeOperationChildRemove::ReadFromStream(Node* target, InputStream* stream)
-{
-SIZE_T size=0;
-UINT pos=0;
-size+=Dwarf::ReadUnsigned(stream, &pos);
-target->RemoveChildAt(pos);
-return size;
-}
-
 SIZE_T NodeOperationChildRemove::WriteToStream(OutputStream* stream)
 {
 SIZE_T size=0;
 auto op=Operation::ChildRemove;
 size+=stream->Write(&op, sizeof(Operation));
 size+=Dwarf::WriteUnsigned(stream, m_Position);
-return size;
-}
-
-
-//==============
-// Child-Select
-//==============
-
-SIZE_T NodeOperationChildSelect::ReadFromStream(Node* target, InputStream* stream, Node** selected)
-{
-SIZE_T size=0;
-Node* node=target;
-while(1)
-	{
-	UINT pos=0;
-	size+=Dwarf::ReadUnsigned(stream, &pos);
-	if(pos==0)
-		break;
-	auto child=node->GetChildAt(pos-1);
-	node=child.As<Node>();
-	}
-*selected=node;
 return size;
 }
 
@@ -274,30 +211,11 @@ for(auto it=m_Position->First(); it->HasCurrent(); it->MoveNext())
 return size;
 }
 
-
-//=======
-// Clear
-//=======
-
 SIZE_T NodeOperationClear::WriteToStream(OutputStream* stream)
 {
 SIZE_T size=0;
 auto op=Operation::Clear;
 size+=stream->Write(&op, sizeof(Operation));
-return size;
-}
-
-
-//=========
-// Tag-Set
-//=========
-
-SIZE_T NodeOperationTagSet::ReadFromStream(Node* target, InputStream* stream)
-{
-StreamReader reader(stream);
-SIZE_T size=0;
-auto tag=reader.ReadString(&size);
-target->SetTag(tag);
 return size;
 }
 
@@ -308,20 +226,6 @@ SIZE_T size=0;
 auto op=Operation::TagSet;
 size+=stream->Write(&op, sizeof(Operation));
 size+=writer.WriteString(m_Tag);
-return size;
-}
-
-
-//===========
-// Value-Set
-//===========
-
-SIZE_T NodeOperationValueSet::ReadFromStream(Node* target, InputStream* stream)
-{
-StreamReader reader(stream);
-SIZE_T size=0;
-auto value=reader.ReadString(&size);
-target->SetValue(value);
 return size;
 }
 
