@@ -12,7 +12,6 @@
 #include "Collections/Array.h"
 #include "Storage/Streams/InputStream.h"
 #include "Storage/Streams/OutputStream.h"
-#include "Storage/Xml/XmlNode.h"
 #include "StringClass.h"
 
 
@@ -108,19 +107,16 @@ private:
 class NodeOperationChildAppend: public NodeOperation
 {
 private:
-	// Using
-	using XmlNode=Storage::Xml::XmlNode;
-
 	// Friends
 	friend NodeOperation;
 
 	// Con-/Destructors
-	NodeOperationChildAppend(XmlNode* Child): m_Child(Child) {}
+	NodeOperationChildAppend(Node* Child): m_Child(Child) {}
 
 	// Common
 	static SIZE_T ReadFromStream(Node* Target, InputStream* Stream);
 	SIZE_T WriteToStream(OutputStream* Stream)override;
-	Handle<XmlNode> m_Child;
+	Handle<Node> m_Child;
 };
 
 
@@ -131,19 +127,16 @@ private:
 class NodeOperationChildInsert: public NodeOperation
 {
 private:
-	// Using
-	using XmlNode=Storage::Xml::XmlNode;
-
 	// Friends
 	friend NodeOperation;
 
 	// Con-/Destructors
-	NodeOperationChildInsert(UINT Position, XmlNode* Child): m_Child(Child), m_Position(Position) {}
+	NodeOperationChildInsert(UINT Position, Node* Child): m_Child(Child), m_Position(Position) {}
 
 	// Common
 	static SIZE_T ReadFromStream(Node* Target, InputStream* Stream);
 	SIZE_T WriteToStream(OutputStream* Stream)override;
-	Handle<XmlNode> m_Child;
+	Handle<Node> m_Child;
 	UINT m_Position;
 };
 
