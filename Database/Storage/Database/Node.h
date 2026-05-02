@@ -14,7 +14,6 @@
 
 #include "Storage/Streams/StreamBuffer.h"
 #include "Storage/Xml/XmlNode.h"
-#include "Storage/Block.h"
 #include "Storage/File.h"
 
 
@@ -49,6 +48,30 @@ public:
 	friend NodeOperation;
 	friend Object;
 
+	// Con-/Destructors
+	~Node();
+
+	// Common
+	VOID AppendChild(Node* Child);
+	VOID AppendChild(XmlNode* Child)override;
+	BOOL Clear()override;
+	VOID CopyFrom(XmlNode* Node)override;
+	VOID InsertChildAt(UINT Position, Node* Child);
+	VOID InsertChildAt(UINT Position, XmlNode* Child)override;
+	BOOL RemoveAttribute(Handle<String> Key)override;
+	VOID RemoveChildAt(UINT Position)override;
+	inline BOOL SetAttribute(Handle<String> Key, INT Value)
+		{
+		return SetAttribute(Key, String::Create("%i", Value));
+		}
+	inline BOOL SetAttribute(Handle<String> Key, INT64 Value)
+		{
+		return SetAttribute(Key, String::Create("%i", Value));
+		}
+	BOOL SetAttribute(Handle<String> Key, Handle<String> Value)override;
+	BOOL SetTag(Handle<String> Tag)override;
+	BOOL SetValue(Handle<String> Value)override;
+
 protected:
 	// Con-/Destructors
 	Node(Database* Database, UINT Block);
@@ -62,16 +85,29 @@ protected:
 		return Object::Create<Node>(Database, Tag);
 		}
 
-private:
+protected:
 	// Common
-	Node* GetBlockNode();
+	Handle<XmlNode> CreateNode()override;
+
+private:
+	// Flags
+	enum class NodeFlags: UINT
+		{
+		None=0,
+		Update=(1<<0)
+		};
+
+	// Common
+	VOID ClearUpdate();
 	VOID ReadFromBlock(UINT Block);
-	UINT ReadUpdates(InputStream* Stream);
+	template <class _op_t, class... _args_t> VOID Update(NodeOperation** Next, _args_t... Arguments);
+	VOID Validate(Node* Node);
 	VOID WriteToBlock(UINT Block);
 	UINT m_BlockId;
 	UINT m_BlockPosition;
 	Database* m_Database;
-	NodeOperation* m_Operation;
+	NodeFlags m_Flags;
+	NodeOperation* m_Update;
 };
 
 }}

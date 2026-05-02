@@ -35,6 +35,7 @@ enum class Operation: BYTE
 None=0,
 AttributeRemove,
 AttributeSet,
+AttributeSetInteger,
 ChildAppend,
 ChildInsert,
 ChildRemove,
@@ -79,8 +80,37 @@ while(stream->Available())
 			StreamReader reader(stream);
 			UINT pos=0;
 			size+=Dwarf::ReadUnsigned(stream, &pos);
-			auto value=reader.ReadString(&size);
-			selected->SetAttributeInternal(pos, value);
+			if(pos==0)
+				{
+				auto key=reader.ReadString(&size);
+				auto value=reader.ReadString(&size);
+				selected->SetAttributeInternal(key, value);
+				}
+			else
+				{
+				auto value=reader.ReadString(&size);
+				selected->SetAttributeInternal(pos-1, value);
+				}
+			return size;
+			}
+		case Operation::AttributeSetInteger:
+			{
+			StreamReader reader(stream);
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(stream, &pos);
+			if(pos==0)
+				{
+				auto key=reader.ReadString(&size);
+				INT64 value=0;
+				size+=Dwarf::ReadSigned(stream, &value);
+				selected->SetAttributeInternal(key, String::Create("%i", value));
+				}
+			else
+				{
+				INT64 value=0;
+				size+=Dwarf::ReadSigned(stream, &value);
+				selected->SetAttributeInternal(pos-1, String::Create("%i", value));
+				}
 			return size;
 			}
 		case Operation::ChildAppend:
@@ -168,8 +198,35 @@ StreamWriter writer(stream);
 SIZE_T size=0;
 auto op=Operation::AttributeSet;
 size+=stream->Write(&op, sizeof(Operation));
-size+=Dwarf::WriteUnsigned(stream, m_Position);
+if(m_Key)
+	{
+	size+=Dwarf::WriteUnsigned(stream, m_Position);
+	size+=writer.WriteString(m_Key);
+	}
+else
+	{
+	size+=Dwarf::WriteUnsigned(stream, m_Position+1);
+	}
 size+=writer.WriteString(m_Value);
+return size;
+}
+
+SIZE_T NodeOperationAttributeSetInteger::WriteToStream(OutputStream* stream)
+{
+StreamWriter writer(stream);
+SIZE_T size=0;
+auto op=Operation::AttributeSetInteger;
+size+=stream->Write(&op, sizeof(Operation));
+if(m_Key)
+	{
+	size+=Dwarf::WriteUnsigned(stream, m_Position);
+	size+=writer.WriteString(m_Key);
+	}
+else
+	{
+	size+=Dwarf::WriteUnsigned(stream, m_Position+1);
+	}
+size+=Dwarf::WriteSigned(stream, m_Value);
 return size;
 }
 
