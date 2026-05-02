@@ -12,6 +12,7 @@
 // Using
 //=======
 
+#include "Storage/Streams/StreamBuffer.h"
 #include "Storage/Xml/XmlNode.h"
 #include "Storage/Block.h"
 #include "Storage/File.h"
@@ -30,7 +31,7 @@ namespace Storage {
 //======================
 
 class Database;
-class Editor;
+class NodeOperation;
 
 
 //======
@@ -40,9 +41,19 @@ class Editor;
 class Node: public Xml::XmlNode
 {
 public:
+	// Using
+	using StreamBuffer=Storage::Streams::StreamBuffer;
+
 	// Friends
 	friend Database;
+	friend NodeOperation;
 	friend Object;
+	
+	// Con-/Destructors
+	static inline Handle<Node> Create(Handle<String> Tag=nullptr)
+		{
+		return Object::Create<Node>(nullptr, Tag);
+		}
 
 protected:
 	// Con-/Destructors
@@ -60,17 +71,13 @@ protected:
 private:
 	// Common
 	Node* GetBlockNode();
-	VOID OnChanged();
 	VOID ReadFromBlock(UINT Block);
-	UINT ReadFromPage(InputStream* Stream);
 	UINT ReadUpdates(InputStream* Stream);
 	VOID WriteToBlock(UINT Block);
-	UINT WriteToPage(OutputStream* Stream);
 	UINT m_BlockId;
 	UINT m_BlockPosition;
-	Editor* m_Editor;
 	Database* m_Database;
-	UINT m_Size;
+	NodeOperation* m_Operation;
 };
 
 }}

@@ -21,6 +21,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp">
       <Filter>Storage</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.cpp">
+      <Filter>Storage\Database</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Database.h">
@@ -46,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h">
       <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.h">
+      <Filter>Storage\Database</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
