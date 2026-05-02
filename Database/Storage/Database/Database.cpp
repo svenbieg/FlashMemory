@@ -69,6 +69,7 @@ switch(create)
 		{
 		if(!header)
 			Initialize();
+		ValidateHeader(header);
 		break;
 		}
 	case FileCreateMode::OpenExisting:
