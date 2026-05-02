@@ -10,8 +10,8 @@
 //=======
 
 #include "Collections/Array.h"
-#include "Storage/Streams/InputStream.h"
-#include "Storage/Streams/OutputStream.h"
+#include "Storage/Streams/StreamReader.h"
+#include "Storage/Streams/StreamWriter.h"
 #include "StringClass.h"
 
 
@@ -45,15 +45,16 @@ public:
 
 protected:
 	// Using
-	using InputStream=Storage::Streams::InputStream;
-	using OutputStream=Storage::Streams::OutputStream;
+	using StreamReader=Storage::Streams::StreamReader;
+	using StreamWriter=Storage::Streams::StreamWriter;
 
 	// Con-/Destructors
 	NodeOperation(): m_Next(nullptr) {}
 
 	// Common
-	static SIZE_T ReadFromStream(Node* Target, InputStream* Stream);
-	virtual SIZE_T WriteToStream(OutputStream* Stream)=0;
+	static SIZE_T ReadFromStream(StreamReader& Reader, Node* Node);
+	virtual SIZE_T WriteToStream(StreamWriter& Writer)=0;
+	static SIZE_T WriteToStream(StreamWriter& Writer, Node* Node);
 
 	// Common
 	NodeOperation* m_Next;
@@ -74,7 +75,7 @@ private:
 	NodeOperationAttributeRemove(UINT Position): m_Position(Position) {}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	UINT m_Position;
 };
 
@@ -83,6 +84,7 @@ class NodeOperationAttributeSet: public NodeOperation
 private:
 	// Friends
 	friend Node;
+	friend NodeOperation;
 
 	// Con-/Destructors
 	NodeOperationAttributeSet(UINT Position, Handle<String> Value):
@@ -96,7 +98,11 @@ private:
 		{}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override
+		{
+		return WriteToStream(Writer, m_Position, m_Key, m_Value);
+		}
+	static SIZE_T WriteToStream(StreamWriter& Writer, UINT Position, Handle<String> Key, Handle<String> Value);
 	Handle<String> m_Key;
 	UINT m_Position;
 	Handle<String> m_Value;
@@ -120,7 +126,7 @@ private:
 		{}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	Handle<String> m_Key;
 	UINT m_Position;
 	INT64 m_Value;
@@ -131,12 +137,17 @@ class NodeOperationChildAppend: public NodeOperation
 private:
 	// Friends
 	friend Node;
+	friend NodeOperation;
 
 	// Con-/Destructors
 	NodeOperationChildAppend(Node* Child): m_Child(Child) {}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override
+		{
+		return WriteToStream(Writer, m_Child);
+		}
+	static SIZE_T WriteToStream(StreamWriter& Writer, Node* Child);
 	Handle<Node> m_Child;
 };
 
@@ -150,7 +161,7 @@ private:
 	NodeOperationChildInsert(UINT Position, Node* Child): m_Child(Child), m_Position(Position) {}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	Handle<Node> m_Child;
 	UINT m_Position;
 };
@@ -165,7 +176,7 @@ private:
 	NodeOperationChildRemove(UINT Position): m_Position(Position) {}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	UINT m_Position;
 };
 
@@ -182,7 +193,7 @@ private:
 	NodeOperationChildSelect(PositionArray* Position): m_Position(Position) {}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	Handle<PositionArray> m_Position;
 };
 
@@ -196,7 +207,7 @@ private:
 	NodeOperationClear()=default;
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override;
 };
 
 class NodeOperationTagSet: public NodeOperation
@@ -204,12 +215,17 @@ class NodeOperationTagSet: public NodeOperation
 private:
 	// Friends
 	friend Node;
+	friend NodeOperation;
 
 	// Con-/Destructors
 	NodeOperationTagSet(Handle<String> Tag): m_Tag(Tag) {}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override
+		{
+		return WriteToStream(Writer, m_Tag);
+		}
+	static SIZE_T WriteToStream(StreamWriter& Writer, Handle<String> Tag);
 	Handle<String> m_Tag;
 };
 
@@ -218,12 +234,17 @@ class NodeOperationValueSet: public NodeOperation
 private:
 	// Friends
 	friend Node;
+	friend NodeOperation;
 
 	// Con-/Destructors
 	NodeOperationValueSet(Handle<String> Value): m_Value(Value) {}
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T WriteToStream(StreamWriter& Writer)override
+		{
+		return WriteToStream(Writer, m_Value);
+		}
+	static SIZE_T WriteToStream(StreamWriter& Writer, Handle<String> Value);
 	Handle<String> m_Value;
 };
 

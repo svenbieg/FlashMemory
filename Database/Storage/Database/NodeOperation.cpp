@@ -51,8 +51,9 @@ Done=255
 // Node-Operation
 //================
 
-SIZE_T NodeOperation::ReadFromStream(Node* node, InputStream* stream)
+SIZE_T NodeOperation::ReadFromStream(StreamReader& reader, Node* node)
 {
+auto stream=reader.GetStream();
 SIZE_T size=0;
 Node* selected=node;
 while(stream->Available())
@@ -77,7 +78,6 @@ while(stream->Available())
 			}
 		case Operation::AttributeSet:
 			{
-			StreamReader reader(stream);
 			UINT pos=0;
 			size+=Dwarf::ReadUnsigned(stream, &pos);
 			if(pos==0)
@@ -95,7 +95,6 @@ while(stream->Available())
 			}
 		case Operation::AttributeSetInteger:
 			{
-			StreamReader reader(stream);
 			UINT pos=0;
 			size+=Dwarf::ReadUnsigned(stream, &pos);
 			if(pos==0)
@@ -116,7 +115,7 @@ while(stream->Available())
 		case Operation::ChildAppend:
 			{
 			auto child=Node::Create(selected->m_Database);
-			size+=child->ReadFromStream(stream);
+			size+=ReadFromStream(reader, child);
 			selected->AppendChildInternal(child);
 			break;
 			}
@@ -125,7 +124,7 @@ while(stream->Available())
 			UINT pos=0;
 			size+=Dwarf::ReadUnsigned(stream, &pos);
 			auto child=Node::Create(selected->m_Database);
-			size+=child->ReadFromStream(stream);
+			size+=ReadFromStream(reader, child);
 			selected->InsertChildInternal(pos, child);
 			break;
 			}
@@ -157,14 +156,12 @@ while(stream->Available())
 			}
 		case Operation::TagSet:
 			{
-			StreamReader reader(stream);
 			auto tag=reader.ReadString(&size);
 			selected->SetTagInternal(tag);
 			break;
 			}
 		case Operation::ValueSet:
 			{
-			StreamReader reader(stream);
 			auto value=reader.ReadString(&size);
 			selected->SetValueInternal(value);
 			break;
@@ -178,13 +175,43 @@ while(stream->Available())
 return size;
 }
 
+SIZE_T NodeOperation::WriteToStream(StreamWriter& writer, Node* node)
+{
+auto stream=writer.GetStream();
+SIZE_T size=0;
+size+=NodeOperationTagSet::WriteToStream(writer, node->m_Tag);
+for(auto const& it: node->m_Attributes)
+	{
+	auto const& key=it.get_key();
+	auto const& value=it.get_value();
+	size+=NodeOperationAttributeSet::WriteToStream(writer, 0, key, value);
+	}
+auto const& value=node->m_Value;
+if(value)
+	{
+	size+=NodeOperationValueSet::WriteToStream(writer, value);
+	}
+else
+	{
+	for(auto const& child: node->m_Children)
+		size+=NodeOperationChildAppend::WriteToStream(writer, child.As<Node>());
+	}
+if(size%2)
+	{
+	auto op=Operation::None;
+	size+=stream->Write(&op, sizeof(Operation));
+	}
+return size;
+}
+
 
 //============
 // Operations
 //============
 
-SIZE_T NodeOperationAttributeRemove::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationAttributeRemove::WriteToStream(StreamWriter& writer)
 {
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::AttributeRemove;
 size+=stream->Write(&op, sizeof(Operation));
@@ -192,28 +219,28 @@ size+=Dwarf::WriteUnsigned(stream, m_Position);
 return size;
 }
 
-SIZE_T NodeOperationAttributeSet::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationAttributeSet::WriteToStream(StreamWriter& writer, UINT pos, Handle<String> key, Handle<String> value)
 {
-StreamWriter writer(stream);
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::AttributeSet;
 size+=stream->Write(&op, sizeof(Operation));
-if(m_Key)
+if(key)
 	{
-	size+=Dwarf::WriteUnsigned(stream, m_Position);
-	size+=writer.WriteString(m_Key);
+	size+=Dwarf::WriteUnsigned(stream, 0);
+	size+=writer.WriteString(key);
 	}
 else
 	{
-	size+=Dwarf::WriteUnsigned(stream, m_Position+1);
+	size+=Dwarf::WriteUnsigned(stream, pos+1);
 	}
-size+=writer.WriteString(m_Value);
+size+=writer.WriteString(value);
 return size;
 }
 
-SIZE_T NodeOperationAttributeSetInteger::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationAttributeSetInteger::WriteToStream(StreamWriter& writer)
 {
-StreamWriter writer(stream);
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::AttributeSetInteger;
 size+=stream->Write(&op, sizeof(Operation));
@@ -230,17 +257,19 @@ size+=Dwarf::WriteSigned(stream, m_Value);
 return size;
 }
 
-SIZE_T NodeOperationChildAppend::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationChildAppend::WriteToStream(StreamWriter& writer, Node* child)
 {
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::ChildAppend;
 size+=stream->Write(&op, sizeof(Operation));
-size+=m_Child->WriteToStream(stream);
+size+=NodeOperation::WriteToStream(writer, child);
 return size;
 }
 
-SIZE_T NodeOperationChildInsert::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationChildInsert::WriteToStream(StreamWriter& writer)
 {
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::ChildInsert;
 size+=stream->Write(&op, sizeof(Operation));
@@ -249,8 +278,9 @@ size+=m_Child->WriteToStream(stream);
 return size;
 }
 
-SIZE_T NodeOperationChildRemove::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationChildRemove::WriteToStream(StreamWriter& writer)
 {
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::ChildRemove;
 size+=stream->Write(&op, sizeof(Operation));
@@ -258,8 +288,9 @@ size+=Dwarf::WriteUnsigned(stream, m_Position);
 return size;
 }
 
-SIZE_T NodeOperationChildSelect::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationChildSelect::WriteToStream(StreamWriter& writer)
 {
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::ChildSelect;
 size+=stream->Write(&op, sizeof(Operation));
@@ -268,31 +299,32 @@ for(auto it=m_Position->First(); it->HasCurrent(); it->MoveNext())
 return size;
 }
 
-SIZE_T NodeOperationClear::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationClear::WriteToStream(StreamWriter& writer)
 {
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::Clear;
 size+=stream->Write(&op, sizeof(Operation));
 return size;
 }
 
-SIZE_T NodeOperationTagSet::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationTagSet::WriteToStream(StreamWriter& writer, Handle<String> tag)
 {
-StreamWriter writer(stream);
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::TagSet;
 size+=stream->Write(&op, sizeof(Operation));
-size+=writer.WriteString(m_Tag);
+size+=writer.WriteString(tag);
 return size;
 }
 
-SIZE_T NodeOperationValueSet::WriteToStream(OutputStream* stream)
+SIZE_T NodeOperationValueSet::WriteToStream(StreamWriter& writer, Handle<String> value)
 {
-StreamWriter writer(stream);
+auto stream=writer.GetStream();
 SIZE_T size=0;
 auto op=Operation::ValueSet;
 size+=stream->Write(&op, sizeof(Operation));
-size+=writer.WriteString(m_Value);
+size+=writer.WriteString(value);
 return size;
 }
 

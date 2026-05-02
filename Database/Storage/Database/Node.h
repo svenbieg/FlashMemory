@@ -30,6 +30,7 @@ namespace Storage {
 //======================
 
 class Database;
+class NodeChildIterator;
 class NodeOperation;
 
 
@@ -45,6 +46,7 @@ public:
 
 	// Friends
 	friend Database;
+	friend NodeChildIterator;
 	friend NodeOperation;
 	friend Object;
 
@@ -56,6 +58,8 @@ public:
 	VOID AppendChild(XmlNode* Child)override;
 	BOOL Clear()override;
 	VOID CopyFrom(XmlNode* Node)override;
+	Handle<Node> GetChildAt(UINT Position);
+	Handle<NodeChildIterator> GetChildren();
 	VOID InsertChildAt(UINT Position, Node* Child);
 	VOID InsertChildAt(UINT Position, XmlNode* Child)override;
 	BOOL RemoveAttribute(Handle<String> Key)override;
@@ -108,6 +112,29 @@ private:
 	Database* m_Database;
 	NodeFlags m_Flags;
 	NodeOperation* m_Update;
+};
+
+
+//================
+// Child-Iterator
+//================
+
+class NodeChildIterator: public Storage::Xml::XmlNodeChildIterator
+{
+public:
+	// Friends
+	friend Node;
+
+	// Access
+	inline Handle<Node> GetCurrent()const
+		{
+		auto current=m_It.get_current();
+		return current.As<Node>();
+		}
+
+private:
+	// Con-/Destructors
+	NodeChildIterator(Node* Node): XmlNodeChildIterator(Node) {}
 };
 
 }}

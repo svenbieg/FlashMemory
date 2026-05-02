@@ -113,6 +113,18 @@ else
 	}
 }
 
+Handle<Node> Node::GetChildAt(UINT pos)
+{
+ReadLock lock(m_Mutex);
+auto child=m_Children.get_at(pos);
+return child.As<Node>();
+}
+
+Handle<NodeChildIterator> Node::GetChildren()
+{
+return new NodeChildIterator(this);
+}
+
 VOID Node::InsertChildAt(UINT pos, Node* child)
 {
 WriteLock lock(m_Mutex);
@@ -248,8 +260,8 @@ VOID Node::ReadFromBlock(UINT block_id)
 {
 auto volume=m_Database->GetVolume();
 auto entry=Entry::Create(volume, block_id, NODE_ID);
-ReadFromStream(entry);
-NodeOperation::ReadFromStream(this, entry);
+StreamReader reader(entry);
+NodeOperation::ReadFromStream(reader, this);
 m_BlockId=block_id;
 m_BlockPosition=entry->GetPosition();
 Validate(this);
@@ -273,12 +285,8 @@ VOID Node::WriteToBlock(UINT block_id)
 {
 auto volume=m_Database->GetVolume();
 auto entry=Entry::Create(volume, block_id, NODE_ID, FileCreateMode::CreateAlways);
-SIZE_T size=WriteToStream(entry);
-if(size%2)
-	{
-	BYTE zero=0;
-	size+=entry->Write(&zero, 1);
-	}
+StreamWriter writer(entry);
+NodeOperation::WriteToStream(writer, this);
 entry->Flush();
 m_BlockId=block_id;
 m_BlockPosition=entry->GetPosition();
