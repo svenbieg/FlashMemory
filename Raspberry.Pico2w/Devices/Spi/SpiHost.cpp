@@ -9,6 +9,7 @@
 // Using
 //=======
 
+#include "Devices/Spi/PL022.h"
 #include "Devices/System/System.h"
 #include "Devices/Peripherals.h"
 
@@ -26,9 +27,9 @@ namespace Devices {
 	namespace Spi {
 
 
-//=========
-// Devices
-//=========
+//===============
+// Configuration
+//===============
 
 typedef struct
 {
@@ -50,14 +51,6 @@ const SPI_DEVICE SPI_DEVICES[]=
 
 const UINT SPI_COUNT=TypeHelper::ArraySize(SPI_DEVICES);
 
-Mutex g_Mutex;
-SpiHost* g_SpiHosts[SPI_COUNT]={ nullptr };
-
-
-//===========
-// Baud-Rate
-//===========
-
 typedef struct
 {
 BYTE PRESCAL; // 2..254 (%2)
@@ -66,67 +59,33 @@ BYTE DIVISOR; // 0..255 (+1)
 
 const CLK_DIV CLK_DIVS[]=
 	{
-	{ 2, 0 } // 75M
+	{ 2, 0 } // SYS_CLK/2=75MHz
 	};
 
+const UINT SPI_DATA_BITS[]={ 7, 15 };
+const UINT SPI_DATA_SIZE[]={ 1, 2 };
+const DmaDataSize SPI_DATA_SIZE_DMA[]={ DmaDataSize::Bits8, DmaDataSize::Bits16 };
 
-//===========
-// Registers
-//===========
 
-typedef struct
-{
-RW32 CTRL0;
-RW32 CTRL1;
-RW32 DATA;
-RO32 STATUS;
-RW32 PRESCAL;
-RW32 IRQMSC;
-RO32 IRQS;
-RO32 IRQMS;
-RW32 IRQC;
-RW32 DMACTRL;
-}PL022_REGS;
+//=========
+// Globals
+//=========
 
-const BITS CTRL0_SCR	={ 0xFF, 8 };
-const BITS CTRL0_FRF	={ 0x3, 4 };
-const BITS CTRL0_DSS	={ 0xF, 0 };
-
-typedef enum
-{
-FRF_TI=1
-}FRF;
-
-typedef enum
-{
-DSS_4BIT=3,
-DSS_8BIT=7,
-DSS_16BIT=15
-}DSS;
-
-const UINT CTRL1_EN		=(1<<1);
-
-const UINT STATUS_BUSY	=(1<<4);
-const UINT STATUS_RF	=(1<<3);
-const UINT STATUS_RNE	=(1<<2);
-const UINT STATUS_TNF	=(1<<1);
-const UINT STATUS_TE	=(1<<0);
-
-const UINT DMACTRL_TXEN	=(1<<1);
-const UINT DMACTRL_RXEN	=(1<<0);
+Mutex g_Mutex;
+SpiHost* g_SpiHosts[SPI_COUNT]={ nullptr };
 
 
 //==================
 // Con-/Destructors
 //==================
 
-Handle<SpiHost> SpiHost::Create(SpiDevice device, BaudRate baud)
+Handle<SpiHost> SpiHost::Create(SpiDevice device)
 {
 WriteLock lock(g_Mutex);
 UINT id=(UINT)device;
 if(g_SpiHosts[id])
 	throw AccessDeniedException();
-auto spi_host=Object::Create<SpiHost>(device, baud);
+auto spi_host=Object::Create<SpiHost>(device);
 g_SpiHosts[id]=spi_host;
 return spi_host;
 }
@@ -143,17 +102,42 @@ g_SpiHosts[m_Id]=nullptr;
 // Common
 //========
 
-VOID SpiHost::Read(UINT* buf, UINT count, UINT timeout)
+VOID SpiHost::Read(VOID* buf, SIZE_T size, UINT timeout)
 {
 auto spi=(PL022_REGS*)m_Device;
-m_InputDma->BeginRead(m_InputRequest, &spi->DATA, buf, count);
+m_InputDma->BeginRead(m_InputRequest, &spi->DATA, buf, size);
 m_InputDma->Wait(timeout);
 }
 
-VOID SpiHost::Write(UINT const* buf, UINT count, UINT timeout)
+VOID SpiHost::SetBaudRate(SpiBaudRate baud)
+{
+UINT id=(UINT)baud;
+auto spi=(PL022_REGS*)SPI_DEVICES[m_Id].BASE;
+IoHelper::Set(spi->PRESCAL, CTRL0_SCR, CLK_DIVS[id].PRESCAL);
+IoHelper::Set(spi->CTRL0, CTRL0_SCR, CLK_DIVS[id].DIVISOR);
+}
+
+VOID SpiHost::SetDataSize(SpiDataSize data_size)
+{
+UINT id=(UINT)data_size;
+auto spi=(PL022_REGS*)SPI_DEVICES[m_Id].BASE;
+IoHelper::Set(spi->CTRL0, CTRL0_DSS, SPI_DATA_BITS[id]);
+m_InputDma->SetDataSize(SPI_DATA_SIZE_DMA[id]);
+m_OutputDma->SetDataSize(SPI_DATA_SIZE_DMA[id]);
+m_DataSize=SPI_DATA_SIZE[id];
+}
+
+VOID SpiHost::SetEnabled(BOOL enabled)
+{
+auto spi=(PL022_REGS*)SPI_DEVICES[m_Id].BASE;
+UINT value=enabled? CTRL1_EN: 0;
+IoHelper::Set(spi->CTRL1, CTRL1_EN, value);
+}
+
+VOID SpiHost::Write(VOID const* buf, SIZE_T size, UINT timeout)
 {
 auto spi=(PL022_REGS*)m_Device;
-m_OutputDma->BeginWrite(m_OutputRequest, &spi->DATA, buf, count);
+m_OutputDma->BeginWrite(m_OutputRequest, &spi->DATA, buf, size);
 m_OutputDma->Wait(timeout);
 }
 
@@ -162,7 +146,8 @@ m_OutputDma->Wait(timeout);
 // Con-/Destructors Private
 //==========================
 
-SpiHost::SpiHost(SpiDevice device, BaudRate baud):
+SpiHost::SpiHost(SpiDevice device):
+m_DataSize(1),
 m_Id((UINT)device)
 {
 m_Device=SPI_DEVICES[m_Id].BASE;
@@ -173,16 +158,9 @@ m_GpioHost->SetPinMode(SPI_DEVICES[m_Id].SCK, GpioPinMode::Func1);
 m_GpioHost->SetPinMode(SPI_DEVICES[m_Id].RX, GpioPinMode::Func1);
 m_GpioHost->SetPinMode(SPI_DEVICES[m_Id].TX, GpioPinMode::Func1);
 m_InputDma=DmaChannel::Create();
-m_InputDma->SetDataSize(DmaDataSize::Bits16);
 m_InputRequest=SPI_DEVICES[m_Id].DMA_RX;
 m_OutputDma=DmaChannel::Create();
-m_OutputDma->SetDataSize(DmaDataSize::Bits16);
 m_OutputRequest=SPI_DEVICES[m_Id].DMA_TX;
-auto spi=(PL022_REGS*)SPI_DEVICES[m_Id].BASE;
-UINT baud_id=(UINT)baud;
-IoHelper::Set(spi->PRESCAL, CTRL0_SCR, CLK_DIVS[baud_id].PRESCAL);
-IoHelper::Set(spi->CTRL0, CTRL0_SCR, CLK_DIVS[baud_id].DIVISOR);
-IoHelper::Set(spi->CTRL1, CTRL1_EN);
 }
 
 }}

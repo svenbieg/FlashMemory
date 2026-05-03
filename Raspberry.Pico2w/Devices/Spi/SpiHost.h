@@ -21,9 +21,9 @@ namespace Devices {
 	namespace Spi {
 
 
-//=========
-// Devices
-//=========
+//===============
+// Configuration
+//===============
 
 enum class SpiDevice
 {
@@ -31,14 +31,15 @@ Spi0,
 Spi1
 };
 
-
-//===========
-// Baud-Rate
-//===========
-
-enum class BaudRate: UINT
+enum class SpiBaudRate: UINT
 {
 Baud75M
+};
+
+enum class SpiDataSize
+{
+Bits8,
+Bits16
 };
 
 
@@ -55,19 +56,23 @@ public:
 	using GpioHost=Devices::Gpio::GpioHost;
 
 	// Con-/Destructors
-	static Handle<SpiHost> Create(SpiDevice Device=SpiDevice::Spi0, BaudRate Baud=BaudRate::Baud75M);
+	static Handle<SpiHost> Create(SpiDevice Device=SpiDevice::Spi0);
 	~SpiHost();
 
 	// Common
-	VOID Read(UINT* Buffer, UINT Count, UINT Timeout=100);
-	VOID Write(UINT const* Buffer, UINT Count, UINT Timeout=100);
+	VOID Read(VOID* Buffer, SIZE_T Size, UINT Timeout=100);
+	VOID SetBaudRate(SpiBaudRate Baud);
+	VOID SetDataSize(SpiDataSize DataSize);
+	VOID SetEnabled(BOOL Enabled);
+	VOID Write(VOID const* Buffer, SIZE_T Size, UINT Timeout=100);
 
 private:
 	// Con-/Destructors
 	friend Object;
-	SpiHost(SpiDevice Device, BaudRate Baud);
+	SpiHost(SpiDevice Device);
 
 	// Common
+	UINT m_DataSize;
 	SIZE_T m_Device;
 	Handle<GpioHost> m_GpioHost;
 	UINT m_Id;
