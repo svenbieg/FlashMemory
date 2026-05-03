@@ -79,10 +79,10 @@ public:
 
 	// Common
 	VOID Abort();
-	VOID BeginRead(DmaRequest Request, RO32* Register, UINT* Buffer, SIZE_T Count);
+	VOID BeginRead(DmaRequest Request, RO32* Register, VOID* Buffer, SIZE_T Size);
 	VOID SetByteSwap(BOOL ByteSwap);
 	VOID SetDataSize(DmaDataSize Size);
-	VOID BeginWrite(DmaRequest Request, RW32* Register, UINT const* Buffer, SIZE_T Count);
+	VOID BeginWrite(DmaRequest Request, RW32* Register, VOID const* Buffer, SIZE_T Size);
 	VOID Wait(UINT Timeout=100);
 
 private:
@@ -97,6 +97,7 @@ private:
 	VOID OnInterrupt();
 	Concurrency::CriticalSection m_CriticalSection;
 	UINT m_Control;
+	UINT m_DataSize;
 	UINT m_Id;
 	Concurrency::Signal m_Signal;
 	Status m_Status;
