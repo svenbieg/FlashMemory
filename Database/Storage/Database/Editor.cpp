@@ -30,7 +30,6 @@ namespace Storage {
 Editor::~Editor()
 {
 Cancel();
-m_Database->m_Editor=nullptr;
 m_Database->m_Mutex.Unlock();
 }
 
@@ -69,7 +68,6 @@ Editor::Editor(Database* database):
 m_Database(database)
 {
 m_Database->m_Mutex.Lock();
-m_Database->m_Editor=this;
 }
 
 }}
