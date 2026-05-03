@@ -23,17 +23,6 @@ namespace Storage {
 	namespace Database {
 
 
-//========
-// Common
-//========
-
-Handle<Editor> Database::Edit()
-{
-m_Editor=Editor::Create(this);
-return m_Editor;
-}
-
-
 //==========================
 // Con-/Destructors Private
 //==========================

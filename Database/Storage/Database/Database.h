@@ -42,7 +42,7 @@ public:
 	static inline Handle<Database> Create(Volume* Volume, FileCreateMode Create=FileCreateMode::OpenExisting) { return Object::Create<Database>(Volume, Create); }
 
 	// Common
-	Handle<Editor> Edit();
+	inline Handle<Editor> Edit() { return Editor::Create(this); }
 	inline Handle<Volume> GetVolume()const { return m_Volume; }
 
 private:
@@ -53,7 +53,6 @@ private:
 	VOID Initialize();
 	Handle<Node> ReadHeader();
 	VOID ValidateHeader(Node* Header);
-	Handle<Editor> m_Editor;
 	Handle<Node> m_Header;
 	Concurrency::Mutex m_Mutex;
 	Handle<Volume> m_Volume;
