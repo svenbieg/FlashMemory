@@ -57,28 +57,44 @@ ClearUpdate();
 // Common
 //========
 
-VOID Node::AppendChild(Node* child)
+VOID Node::AppendChild(XmlNode* child)
+{
+auto node=dynamic_cast<Node*>(child);
+if(!node)
+	throw InvalidArgumentException();
+auto editor=m_Database->Edit();
+AppendChild(editor, node);
+editor->Flush();
+}
+
+VOID Node::AppendChild(Editor* editor, Node* child)
 {
 WriteLock lock(m_Mutex);
 AppendChildInternal(child);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	Update<NodeOperationChildAppend>(&m_Update, child);
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 }
 
-VOID Node::AppendChild(XmlNode* child)
+BOOL Node::Clear()
 {
-throw InvalidArgumentException();
+auto editor=m_Database->Edit();
+BOOL cleared=Clear(editor);
+if(cleared)
+	editor->Flush();
+return cleared;
 }
 
-BOOL Node::Clear()
+BOOL Node::Clear(Editor* editor)
 {
 WriteLock lock(m_Mutex);
 if(!ClearInternal())
 	return false;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	Update<NodeOperationClear>(&m_Update);
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 return true;
@@ -86,21 +102,28 @@ return true;
 
 VOID Node::CopyFrom(XmlNode* copy)
 {
+auto editor=m_Database->Edit();
+CopyFrom(editor, copy);
+editor->Flush();
+}
+
+VOID Node::CopyFrom(Editor* editor, XmlNode* copy)
+{
 if(!copy)
 	throw InvalidArgumentException();
-Clear();
+Clear(editor);
 auto tag=copy->GetTag();
-SetTag(tag);
+SetTag(editor, tag);
 for(auto it=copy->GetAttributes(); it->HasCurrent(); it->MoveNext())
 	{
 	auto key=it->GetKey();
 	auto value=it->GetValue();
-	SetAttribute(key, value);
+	SetAttribute(editor, key, value);
 	}
 auto value=copy->GetValue();
 if(value)
 	{
-	SetValue(value);
+	SetValue(editor, value);
 	}
 else
 	{
@@ -108,7 +131,7 @@ else
 		{
 		auto child=Node::Create(m_Database);
 		child->CopyFrom(it->GetCurrent());
-		AppendChild(child);
+		AppendChild(editor, child);
 		}
 	}
 }
@@ -125,22 +148,37 @@ Handle<NodeChildIterator> Node::GetChildren()
 return new NodeChildIterator(this);
 }
 
-VOID Node::InsertChildAt(UINT pos, Node* child)
+VOID Node::InsertChildAt(UINT pos, XmlNode* child)
+{
+auto node=dynamic_cast<Node*>(child);
+if(!node)
+	throw InvalidArgumentException();
+auto editor=m_Database->Edit();
+InsertChildAt(editor, pos, node);
+editor->Flush();
+}
+
+VOID Node::InsertChildAt(Editor* editor, UINT pos, Node* child)
 {
 WriteLock lock(m_Mutex);
 InsertChildInternal(pos, child);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	Update<NodeOperationChildInsert>(&m_Update, pos, child);
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 }
 
-VOID Node::InsertChildAt(UINT pos, XmlNode* child)
+BOOL Node::RemoveAttribute(Handle<String> key)
 {
-throw InvalidArgumentException();
+auto editor=m_Database->Edit();
+BOOL removed=RemoveAttribute(editor, key);
+if(removed)
+	editor->Flush();
+return removed;
 }
 
-BOOL Node::RemoveAttribute(Handle<String> key)
+BOOL Node::RemoveAttribute(Editor* editor, Handle<String> key)
 {
 WriteLock lock(m_Mutex);
 UINT pos=0;
@@ -149,6 +187,7 @@ if(!m_Attributes.index_of(key, &pos))
 RemoveAttributeInternal(pos);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	Update<NodeOperationAttributeRemove>(&m_Update, pos);
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 return true;
@@ -156,15 +195,32 @@ return true;
 
 VOID Node::RemoveChildAt(UINT pos)
 {
+auto editor=m_Database->Edit();
+RemoveChildAt(editor, pos);
+editor->Flush();
+}
+
+VOID Node::RemoveChildAt(Editor* editor, UINT pos)
+{
 WriteLock lock(m_Mutex);
 RemoveChildInternal(pos);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	Update<NodeOperationChildRemove>(&m_Update, pos);
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 }
 
 BOOL Node::SetAttribute(Handle<String> key, Handle<String> value)
+{
+auto editor=m_Database->Edit();
+BOOL set=SetAttribute(editor, key, value);
+if(set)
+	editor->Flush();
+return set;
+}
+
+BOOL Node::SetAttribute(Editor* editor, Handle<String> key, Handle<String> value)
 {
 WriteLock lock(m_Mutex);
 UINT pos=0;
@@ -180,6 +236,7 @@ else
 	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 		Update<NodeOperationAttributeSet>(&m_Update, key, value);
 	}
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 return true;
@@ -187,11 +244,21 @@ return true;
 
 BOOL Node::SetTag(Handle<String> tag)
 {
+auto editor=m_Database->Edit();
+BOOL set=SetTag(editor, tag);
+if(set)
+	editor->Flush();
+return set;
+}
+
+BOOL Node::SetTag(Editor* editor, Handle<String> tag)
+{
 WriteLock lock(m_Mutex);
 if(!SetTagInternal(tag))
 	return false;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	Update<NodeOperationTagSet>(&m_Update, tag);
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 return true;
@@ -199,11 +266,21 @@ return true;
 
 BOOL Node::SetValue(Handle<String> value)
 {
+auto editor=m_Database->Edit();
+BOOL set=SetValue(editor, value);
+if(set)
+	editor->Flush();
+return set;
+}
+
+BOOL Node::SetValue(Editor* editor, Handle<String> value)
+{
 WriteLock lock(m_Mutex);
 if(!SetValueInternal(value))
 	return false;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	Update<NodeOperationValueSet>(&m_Update, value);
+editor->Invalidate(this);
 lock.Unlock();
 Changed(this);
 return true;

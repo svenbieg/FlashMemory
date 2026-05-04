@@ -60,6 +60,7 @@ private:
 	static inline Handle<Editor> Create(Database* Database) { return Object::Create<Editor>(Database); }
 
 	// Common
+	VOID Invalidate(Node* Node);
 	NodeIndex m_ChangedNodes;
 	Database* m_Database;
 };

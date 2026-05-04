@@ -30,6 +30,7 @@ namespace Storage {
 //======================
 
 class Database;
+class Editor;
 class NodeChildIterator;
 class NodeOperation;
 
@@ -54,27 +55,34 @@ public:
 	~Node();
 
 	// Common
-	VOID AppendChild(Node* Child);
 	VOID AppendChild(XmlNode* Child)override;
+	VOID AppendChild(Editor* Editor, Node* Child);
 	BOOL Clear()override;
+	BOOL Clear(Editor* Editor);
 	VOID CopyFrom(XmlNode* Node)override;
+	VOID CopyFrom(Editor* Editor, XmlNode* Node);
 	Handle<Node> GetChildAt(UINT Position);
 	Handle<NodeChildIterator> GetChildren();
-	VOID InsertChildAt(UINT Position, Node* Child);
 	VOID InsertChildAt(UINT Position, XmlNode* Child)override;
+	VOID InsertChildAt(Editor* Editor, UINT Position, Node* Child);
 	BOOL RemoveAttribute(Handle<String> Key)override;
+	BOOL RemoveAttribute(Editor* Editor, Handle<String> Key);
 	VOID RemoveChildAt(UINT Position)override;
-	inline BOOL SetAttribute(Handle<String> Key, INT Value)
-		{
-		return SetAttribute(Key, String::Create("%i", Value));
-		}
+	VOID RemoveChildAt(Editor* Editor, UINT Position);
+	BOOL SetAttribute(Handle<String> Key, Handle<String> Value)override;
 	inline BOOL SetAttribute(Handle<String> Key, INT64 Value)
 		{
 		return SetAttribute(Key, String::Create("%i", Value));
 		}
-	BOOL SetAttribute(Handle<String> Key, Handle<String> Value)override;
+	BOOL SetAttribute(Editor* Editor, Handle<String> Key, Handle<String> Value);
+	inline BOOL SetAttribute(Editor* Editor, Handle<String> Key, INT64 Value)
+		{
+		return SetAttribute(Editor, Key, String::Create("%i", Value));
+		}
 	BOOL SetTag(Handle<String> Tag)override;
+	BOOL SetTag(Editor* Editor, Handle<String> Tag);
 	BOOL SetValue(Handle<String> Value)override;
+	BOOL SetValue(Editor* Editor, Handle<String> Value);
 
 protected:
 	// Con-/Destructors

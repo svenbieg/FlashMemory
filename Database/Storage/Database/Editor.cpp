@@ -70,4 +70,14 @@ m_Database(database)
 m_Database->m_Mutex.Lock();
 }
 
+
+//================
+// Common Private
+//================
+
+VOID Editor::Invalidate(Node* node)
+{
+m_ChangedNodes.add(node);
+}
+
 }}
