@@ -47,6 +47,17 @@ static const UINT NODE_ID='NODE';
 // Con-/Destructors
 //==================
 
+Handle<Node> Node::Create(Database* database, UINT block)
+{
+WriteLock lock(database->m_Mutex);
+Node* found=nullptr;
+if(database->m_Nodes.try_get(block, &found))
+	return found;
+auto node=Object::Create<Node>(database, block);
+database->m_Nodes.add(block, node);
+return node;
+}
+
 Node::~Node()
 {
 ClearUpdate();
@@ -314,6 +325,20 @@ m_Update(nullptr)
 Handle<XmlNode> Node::CreateNode()
 {
 return Node::Create(m_Database);
+}
+
+UINT Node::Release()noexcept
+{
+if(!m_BlockId)
+	return XmlNode::Release();
+WriteLock lock(m_Database->m_Mutex);
+UINT ref_count=Cpu::InterlockedDecrement(&m_ReferenceCount);
+if(ref_count==0)
+	{
+	m_Database->m_Nodes.remove(m_BlockId);
+	delete this;
+	}
+return ref_count;
 }
 
 

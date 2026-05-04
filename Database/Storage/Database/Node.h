@@ -52,6 +52,7 @@ public:
 	friend Object;
 
 	// Con-/Destructors
+	static Handle<Node> Create(Database* Database, UINT Block);
 	~Node();
 
 	// Common
@@ -88,18 +89,14 @@ protected:
 	// Con-/Destructors
 	Node(Database* Database, UINT Block);
 	Node(Database* Database, Handle<String> Tag=nullptr);
-	static inline Handle<Node> Create(Database* Database, UINT Block)
-		{
-		return Object::Create<Node>(Database, Block);
-		}
 	static inline Handle<Node> Create(Database* Database, Handle<String> Tag=nullptr)
 		{
 		return Object::Create<Node>(Database, Tag);
 		}
 
-protected:
 	// Common
 	Handle<XmlNode> CreateNode()override;
+	UINT Release()noexcept override;
 
 private:
 	// Flags

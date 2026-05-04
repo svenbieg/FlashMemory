@@ -12,6 +12,7 @@
 // Using
 //=======
 
+#include "Collections/map.hpp"
 #include "Concurrency/Mutex.h"
 #include "Storage/Database/Editor.h"
 #include "Storage/File.h"
@@ -33,6 +34,9 @@ namespace Storage {
 class Database: public Object
 {
 public:
+	// Using
+	using NodeMap=Collections::map<UINT, Node*>;
+
 	// Friends
 	friend Editor;
 	friend Node;
@@ -54,6 +58,7 @@ private:
 	Handle<Node> ReadHeader();
 	VOID ValidateHeader(Node* Header);
 	Handle<Node> m_Header;
+	NodeMap m_Nodes;
 	Concurrency::Mutex m_Mutex;
 	Handle<Volume> m_Volume;
 };
