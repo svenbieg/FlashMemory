@@ -41,6 +41,7 @@ ChildInsert,
 ChildRemove,
 ChildSelect,
 Clear,
+NodeEnd,
 TagSet,
 ValueSet,
 Done=255
@@ -55,6 +56,7 @@ SIZE_T NodeOperation::ReadFromStream(StreamReader& reader, Node* node)
 {
 auto stream=reader.GetStream();
 SIZE_T size=0;
+FlagHelper::Set(node->m_Flags, Node::NodeFlags::Update);
 Node* selected=node;
 while(stream->Available())
 	{
@@ -154,6 +156,10 @@ while(stream->Available())
 			selected->ClearInternal();
 			break;
 			}
+		case Operation::NodeEnd:
+			{
+			return size;
+			}
 		case Operation::TagSet:
 			{
 			auto tag=reader.ReadString(&size);
@@ -196,9 +202,11 @@ else
 	for(auto const& child: node->m_Children)
 		size+=NodeOperationChildAppend::WriteToStream(writer, child.As<Node>());
 	}
+auto op=Operation::NodeEnd;
+size+=stream->Write(&op, sizeof(Operation));
 if(size%2)
 	{
-	auto op=Operation::None;
+	op=Operation::None;
 	size+=stream->Write(&op, sizeof(Operation));
 	}
 return size;
