@@ -12,7 +12,6 @@
 // Using
 //=======
 
-#include "Storage/Streams/StreamBuffer.h"
 #include "Storage/Xml/XmlNode.h"
 #include "Storage/File.h"
 
@@ -42,9 +41,6 @@ class NodeOperation;
 class Node: public Xml::XmlNode
 {
 public:
-	// Using
-	using StreamBuffer=Storage::Streams::StreamBuffer;
-
 	// Friends
 	friend Database;
 	friend NodeChildIterator;
@@ -110,7 +106,6 @@ private:
 	VOID ClearUpdate();
 	VOID ReadFromBlock(UINT Block);
 	template <class _op_t, class... _args_t> VOID Update(NodeOperation** Next, _args_t... Arguments);
-	VOID Validate(Node* Node);
 	VOID WriteToBlock(UINT Block);
 	UINT m_BlockId;
 	UINT m_BlockPosition;

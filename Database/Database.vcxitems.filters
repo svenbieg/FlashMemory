@@ -21,7 +21,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Block.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,7 +50,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Block.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
   </ItemGroup>

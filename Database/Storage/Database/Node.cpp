@@ -14,7 +14,7 @@
 
 #include "Concurrency/ReadLock.h"
 #include "Concurrency/WriteLock.h"
-#include "Storage/Database/Entry.h"
+#include "Storage/Database/Block.h"
 #include "Storage/Database/Database.h"
 #include "Storage/Database/NodeOperation.h"
 #include "Storage/Encoding/Dwarf.h"
@@ -361,12 +361,17 @@ m_Update=nullptr;
 VOID Node::ReadFromBlock(UINT block_id)
 {
 auto volume=m_Database->GetVolume();
-auto entry=Entry::Create(volume, block_id, NODE_ID);
-StreamReader reader(entry);
+auto block=Block::Create(volume, block_id);
+StreamReader reader(block);
+UINT id=0;
+reader.Read(&id, sizeof(UINT));
+if(id!=NODE_ID)
+	throw InvalidArgumentException();
+auto skip_bits=block->ReadSkipBits();
+block->SkipPages(skip_bits);
 NodeOperation::ReadFromStream(reader, this);
 m_BlockId=block_id;
-m_BlockPosition=entry->GetPosition();
-Validate(this);
+m_BlockPosition=block->GetPosition();
 }
 
 template <class _op_t, class... _args_t> VOID Node::Update(NodeOperation** next_ptr, _args_t... args)
@@ -376,22 +381,15 @@ while(*next_ptr)
 *next_ptr=new _op_t(args...);
 }
 
-VOID Node::Validate(Node* node)
-{
-FlagHelper::Set(m_Flags, NodeFlags::Update);
-for(auto child: m_Children)
-	Validate(dynamic_cast<Node*>((XmlNode*)child));
-}
-
 VOID Node::WriteToBlock(UINT block_id)
 {
 auto volume=m_Database->GetVolume();
-auto entry=Entry::Create(volume, block_id, NODE_ID, FileCreateMode::CreateAlways);
-StreamWriter writer(entry);
+auto block=Block::Create(volume, block_id);
+StreamWriter writer(block);
 NodeOperation::WriteToStream(writer, this);
-entry->Flush();
+block->Flush();
 m_BlockId=block_id;
-m_BlockPosition=entry->GetPosition();
+m_BlockPosition=block->GetPosition();
 }
 
 }}
