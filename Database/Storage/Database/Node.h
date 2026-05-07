@@ -75,10 +75,9 @@ protected:
 	// Con-/Destructors
 	Node(Database* Database, UINT Block);
 	Node(Node* Parent, Handle<String> Tag=nullptr);
-	static Handle<Node> Create(Database* Database, UINT Block);
-	static inline Handle<Node> Create(Database* Database, Handle<String> Tag=nullptr)
+	static inline Handle<Node> Create(Database* Database, UINT Block)
 		{
-		return Object::Create<Node>(Database, Tag);
+		return Entry::Create<Node>(Database, Block);
 		}
 	static inline Handle<Node> Create(Node* Parent, Handle<String> Tag=nullptr)
 		{
@@ -104,7 +103,6 @@ private:
 	AttributeMap m_Attributes;
 	ChildList m_Children;
 	NodeFlags m_Flags;
-	Node* m_Parent;
 	Handle<String> m_Tag;
 	Handle<String> m_Value;
 	NodeUpdate* m_Update;

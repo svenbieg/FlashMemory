@@ -13,6 +13,7 @@
 //=======
 
 #include "Storage/Database/Editor.h"
+#include "Storage/Database/Map.h"
 
 
 //===========
@@ -76,7 +77,8 @@ switch(create)
 
 VOID Database::Initialize()
 {
-m_Header=Node::Create(this, "Header");
+m_Header=Node::Create(this, 0);
+m_Header->SetTag("Header");
 m_Header->WriteToBlock(0);
 m_Header->WriteToBlock(1);
 }

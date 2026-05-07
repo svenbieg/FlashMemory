@@ -101,7 +101,7 @@ if(!m_Attributes.index_of(key, &pos))
 m_Attributes.remove_at(pos);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	NodeUpdate::Create<NodeUpdateAttributeRemove>(&m_Update, pos);
-editor->Invalidate(this);
+Invalidate(editor);
 return true;
 }
 
@@ -122,7 +122,7 @@ FreeChild(editor, child);
 m_Children.remove_at(pos);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	NodeUpdate::Create<NodeUpdateChildRemove>(&m_Update, pos);
-editor->Invalidate(this);
+Invalidate(editor);
 }
 
 BOOL Node::SetAttribute(Handle<String> key, Handle<String> value)
@@ -150,7 +150,7 @@ else
 	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 		NodeUpdate::Create<NodeUpdateAttributeSet>(&m_Update, key, value);
 	}
-editor->Invalidate(this);
+Invalidate(editor);
 return true;
 }
 
@@ -171,7 +171,7 @@ if(m_Tag==tag)
 m_Tag=tag;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	NodeUpdate::Create<NodeUpdateTagSet>(&m_Update, tag);
-editor->Invalidate(this);
+Invalidate(editor);
 return true;
 }
 
@@ -192,7 +192,7 @@ if(m_Value==value)
 m_Value=value;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	NodeUpdate::Create<NodeUpdateValueSet>(&m_Update, value);
-editor->Invalidate(this);
+Invalidate(editor);
 return true;
 }
 
@@ -204,24 +204,17 @@ return true;
 Node::Node(Database* database, UINT block):
 Entry(database, block),
 m_Flags(NodeFlags::None),
-m_Parent(nullptr),
 m_Update(nullptr)
 {}
 
 Node::Node(Node* parent, Handle<String> tag):
-Entry(parent->m_Database, -1),
+Entry(parent),
 m_Flags(NodeFlags::None),
-m_Parent(parent),
 m_Update(nullptr)
 {
-m_Parent->m_Children.append(this);
-if(FlagHelper::Get(m_Parent->m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateChildAppend>(&m_Parent->m_Update, this);
-}
-
-Handle<Node> Node::Create(Database* database, UINT block)
-{
-return database->CreateEntry<Node>(block);
+parent->m_Children.append(this);
+if(FlagHelper::Get(parent->m_Flags, NodeFlags::Update))
+	NodeUpdate::Create<NodeUpdateChildAppend>(&parent->m_Update, this);
 }
 
 
@@ -247,7 +240,7 @@ for(UINT pos=0; pos<child_count; pos++)
 m_Value=nullptr;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 	NodeUpdate::Create<NodeUpdateClear>(&m_Update);
-editor->Invalidate(this);
+Invalidate(editor);
 return true;
 }
 

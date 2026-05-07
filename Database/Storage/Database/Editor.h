@@ -12,7 +12,8 @@
 // Using
 //=======
 
-#include "Storage/Database/Node.h"
+#include "Collections/index.hpp"
+#include "Storage/Database/Entry.h"
 
 
 //===========
@@ -38,11 +39,11 @@ class Editor: public Object
 {
 public:
 	// Using
-	using NodeIndex=Collections::index<Handle<Node>>;
+	using EntryIndex=Collections::index<Handle<Entry>>;
 
 	// Friends
 	friend Database;
-	friend Node;
+	friend Entry;
 	friend Object;
 
 	// Con-/Destructors
@@ -50,7 +51,6 @@ public:
 
 	// Common
 	UINT Allocate(UINT Count=1);
-	VOID Cancel();
 	VOID Flush();
 	VOID Free(UINT Block, UINT Count=1);
 
@@ -60,8 +60,8 @@ private:
 	static inline Handle<Editor> Create(Database* Database) { return Object::Create<Editor>(Database); }
 
 	// Common
-	VOID Invalidate(Node* Node);
-	NodeIndex m_ChangedNodes;
+	VOID Cancel();
+	EntryIndex m_ChangedEntries;
 	Database* m_Database;
 };
 

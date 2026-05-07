@@ -44,11 +44,6 @@ throw NotImplementedException();
 return 0;
 }
 
-VOID Editor::Cancel()
-{
-m_ChangedNodes.clear();
-}
-
 VOID Editor::Flush()
 {
 throw NotImplementedException();
@@ -75,9 +70,9 @@ m_Database->m_Mutex.Lock();
 // Common Private
 //================
 
-VOID Editor::Invalidate(Node* node)
+VOID Editor::Cancel()
 {
-m_ChangedNodes.add(node);
+m_ChangedEntries.clear();
 }
 
 }}

@@ -42,8 +42,7 @@ ChildSelect,
 Clear,
 NodeEnd,
 TagSet,
-ValueSet,
-Done=255
+ValueSet
 };
 
 
@@ -55,19 +54,15 @@ SIZE_T NodeUpdate::ReadFromStream(StreamReader& reader, Node* node)
 {
 auto stream=reader.GetStream();
 SIZE_T size=0;
-FlagHelper::Set(node->m_Flags, Node::NodeFlags::Update);
 Node* selected=node;
 while(stream->Available())
 	{
 	Update update=Update::None;
 	size+=stream->Read(&update, sizeof(Update));
-	if(update==Update::Done)
-		{
-		size--;
-		break;
-		}
 	if(update==Update::None)
 		continue;
+	if(update==Update::NodeEnd)
+		break;
 	switch(update)
 		{
 		case Update::AttributeRemove:
@@ -97,9 +92,8 @@ while(stream->Available())
 			}
 		case Update::ChildAppend:
 			{
-			auto child=Node::Create(selected->m_Database);
+			auto child=Node::Create(selected);
 			size+=ReadFromStream(reader, child);
-			selected->m_Children.append(child);
 			break;
 			}
 		case Update::ChildRemove:
@@ -130,10 +124,6 @@ while(stream->Available())
 			selected->m_Value=nullptr;
 			break;
 			}
-		case Update::NodeEnd:
-			{
-			return size;
-			}
 		case Update::TagSet:
 			{
 			auto tag=reader.ReadString(&size);
@@ -152,6 +142,7 @@ while(stream->Available())
 			}
 		}
 	}
+FlagHelper::Set(node->m_Flags, Node::NodeFlags::Update);
 return size;
 }
 

@@ -53,6 +53,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h">
       <Filter>Storage</Filter>
     </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Map.h">
+      <Filter>Storage\Database</Filter>
+    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Block.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
