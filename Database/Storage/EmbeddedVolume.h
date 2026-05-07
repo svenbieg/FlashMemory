@@ -2,10 +2,10 @@
 // EmbeddedVolume.h
 //==================
 
+// The embedded volume is a combination of reversed and reliable.
+
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // https://github.com/svenbieg/Database/wiki/Storage#Embedded-Volume
-
-// The embedded volume is a combination of reversed and reliable.
 
 #pragma once
 

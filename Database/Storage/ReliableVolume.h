@@ -2,10 +2,10 @@
 // ReliableVolume.h
 //==================
 
+// Wear-leveling is redirecting bad blocks.
+
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // https://github.com/svenbieg/Database/wiki/Storage#Reliable-Volume
-
-// Wear-leveling is redirecting bad blocks.
 
 #pragma once
 
