@@ -36,13 +36,6 @@ namespace Storage {
 	namespace Database {
 
 
-//==========
-// Settings
-//==========
-
-static const UINT NODE_ID='NODE';
-
-
 //==================
 // Con-/Destructors
 //==================
@@ -124,6 +117,15 @@ if(FlagHelper::Get(m_Flags, NodeFlags::Update))
 Invalidate(editor);
 }
 
+BOOL Node::SetAttribute(Handle<String> key, INT64 value)
+{
+auto editor=m_Database->Edit();
+BOOL set=SetAttribute(editor, key, value);
+if(set)
+	editor->Flush();
+return set;
+}
+
 BOOL Node::SetAttribute(Handle<String> key, Handle<String> value)
 {
 auto editor=m_Database->Edit();
@@ -131,6 +133,26 @@ BOOL set=SetAttribute(editor, key, value);
 if(set)
 	editor->Flush();
 return set;
+}
+
+BOOL Node::SetAttribute(Editor* editor, Handle<String> key, INT64 value)
+{
+WriteLock lock(m_Mutex);
+UINT pos=0;
+if(m_Attributes.index_of(key, &pos))
+	{
+	m_Attributes.set(key, String::Create("%i", value));
+	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+		NodeUpdate::Create<NodeUpdateAttributeSetInt64>(&m_Update, pos, value);
+	}
+else
+	{
+	m_Attributes.set(key, String::Create("%i", value));
+	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+		NodeUpdate::Create<NodeUpdateAttributeSetInt64>(&m_Update, key, value);
+	}
+Invalidate(editor);
+return true;
 }
 
 BOOL Node::SetAttribute(Editor* editor, Handle<String> key, Handle<String> value)
@@ -200,32 +222,23 @@ return true;
 // Con-/Destructors Protected
 //============================
 
-Node::Node(Database* database):
-Entry(database),
-m_Flags(NodeFlags::None),
-m_Update(nullptr)
-{}
-
-Node::Node(Database* database, UINT block):
-Entry(database, block),
+Node::Node(Database* database, UINT block_id):
+Entry(database, block_id),
 m_Flags(NodeFlags::None),
 m_Update(nullptr)
 {
-StreamReader reader(m_Block);
+if(m_BlockId==-1)
+	return;
+auto block=Block::Create(m_Database, m_BlockId);
 UINT id=0;
-reader.Read(&id, sizeof(UINT));
+block->Read(&id, sizeof(UINT));
 if(id!=NODE_ID)
 	throw InvalidArgumentException();
+SkipBits::Skip(block);
+StreamReader reader(block);
 NodeUpdate::ReadFromStream(reader, this);
-m_BlockPosition=m_Block->GetPosition();
-m_Block=nullptr;
+m_BlockPosition=block->GetPosition();
 }
-
-Node::Node(Database* database, UINT block, EntryCreateMode create):
-Entry(database, block, create),
-m_Flags(NodeFlags::None),
-m_Update(nullptr)
-{}
 
 Node::Node(Node* parent, Handle<String> tag):
 Entry(parent->m_Database),
@@ -283,7 +296,7 @@ child->ClearInternal(editor);
 child->ClearUpdate();
 if(child->m_BlockId!=-1)
 	{
-	editor->Free(child->m_Block);
+	editor->Free(child->m_BlockId);
 	child->m_BlockId=-1;
 	}
 }
@@ -305,17 +318,9 @@ return child;
 
 VOID Node::WriteToBlock(UINT block_id)
 {
-auto volume=m_Database->GetVolume();
-auto block=Block::Create(volume, block_id);
-if(m_SkipBits)
-	{
-	m_SkipBits->Clear();
-	}
-else
-	{
-	m_SkipBits=SkipBits::Create(volume);
-	}
-m_SkipBits->WriteToStream(block);
+auto block=Block::Create(m_Database, block_id);
+block->Write(&NODE_ID, sizeof(UINT));
+SkipBits::Initialize(block);
 StreamWriter writer(block);
 NodeUpdate::WriteToStream(writer, this);
 block->Flush();

@@ -119,6 +119,34 @@ private:
 	Handle<String> m_Value;
 };
 
+class NodeUpdateAttributeSetInt64: public NodeUpdate
+{
+private:
+	// Friends
+	friend NodeUpdate;
+
+	// Con-/Destructors
+	NodeUpdateAttributeSetInt64(UINT Position, INT64 Value):
+		m_Position(Position),
+		m_Value(Value)
+		{}
+	NodeUpdateAttributeSetInt64(Handle<String> Key, INT64 Value):
+		m_Key(Key),
+		m_Position(0),
+		m_Value(Value)
+		{}
+
+	// Common
+	SIZE_T WriteToStream(StreamWriter& Writer)override
+		{
+		return WriteToStream(Writer, m_Position, m_Key, m_Value);
+		}
+	static SIZE_T WriteToStream(StreamWriter& Writer, UINT Position, Handle<String> Key, INT64 Value);
+	Handle<String> m_Key;
+	UINT m_Position;
+	INT64 m_Value;
+};
+
 class NodeUpdateChildAppend: public NodeUpdate
 {
 private:

@@ -25,6 +25,13 @@ namespace Storage {
 	namespace Database {
 
 
+//======================
+// Forward-Declarations
+//======================
+
+class Database;
+
+
 //=======
 // Block
 //=======
@@ -36,9 +43,10 @@ public:
 	friend Object;
 
 	// Con-/Destructors
-	static Handle<Block> Create(Volume* Volume, UINT Block);
+	static Handle<Block> Create(Database* Database, UINT Block);
 
 	// Common
+	BYTE const* BeginRead();
 	inline UINT GetPageSize()const { return m_PageSize; }
 	inline UINT GetPosition()const { return m_Position; }
 	inline UINT GetSize()const { return m_Size; }

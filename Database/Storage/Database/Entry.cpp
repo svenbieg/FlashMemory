@@ -28,30 +28,11 @@ namespace Storage {
 // Con-/Destructors Protected
 //============================
 
-Entry::Entry(Database* database):
-m_BlockId(-1),
-m_BlockPosition(0),
-m_Database(database)
-{}
-
 Entry::Entry(Database* database, UINT block_id):
 m_BlockId(block_id),
 m_BlockPosition(0),
 m_Database(database)
-{
-auto volume=database->GetVolume();
-m_Block=Block::Create(volume, m_BlockId);
-m_SkipBits=SkipBits::Create(m_Block);
-}
-
-Entry::Entry(Database* database, UINT block_id, EntryCreateMode create):
-m_BlockId(block_id),
-m_BlockPosition(0),
-m_Database(database)
-{
-auto volume=database->GetVolume();
-m_SkipBits=SkipBits::Create(volume);
-}
+{}
 
 
 //==================

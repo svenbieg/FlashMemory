@@ -44,19 +44,24 @@ public:
 
 private:
 	// Settings
-	static const UINT MAP_ID='MAP';
+	static constexpr UINT MAP_ID=ENTRY_ID('MAP ');
 
 	// Con-/Destructors
 	Map(Database* Database, UINT Block): Entry(Database, Block)
 		{
-		m_BlockPosition=m_Block->GetPosition();
-		m_Block=nullptr;
+		if(m_BlockId==-1)
+			return;
+		auto block=Block::Create(m_Database, m_BlockId);
+		UINT id=0;
+		block->Read(&id, sizeof(UINT));
+		if(id!=MAP_ID)
+			throw InvalidArgumentException();
+		SkipBits::Skip(block);
+		m_BlockPosition=block->GetPosition();
 		}
-	Map(Database* Database, UINT Block, EntryCreateMode Create): Entry(Database, Block, Create)
-		{}
-	static inline Handle<Map> Create(Database* Database, UINT Block, EntryCreateMode Create)
+	static inline Handle<Map> Create(Database* Database, UINT Block=-1)
 		{
-		return Entry::Create<Map>(Database, Block, Create);
+		return Entry::Create<Map>(Database, Block);
 		}
 
 	// Group

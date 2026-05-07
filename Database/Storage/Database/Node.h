@@ -64,7 +64,9 @@ public:
 	BOOL RemoveAttribute(Editor* Editor, Handle<String> Key);
 	VOID RemoveChild(Handle<Node> Child);
 	VOID RemoveChild(Editor* Editor, Handle<Node> Child);
+	BOOL SetAttribute(Handle<String> Key, INT64 Value);
 	BOOL SetAttribute(Handle<String> Key, Handle<String> Value);
+	BOOL SetAttribute(Editor* Editor, Handle<String> Key, INT64 Value);
 	BOOL SetAttribute(Editor* Editor, Handle<String> Key, Handle<String> Value);
 	BOOL SetTag(Handle<String> Tag);
 	BOOL SetTag(Editor* Editor, Handle<String> Tag);
@@ -73,21 +75,11 @@ public:
 
 protected:
 	// Con-/Destructors
-	Node(Database* Database);
 	Node(Database* Database, UINT Block);
-	Node(Database* Database, UINT Block, EntryCreateMode Create);
 	Node(Node* Parent, Handle<String> Tag=nullptr);
-	static inline Handle<Node> Create(Database* Database)
-		{
-		return Object::Create<Node>(Database);
-		}
-	static inline Handle<Node> Create(Database* Database, UINT Block)
+	static inline Handle<Node> Create(Database* Database, UINT Block=-1)
 		{
 		return Entry::Create<Node>(Database, Block);
-		}
-	static inline Handle<Node> Create(Database* Database, UINT Block, EntryCreateMode Create)
-		{
-		return Entry::Create<Node>(Database, Block, Create);
 		}
 	static inline Handle<Node> Create(Node* Parent, Handle<String> Tag=nullptr)
 		{
@@ -95,6 +87,9 @@ protected:
 		}
 
 private:
+	// Settings
+	static constexpr UINT NODE_ID=ENTRY_ID('NODE');
+
 	// Flags
 	enum class NodeFlags: UINT
 		{

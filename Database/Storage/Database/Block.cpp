@@ -12,6 +12,7 @@
 // Using
 //=======
 
+#include "Storage/Database/Database.h"
 #include "MemoryHelper.h"
 
 
@@ -27,16 +28,31 @@ namespace Storage {
 // Con-/Destructors
 //==================
 
-Handle<Block> Block::Create(Volume* volume, UINT block)
+Handle<Block> Block::Create(Database* database, UINT block)
 {
+auto volume=database->GetVolume();
 UINT page_size=volume->GetPageSize();
-return Object::CreateEx<Block, Volume*>(page_size, sizeof(SIZE_T), volume, block);
+return Object::CreateEx<Block>(page_size, sizeof(SIZE_T), volume, block);
 }
 
 
 //========
 // Common
 //========
+
+BYTE const* Block::BeginRead()
+{
+UINT page=m_Position/m_PageSize;
+if(m_Page==page)
+	{
+	UINT page_pos=m_Position%m_PageSize;
+	return &m_Buffer[page_pos];
+	}
+UINT64 offset=m_Offset+page*m_PageSize;
+m_Volume->Read(offset, m_Buffer, m_PageSize);
+m_Page=page;
+return m_Buffer;
+}
 
 VOID Block::Seek(UINT pos)
 {

@@ -5,6 +5,15 @@
 #include "SkipBits.h"
 
 
+//=======
+// Using
+//=======
+
+#include "Devices/System/Cpu.h"
+
+using namespace Devices::System;
+
+
 //===========
 // Namespace
 //===========
@@ -14,94 +23,54 @@ namespace Storage {
 		namespace Updates {
 
 
-//==================
-// Con-/Destructors
-//==================
-
-Handle<SkipBits> SkipBits::Create(Block* block)
-{
-UINT block_size=block->GetSize();
-UINT chunk_count=block_size/CHUNK_SIZE;
-UINT size=chunk_count/8;
-return Object::CreateEx<SkipBits>(size, sizeof(SIZE_T), block);
-}
-
-Handle<SkipBits> SkipBits::Create(Volume* volume)
-{
-UINT block_size=volume->GetBlockSize();
-UINT chunk_count=block_size/CHUNK_SIZE;
-UINT size=chunk_count/8;
-return Object::CreateEx<SkipBits>(size, sizeof(SIZE_T));
-}
-
-
 //========
 // Common
 //========
 
-VOID SkipBits::Clear()
+VOID SkipBits::Initialize(Block* block)
 {
-Fill(-1);
-m_Changed=false;
-m_SkipCount=0;
+UINT block_size=block->GetSize();
+UINT page_size=block->GetPageSize();
+UINT page_count=block_size/page_size;
+UINT count=page_count/32;
+UINT bits=-1;
+for(UINT u=0; u<count; u++)
+	block->Write(&bits, sizeof(UINT));
 }
 
-VOID SkipBits::Skip(UINT skip)
+VOID SkipBits::Skip(Block* block)
 {
-UINT skip_count=skip/CHUNK_SIZE;
-if(m_SkipCount==skip_count)
-	return;
-auto bits=Begin();
-for(UINT pos=m_SkipCount/ITEM_BITS; pos<m_Count; pos++)
+UINT block_size=block->GetSize();
+UINT page_size=block->GetPageSize();
+UINT page_count=block_size/page_size;
+UINT count=page_count/32;
+auto buf=(UINT const*)block->BeginRead();
+UINT skip_count=SkipCount(buf, count);
+UINT pos=skip_count*page_size;
+block->Seek(pos);
+buf=(UINT const*)block->BeginRead();
+skip_count=SkipCount(buf, 1);
+UINT chunk_size=page_size/32;
+pos+=skip_count*chunk_size;
+block->Seek(pos);
+}
+
+
+//================
+// Common Private
+//================
+
+UINT SkipBits::SkipCount(UINT const* bits, UINT count)
+{
+UINT skip_count=0;
+for(UINT u=0; u<count; u++)
 	{
-	UINT skip_pos=pos*ITEM_BITS;
-	if(skip_pos>=skip_count)
+	UINT skip=Cpu::CountTrailingZeros(bits[u]);
+	if(skip==0)
 		break;
-	UINT mask=-1;
-	UINT shift=TypeHelper::Min(skip_count-skip_pos, ITEM_BITS);
-	mask>>=shift;
-	mask<<=shift;
-	bits[pos]=mask;
+	skip_count+=skip;
 	}
-m_SkipCount=skip_count;
-m_Changed=true;
-}
-
-
-//==========================
-// Con-/Destructors Private
-//==========================
-
-SkipBits::SkipBits(BYTE* buf, SIZE_T size):
-Array(buf, size),
-m_Changed(false),
-m_SkipCount(0)
-{
-Fill(-1);
-}
-
-SkipBits::SkipBits(BYTE* buf, SIZE_T size, Block* block):
-Array(buf, size),
-m_Changed(false),
-m_SkipCount(0)
-{
-UINT id=0;
-block->Read(&id, sizeof(UINT));
-if(id!=SKIP_ID)
-	throw InvalidArgumentException();
-block->Read(buf, size);
-auto bits=Begin();
-for(UINT pos=0; pos<m_Count; pos++)
-	{
-	UINT skip=Cpu::CountTrailingZeros(bits[pos]);
-	if(!skip)
-		break;
-	m_SkipCount+=skip;
-	}
-UINT block_pos=block->GetPosition();
-UINT block_skip=m_SkipCount*CHUNK_SIZE;
-if(block_skip>block_pos)
-	block->Seek(block_skip);
+return skip_count;
 }
 
 }}}

@@ -37,6 +37,7 @@ enum class Update: BYTE
 None=0,
 AttributeRemove,
 AttributeSet,
+AttributeSetInt64,
 ChildAppend,
 ChildRemove,
 ChildSelect,
@@ -88,6 +89,26 @@ while(stream->Available())
 				auto& attr=selected->m_Attributes.get_at(pos-1);
 				auto value=reader.ReadString(&size);
 				attr.set_value(value);
+				}
+			return size;
+			}
+		case Update::AttributeSetInt64:
+			{
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(stream, &pos);
+			if(pos==0)
+				{
+				auto key=reader.ReadString(&size);
+				INT64 value=0;
+				size+=Dwarf::ReadSigned(stream, &value);
+				selected->m_Attributes.set(key, String::Create("%i", value));
+				}
+			else
+				{
+				auto& attr=selected->m_Attributes.get_at(pos-1);
+				INT64 value=0;
+				size+=Dwarf::ReadSigned(stream, &value);
+				attr.set_value(String::Create("%i", value));
 				}
 			return size;
 			}
@@ -215,6 +236,25 @@ else
 	size+=Dwarf::WriteUnsigned(stream, pos+1);
 	}
 size+=writer.WriteString(value);
+return size;
+}
+
+SIZE_T NodeUpdateAttributeSetInt64::WriteToStream(StreamWriter& writer, UINT pos, Handle<String> key, INT64 value)
+{
+auto stream=writer.GetStream();
+SIZE_T size=0;
+auto op=Update::AttributeSetInt64;
+size+=stream->Write(&op, sizeof(Update));
+if(key)
+	{
+	size+=Dwarf::WriteUnsigned(stream, 0);
+	size+=writer.WriteString(key);
+	}
+else
+	{
+	size+=Dwarf::WriteUnsigned(stream, pos+1);
+	}
+size+=Dwarf::WriteSigned(stream, value);
 return size;
 }
 
