@@ -1,6 +1,6 @@
-//=================
-// NodeOperation.h
-//=================
+//==============
+// NodeUpdate.h
+//==============
 
 #pragma once
 
@@ -15,41 +15,54 @@
 #include "StringClass.h"
 
 
+//======================
+// Forward-Declarations
+//======================
+
+namespace Storage
+{
+namespace Database
+	{
+	class Node;
+	}
+}
+
+
 //===========
 // Namespace
 //===========
 
 namespace Storage {
 	namespace Database {
+		namespace Updates {
 
 
-//======================
-// Forward-Declarations
-//======================
+//=============
+// Node-Update
+//=============
 
-class Node;
-
-
-//================
-// Node-Operation
-//================
-
-class NodeOperation
+class NodeUpdate
 {
 public:
-	// Friends
-	friend Node;
-
 	// Con-/Destructors
-	virtual ~NodeOperation() {}
+	virtual ~NodeUpdate() {}
 
 protected:
 	// Using
 	using StreamReader=Storage::Streams::StreamReader;
 	using StreamWriter=Storage::Streams::StreamWriter;
 
+	// Friends
+	friend Node;
+
 	// Con-/Destructors
-	NodeOperation(): m_Next(nullptr) {}
+	NodeUpdate(): m_Next(nullptr) {}
+	template <class _update_t, class... _args_t> static VOID Create(NodeUpdate** Next, _args_t... Arguments)
+		{
+		while(*Next)
+			Next=&(*Next)->m_Next;
+		*Next=new _update_t(Arguments...);
+		}
 
 	// Common
 	static SIZE_T ReadFromStream(StreamReader& Reader, Node* Node);
@@ -57,41 +70,40 @@ protected:
 	static SIZE_T WriteToStream(StreamWriter& Writer, Node* Node);
 
 	// Common
-	NodeOperation* m_Next;
+	NodeUpdate* m_Next;
 };
 
 
-//============
-// Operations
-//============
+//=========
+// Updates
+//=========
 
-class NodeOperationAttributeRemove: public NodeOperation
+class NodeUpdateAttributeRemove: public NodeUpdate
 {
 private:
 	// Friends
-	friend Node;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationAttributeRemove(UINT Position): m_Position(Position) {}
+	NodeUpdateAttributeRemove(UINT Position): m_Position(Position) {}
 
 	// Common
 	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	UINT m_Position;
 };
 
-class NodeOperationAttributeSet: public NodeOperation
+class NodeUpdateAttributeSet: public NodeUpdate
 {
 private:
 	// Friends
-	friend Node;
-	friend NodeOperation;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationAttributeSet(UINT Position, Handle<String> Value):
+	NodeUpdateAttributeSet(UINT Position, Handle<String> Value):
 		m_Position(Position),
 		m_Value(Value)
 		{}
-	NodeOperationAttributeSet(Handle<String> Key, Handle<String> Value):
+	NodeUpdateAttributeSet(Handle<String> Key, Handle<String> Value):
 		m_Key(Key),
 		m_Position(0),
 		m_Value(Value)
@@ -108,39 +120,14 @@ private:
 	Handle<String> m_Value;
 };
 
-class NodeOperationAttributeSetInteger: public NodeOperation
+class NodeUpdateChildAppend: public NodeUpdate
 {
 private:
 	// Friends
-	friend Node;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationAttributeSetInteger(UINT Position, INT64 Value):
-		m_Position(Position),
-		m_Value(Value)
-		{}
-	NodeOperationAttributeSetInteger(Handle<String> Key, INT64 Value):
-		m_Key(Key),
-		m_Position(0),
-		m_Value(Value)
-		{}
-
-	// Common
-	SIZE_T WriteToStream(StreamWriter& Writer)override;
-	Handle<String> m_Key;
-	UINT m_Position;
-	INT64 m_Value;
-};
-
-class NodeOperationChildAppend: public NodeOperation
-{
-private:
-	// Friends
-	friend Node;
-	friend NodeOperation;
-
-	// Con-/Destructors
-	NodeOperationChildAppend(Node* Child): m_Child(Child) {}
+	NodeUpdateChildAppend(Node* Child): m_Child(Child) {}
 
 	// Common
 	SIZE_T WriteToStream(StreamWriter& Writer)override
@@ -151,74 +138,58 @@ private:
 	Handle<Node> m_Child;
 };
 
-class NodeOperationChildInsert: public NodeOperation
+class NodeUpdateChildRemove: public NodeUpdate
 {
 private:
 	// Friends
-	friend Node;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationChildInsert(UINT Position, Node* Child): m_Child(Child), m_Position(Position) {}
-
-	// Common
-	SIZE_T WriteToStream(StreamWriter& Writer)override;
-	Handle<Node> m_Child;
-	UINT m_Position;
-};
-
-class NodeOperationChildRemove: public NodeOperation
-{
-private:
-	// Friends
-	friend Node;
-
-	// Con-/Destructors
-	NodeOperationChildRemove(UINT Position): m_Position(Position) {}
+	NodeUpdateChildRemove(UINT Position): m_Position(Position) {}
 
 	// Common
 	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	UINT m_Position;
 };
 
-class NodeOperationChildSelect: public NodeOperation
+class NodeUpdateChildSelect: public NodeUpdate
 {
 private:
 	// Using
 	using PositionArray=Collections::Array<UINT>;
 
 	// Friends
-	friend Node;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationChildSelect(PositionArray* Position): m_Position(Position) {}
+	NodeUpdateChildSelect(PositionArray* Position): m_Position(Position) {}
 
 	// Common
 	SIZE_T WriteToStream(StreamWriter& Writer)override;
 	Handle<PositionArray> m_Position;
 };
 
-class NodeOperationClear: public NodeOperation
+class NodeUpdateClear: public NodeUpdate
 {
 private:
 	// Friends
-	friend Node;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationClear()=default;
+	NodeUpdateClear()=default;
 
 	// Common
 	SIZE_T WriteToStream(StreamWriter& Writer)override;
 };
 
-class NodeOperationTagSet: public NodeOperation
+class NodeUpdateTagSet: public NodeUpdate
 {
 private:
 	// Friends
-	friend Node;
-	friend NodeOperation;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationTagSet(Handle<String> Tag): m_Tag(Tag) {}
+	NodeUpdateTagSet(Handle<String> Tag): m_Tag(Tag) {}
 
 	// Common
 	SIZE_T WriteToStream(StreamWriter& Writer)override
@@ -229,15 +200,14 @@ private:
 	Handle<String> m_Tag;
 };
 
-class NodeOperationValueSet: public NodeOperation
+class NodeUpdateValueSet: public NodeUpdate
 {
 private:
 	// Friends
-	friend Node;
-	friend NodeOperation;
+	friend NodeUpdate;
 
 	// Con-/Destructors
-	NodeOperationValueSet(Handle<String> Value): m_Value(Value) {}
+	NodeUpdateValueSet(Handle<String> Value): m_Value(Value) {}
 
 	// Common
 	SIZE_T WriteToStream(StreamWriter& Writer)override
@@ -248,4 +218,4 @@ private:
 	Handle<String> m_Value;
 };
 
-}}
+}}}

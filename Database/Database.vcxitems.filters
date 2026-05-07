@@ -7,6 +7,9 @@
     <Filter Include="Storage\Database">
       <UniqueIdentifier>{4a1e7458-5028-48af-868b-8d39fe9f4960}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Storage\Database\Updates">
+      <UniqueIdentifier>{33b1ff58-079f-483b-b708-8c18df568e45}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Database.cpp">
@@ -18,11 +21,14 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.cpp">
-      <Filter>Storage\Database</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Block.cpp">
       <Filter>Storage\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.cpp">
+      <Filter>Storage\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.cpp">
+      <Filter>Storage\Database\Updates</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -47,11 +53,14 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h">
       <Filter>Storage</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\NodeOperation.h">
-      <Filter>Storage\Database</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Block.h">
       <Filter>Storage\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.h">
+      <Filter>Storage\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.h">
+      <Filter>Storage\Database\Updates</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

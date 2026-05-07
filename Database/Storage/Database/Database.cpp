@@ -77,7 +77,6 @@ switch(create)
 VOID Database::Initialize()
 {
 m_Header=Node::Create(this, "Header");
-m_Header->SetAttribute("Used", 2);
 m_Header->WriteToBlock(0);
 m_Header->WriteToBlock(1);
 }
@@ -101,7 +100,7 @@ return header;
 
 VOID Database::ValidateHeader(Node* header)
 {
-if(header->m_BlockId==0)
+if(header->m_Block==0)
 	{
 	try
 		{
