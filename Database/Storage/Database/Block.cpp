@@ -38,13 +38,6 @@ return Object::CreateEx<Block, Volume*>(page_size, sizeof(SIZE_T), volume, block
 // Common
 //========
 
-Handle<Block::SkipBitArray> Block::ReadSkipBits()
-{
-auto skip_bits=CreateSkipBits();
-skip_bits->ReadFromStream(this);
-return skip_bits;
-}
-
 VOID Block::Seek(UINT pos)
 {
 if(m_Position==pos)
@@ -69,24 +62,6 @@ m_Offset=offset;
 m_Page=-1;
 m_Position=pos;
 m_Written=0;
-}
-
-VOID Block::SkipPages(SkipBitArray* skip_bits)
-{
-UINT count=skip_bits->GetCount();
-UINT page=0;
-for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
-	{
-	UINT bits=it->GetCurrent();
-	if(bits)
-		{
-		page+=Cpu::CountTrailingZeros(bits);
-		break;
-		}
-	page+=32;
-	}
-if(page>0)
-	Seek(page*m_PageSize);
 }
 
 
@@ -175,33 +150,6 @@ m_Volume(vol),
 m_Written(0)
 {
 m_Offset=(UINT64)block*m_Size;
-}
-
-
-//==================
-// Common Protected
-//==================
-
-Handle<Block::SkipBitArray> Block::CreateSkipBits(UINT skip)
-{
-UINT page_count=m_Size/m_PageSize;
-auto skip_bits=SkipBitArray::Create(page_count/32);
-skip_bits->Fill(-1);
-if(skip==0)
-	return skip_bits;
-UINT pos=0;
-for(auto it=skip_bits->First(); it->HasCurrent(); it->MoveNext())
-	{
-	if(pos>=skip)
-		break;
-	UINT mask=-1;
-	UINT shift=TypeHelper::Min(skip-pos, 32);
-	mask>>=shift;
-	mask<<=shift;
-	it->SetCurrent(mask);
-	pos+=32;
-	}
-return skip_bits;
 }
 
 }}

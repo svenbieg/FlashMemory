@@ -73,15 +73,24 @@ public:
 
 protected:
 	// Con-/Destructors
+	Node(Database* Database);
 	Node(Database* Database, UINT Block);
+	Node(Database* Database, UINT Block, EntryCreateMode Create);
 	Node(Node* Parent, Handle<String> Tag=nullptr);
+	static inline Handle<Node> Create(Database* Database)
+		{
+		return Object::Create<Node>(Database);
+		}
 	static inline Handle<Node> Create(Database* Database, UINT Block)
 		{
 		return Entry::Create<Node>(Database, Block);
 		}
+	static inline Handle<Node> Create(Database* Database, UINT Block, EntryCreateMode Create)
+		{
+		return Entry::Create<Node>(Database, Block, Create);
+		}
 	static inline Handle<Node> Create(Node* Parent, Handle<String> Tag=nullptr)
 		{
-		assert(Parent);
 		return Object::Create<Node>(Parent, Tag);
 		}
 
@@ -98,7 +107,6 @@ private:
 	VOID ClearUpdate();
 	VOID FreeChild(Editor* Editor, Node* Child);
 	Handle<Node> GetChildInternal(UINT Position);
-	VOID ReadFromBlock(UINT Block);
 	VOID WriteToBlock(UINT Block);
 	AttributeMap m_Attributes;
 	ChildList m_Children;

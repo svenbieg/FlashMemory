@@ -28,19 +28,30 @@ namespace Storage {
 // Con-/Destructors Protected
 //============================
 
-Entry::Entry(Database* database, UINT block):
-m_Block(block),
+Entry::Entry(Database* database):
+m_BlockId(-1),
 m_BlockPosition(0),
-m_Database(database),
-m_Parent(nullptr)
+m_Database(database)
 {}
 
-Entry::Entry(Entry* parent):
-m_Block(-1),
+Entry::Entry(Database* database, UINT block_id):
+m_BlockId(block_id),
 m_BlockPosition(0),
-m_Database(parent->m_Database),
-m_Parent(parent)
-{}
+m_Database(database)
+{
+auto volume=database->GetVolume();
+m_Block=Block::Create(volume, m_BlockId);
+m_SkipBits=SkipBits::Create(m_Block);
+}
+
+Entry::Entry(Database* database, UINT block_id, EntryCreateMode create):
+m_BlockId(block_id),
+m_BlockPosition(0),
+m_Database(database)
+{
+auto volume=database->GetVolume();
+m_SkipBits=SkipBits::Create(volume);
+}
 
 
 //==================
@@ -49,16 +60,8 @@ m_Parent(parent)
 
 VOID Entry::Invalidate(Editor* editor)
 {
-auto entry=this;
-while(entry)
-	{
-	if(entry->m_Block!=-1)
-		{
-		editor->m_ChangedEntries.add(entry);
-		break;
-		}
-	entry=entry->m_Parent;
-	}
+if(m_BlockId!=-1)
+	editor->m_ChangedEntries.add(this);
 }
 
 UINT Entry::Release()noexcept
@@ -67,8 +70,8 @@ WriteLock lock(m_Database->m_EntriesMutex);
 UINT ref_count=Cpu::InterlockedDecrement(&m_ReferenceCount);
 if(ref_count>0)
 	return ref_count;
-if(m_Block!=-1)
-	m_Database->m_Entries.remove(m_Block);
+if(m_BlockId!=-1)
+	m_Database->m_Entries.remove(m_BlockId);
 delete this;
 return 0;
 }

@@ -19,6 +19,7 @@
 #include "Storage/Encoding/Dwarf.h"
 #include "Storage/Streams/StreamReader.h"
 #include "Storage/Streams/StreamWriter.h"
+#include "FlagHelper.h"
 
 using namespace Concurrency;
 using namespace Devices::System;
@@ -115,13 +116,11 @@ editor->Flush();
 VOID Node::RemoveChild(Editor* editor, Handle<Node> child)
 {
 WriteLock lock(m_Mutex);
-UINT pos=0;
-if(!m_Children.index_of(child, &pos))
+if(!m_Children.remove(child))
 	throw NotFoundException();
 FreeChild(editor, child);
-m_Children.remove_at(pos);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateChildRemove>(&m_Update, pos);
+	NodeUpdate::Create<NodeUpdateChildRemove>(&m_Update, child);
 Invalidate(editor);
 }
 
@@ -201,14 +200,35 @@ return true;
 // Con-/Destructors Protected
 //============================
 
+Node::Node(Database* database):
+Entry(database),
+m_Flags(NodeFlags::None),
+m_Update(nullptr)
+{}
+
 Node::Node(Database* database, UINT block):
 Entry(database, block),
+m_Flags(NodeFlags::None),
+m_Update(nullptr)
+{
+StreamReader reader(m_Block);
+UINT id=0;
+reader.Read(&id, sizeof(UINT));
+if(id!=NODE_ID)
+	throw InvalidArgumentException();
+NodeUpdate::ReadFromStream(reader, this);
+m_BlockPosition=m_Block->GetPosition();
+m_Block=nullptr;
+}
+
+Node::Node(Database* database, UINT block, EntryCreateMode create):
+Entry(database, block, create),
 m_Flags(NodeFlags::None),
 m_Update(nullptr)
 {}
 
 Node::Node(Node* parent, Handle<String> tag):
-Entry(parent),
+Entry(parent->m_Database),
 m_Flags(NodeFlags::None),
 m_Update(nullptr)
 {
@@ -261,53 +281,45 @@ VOID Node::FreeChild(Editor* editor, Node* child)
 WriteLock child_lock(child->m_Mutex);
 child->ClearInternal(editor);
 child->ClearUpdate();
-child->m_Parent=nullptr;
-if(child->m_Block)
+if(child->m_BlockId!=-1)
 	{
 	editor->Free(child->m_Block);
-	child->m_Block=-1;
+	child->m_BlockId=-1;
 	}
 }
 
 Handle<Node> Node::GetChildInternal(UINT pos)
 {
 auto child=m_Children.get_at(pos);
-WriteLock lock(child->m_Mutex);
-Handle<String> at;
-if(!child->m_Attributes.try_get("@", &at))
+auto at=child->GetAttribute("@");
+if(!at)
 	return child;
-child->m_Attributes.remove("@");
-INT rel=0;
-at->Scan("%i", &rel);
-UINT block=m_Block+rel;
-child->ReadFromBlock(block);
-return child;
-}
-
-VOID Node::ReadFromBlock(UINT block_id)
-{
-auto volume=m_Database->GetVolume();
-auto block=Block::Create(volume, block_id);
-StreamReader reader(block);
-UINT id=0;
-reader.Read(&id, sizeof(UINT));
-if(id!=NODE_ID)
+INT relative=0;
+if(at->Scan("%i", &relative)!=1)
 	throw InvalidArgumentException();
-auto skip_bits=block->ReadSkipBits();
-block->SkipPages(skip_bits);
-NodeUpdate::ReadFromStream(reader, this);
-m_Block=block_id;
-m_BlockPosition=block->GetPosition();
+UINT block_id=m_BlockId+relative;
+child=Node::Create(m_Database, block_id);
+m_Children.set_at(pos, child);
+return child;
 }
 
 VOID Node::WriteToBlock(UINT block_id)
 {
 auto volume=m_Database->GetVolume();
 auto block=Block::Create(volume, block_id);
+if(m_SkipBits)
+	{
+	m_SkipBits->Clear();
+	}
+else
+	{
+	m_SkipBits=SkipBits::Create(volume);
+	}
+m_SkipBits->WriteToStream(block);
 StreamWriter writer(block);
 NodeUpdate::WriteToStream(writer, this);
 block->Flush();
-m_Block=block_id;
+m_BlockId=block_id;
 m_BlockPosition=block->GetPosition();
 }
 

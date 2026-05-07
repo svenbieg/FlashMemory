@@ -12,6 +12,7 @@
 // Using
 //=======
 
+#include "Storage/Database/Updates/MapUpdate.h"
 #include "Storage/Database/Entry.h"
 
 
@@ -28,17 +29,35 @@ namespace Storage {
 //=====
 
 template <class _key_t, class _value_t, class _size_t=UINT, WORD _group_size=10>
-class Map: public Object
+class Map: public Entry
 {
 public:
+	// Using
+	using _update_t=Storage::Database::Updates::MapUpdate<_key_t, _value_t, _size_t, _group_size>;
+
+	// Friends
+	friend Object;
+
 	// Common
 	VOID Clear();
 	BOOL Set(_key_t const& Key, _value_t const& Value);
 
 private:
+	// Settings
+	static const UINT MAP_ID='MAP';
+
 	// Con-/Destructors
-	Map(Database* Database, UINT Block);
-	static inline Handle<Map> Create(Database* Database, UINT Block) { return Object::Create<Map>(Database, Block); }
+	Map(Database* Database, UINT Block): Entry(Database, Block)
+		{
+		m_BlockPosition=m_Block->GetPosition();
+		m_Block=nullptr;
+		}
+	Map(Database* Database, UINT Block, EntryCreateMode Create): Entry(Database, Block, Create)
+		{}
+	static inline Handle<Map> Create(Database* Database, UINT Block, EntryCreateMode Create)
+		{
+		return Entry::Create<Map>(Database, Block, Create);
+		}
 
 	// Group
 	class Group: public Entry

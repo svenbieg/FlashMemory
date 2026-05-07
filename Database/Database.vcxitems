@@ -21,6 +21,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Block.h" />
@@ -29,7 +30,9 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Map.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Node.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\MapUpdate.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReliableVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h" />

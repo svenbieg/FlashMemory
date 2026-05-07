@@ -13,6 +13,7 @@
 #include "Storage/Encoding/Dwarf.h"
 #include "Storage/Streams/StreamReader.h"
 #include "Storage/Streams/StreamWriter.h"
+#include "FlagHelper.h"
 
 using namespace Storage::Encoding;
 using namespace Storage::Streams;

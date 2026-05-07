@@ -30,6 +30,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.cpp">
       <Filter>Storage\Database\Updates</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.cpp">
+      <Filter>Storage\Database\Updates</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Database.h">
@@ -63,6 +66,12 @@
       <Filter>Storage\Database</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.h">
+      <Filter>Storage\Database\Updates</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\MapUpdate.h">
+      <Filter>Storage\Database\Updates</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.h">
       <Filter>Storage\Database\Updates</Filter>
     </ClInclude>
   </ItemGroup>
