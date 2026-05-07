@@ -88,6 +88,7 @@
     <None Include="$(MSBuildThisFileDirectory)Devices\Wifi\firmware.S">
       <Filter>Devices\Wifi</Filter>
     </None>
+    <None Include="$(MSBuildThisFileDirectory)long.S" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="$(MSBuildThisFileDirectory)start.cpp" />
@@ -130,6 +131,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Spi\SpiHost.cpp">
       <Filter>Devices\Spi</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)math.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Configuration">

@@ -44,6 +44,7 @@
     <None Include="$(MSBuildThisFileDirectory)float.S" />
     <None Include="$(MSBuildThisFileDirectory)init.S" />
     <None Include="$(MSBuildThisFileDirectory)linker.ld.in" />
+    <None Include="$(MSBuildThisFileDirectory)long.S" />
     <None Include="$(MSBuildThisFileDirectory)picobin.S" />
   </ItemGroup>
   <ItemGroup>
@@ -60,6 +61,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Timers\SystemTimer.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Wifi\WifiSpi.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Wifi\WifiSdio.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)math.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)start.cpp" />
   </ItemGroup>
   <ItemGroup>
