@@ -33,6 +33,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.cpp">
       <Filter>Storage\Database\Updates</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\EntryUpdate.cpp">
+      <Filter>Storage\Database\Updates</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Database.h">
@@ -72,6 +75,9 @@
       <Filter>Storage\Database\Updates</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.h">
+      <Filter>Storage\Database\Updates</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\EntryUpdate.h">
       <Filter>Storage\Database\Updates</Filter>
     </ClInclude>
   </ItemGroup>

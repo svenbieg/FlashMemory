@@ -19,7 +19,6 @@
 #include "Storage/Encoding/Dwarf.h"
 #include "Storage/Streams/StreamReader.h"
 #include "Storage/Streams/StreamWriter.h"
-#include "FlagHelper.h"
 
 using namespace Concurrency;
 using namespace Devices::System;
@@ -34,16 +33,6 @@ using namespace Storage::Streams;
 
 namespace Storage {
 	namespace Database {
-
-
-//==================
-// Con-/Destructors
-//==================
-
-Node::~Node()
-{
-ClearUpdate();
-}
 
 
 //========
@@ -77,7 +66,7 @@ for(UINT pos=0; pos<child_count; pos++)
 	editor->Free(child->m_BlockId);
 	}
 m_Value=nullptr;
-if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+if(m_BlockId!=-1)
 	NodeUpdateClear::Create(this);
 Invalidate(editor);
 return true;
@@ -110,7 +99,7 @@ BOOL Node::RemoveAttribute(Editor* editor, Handle<String> key)
 WriteLock lock(m_Mutex);
 if(!m_Attributes.remove(key))
 	return false;
-if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+if(m_BlockId!=-1)
 	NodeUpdateAttributeRemove::Create(this, key);
 Invalidate(editor);
 return true;
@@ -129,7 +118,7 @@ WriteLock lock(m_Mutex);
 UINT block_id=child->m_BlockId;
 if(!m_Children.remove(block_id))
 	throw NotFoundException();
-if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+if(m_BlockId!=-1)
 	NodeUpdateChildRemove::Create(this, block_id);
 Invalidate(editor);
 }
@@ -148,7 +137,7 @@ BOOL Node::SetAttribute(Editor* editor, Handle<String> key, Handle<String> value
 WriteLock lock(m_Mutex);
 if(!m_Attributes.set(key, value))
 	return false;
-if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+if(m_BlockId!=-1)
 	NodeUpdateAttributeSet::Create(this, key, value);
 Invalidate(editor);
 return true;
@@ -169,7 +158,7 @@ WriteLock lock(m_Mutex);
 if(m_Tag==tag)
 	return false;
 m_Tag=tag;
-if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+if(m_BlockId!=-1)
 	NodeUpdateTagSet::Create(this, tag);
 Invalidate(editor);
 return true;
@@ -190,7 +179,7 @@ WriteLock lock(m_Mutex);
 if(m_Value==value)
 	return false;
 m_Value=value;
-if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+if(m_BlockId!=-1)
 	NodeUpdateValueSet::Create(this, value);
 Invalidate(editor);
 return true;
@@ -202,47 +191,44 @@ return true;
 //============================
 
 Node::Node(Database* database, UINT block_id):
-Entry(database, block_id),
-m_Flags(NodeFlags::None)
+Entry(database, block_id)
 {
 if(m_BlockId==-1)
-	{
-	m_Id=NODE_ID;
 	return;
-	}
+auto block=Block::Create(m_Database, m_BlockId);
+ReadEntry(block);
+m_SkipBits.Skip(block);
+ReadUpdate(block);
+m_BlockPosition=block->GetPosition();
+}
+
+
+//==================
+// Common Protected
+//==================
+
+SIZE_T Node::ReadEntry(Block* block)
+{
+SIZE_T size=0;
+size+=block->Read(&m_Id, sizeof(UINT));
 if(m_Id!=NODE_ID)
 	throw InvalidArgumentException();
-NodeUpdate::ReadFromStream(m_Block, this);
-SkipBits::Skip(m_Block, &m_SkipBlock, &m_SkipPage);
-NodeUpdate::ReadFromStream(m_Block, this);
-m_BlockPosition=m_Block->GetPosition();
-m_Block=nullptr;
+size+=NodeUpdate::ReadFromStream(block, this);
+return size;
 }
 
-
-//================
-// Common Private
-//================
-
-VOID Node::ClearUpdate()
+SIZE_T Node::ReadUpdate(Block* block)
 {
-while(m_Update)
-	{
-	auto update=m_Update;
-	m_Update=update->m_Next;
-	delete update;
-	}
+return NodeUpdate::ReadFromStream(block, this);
 }
 
-VOID Node::WriteToBlock(UINT block_id)
+SIZE_T Node::WriteEntry(Block* block)
 {
-auto block=Block::Create(m_Database, block_id);
-block->Write(&NODE_ID, sizeof(UINT));
-SkipBits::Initialize(block);
-NodeUpdate::WriteToStream(block, this);
-block->Flush();
-m_BlockId=block_id;
-m_BlockPosition=block->GetPosition();
+SIZE_T size=0;
+m_Id=NODE_ID;
+size+=OutputStream::Write(block, &m_Id, sizeof(UINT));
+size+=NodeUpdate::WriteToStream(block, this);
+return size;
 }
 
 }}

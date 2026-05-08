@@ -9,9 +9,7 @@
 // Using
 //=======
 
-#include "Storage/Streams/InputStream.h"
-#include "Storage/Streams/OutputStream.h"
-#include "StringClass.h"
+#include "Storage/Database/Updates/EntryUpdate.h"
 
 
 //======================
@@ -40,33 +38,16 @@ namespace Storage {
 // Node-Update
 //=============
 
-class NodeUpdate
+class NodeUpdate: public EntryUpdate
 {
 public:
-	// Using
-	using InputStream=Storage::Streams::InputStream;
-	using OutputStream=Storage::Streams::OutputStream;
-
 	// Friends
 	friend Node;
 
-	// Con-/Destructors
-	virtual ~NodeUpdate()=default;
-
-	// Common
-	inline NodeUpdate** GetNext() { return &m_Next; }
-
 protected:
 	// Con-/Destructors
-	NodeUpdate(Node* Node): m_Next(nullptr), m_Node(Node) {}
+	NodeUpdate(Node* Node);
 
-	// Common
-	static NodeUpdate** GetUpdate(Node* Node);
-	virtual SIZE_T WriteToStream(OutputStream* Stream)=0;
-	NodeUpdate* m_Next;
-	Node* m_Node;
-
-private:
 	// Common
 	static SIZE_T ReadFromStream(InputStream* Stream, Node* Node);
 	static SIZE_T WriteToStream(OutputStream* Stream, Node* Node);
@@ -80,20 +61,20 @@ private:
 class NodeUpdateAttributeRemove: public NodeUpdate
 {
 public:
-	// Common
-	inline Handle<String> GetKey()const { return m_Key; }
-
-private:
 	// Friends
 	friend Node;
 	friend NodeUpdate;
 
+	// Common
+	inline Handle<String> GetKey()const { return m_Key; }
+	SIZE_T WriteToStream(OutputStream* Stream)override;
+
+private:
 	// Con-/Destructors
 	NodeUpdateAttributeRemove(Node* Node, Handle<String> Key);
 	static VOID Create(Node* Node, Handle<String> Key);
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
 	Handle<String> m_Key;
 };
 
@@ -105,21 +86,21 @@ private:
 class NodeUpdateAttributeSet: public NodeUpdate
 {
 public:
-	// Common
-	inline Handle<String> GetKey()const { return m_Key; }
-	inline VOID SetValue(Handle<String> Value) { m_Value=Value; }
-
-private:
 	// Friends
 	friend Node;
 	friend NodeUpdate;
 
+	// Common
+	inline Handle<String> GetKey()const { return m_Key; }
+	inline VOID SetValue(Handle<String> Value) { m_Value=Value; }
+	SIZE_T WriteToStream(OutputStream* Stream)override;
+
+private:
 	// Con-/Destructors
 	NodeUpdateAttributeSet(Node* Node, Handle<String> Key, Handle<String> Value);
 	static VOID Create(Node* Node, Handle<String> Key, Handle<String> Value);
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
 	static SIZE_T WriteToStream(OutputStream* Stream, Handle<String> Key, Handle<String> Value);
 	Handle<String> m_Key;
 	Handle<String> m_Value;
@@ -132,17 +113,20 @@ private:
 
 class NodeUpdateChildAppend: public NodeUpdate
 {
-private:
+public:
 	// Friends
 	friend Node;
 	friend NodeUpdate;
 
+	// Common
+	SIZE_T WriteToStream(OutputStream* Stream)override;
+
+private:
 	// Con-/Destructors
 	NodeUpdateChildAppend(Node* Node, UINT Child);
 	static VOID Create(Node* Node, UINT Child);
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
 	static SIZE_T WriteToStream(OutputStream* Stream, UINT Child);
 	UINT m_Child;
 };
@@ -154,17 +138,20 @@ private:
 
 class NodeUpdateChildRemove: public NodeUpdate
 {
-private:
+public:
 	// Friends
 	friend Node;
 	friend NodeUpdate;
 
+	// Common
+	SIZE_T WriteToStream(OutputStream* Stream)override;
+
+private:
 	// Con-/Destructors
 	NodeUpdateChildRemove(Node* Node, UINT Child);
 	static VOID Create(Node* Node, UINT Child);
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
 	UINT m_Child;
 };
 
@@ -175,17 +162,18 @@ private:
 
 class NodeUpdateClear: public NodeUpdate
 {
-private:
+public:
 	// Friends
 	friend Node;
 	friend NodeUpdate;
 
+	// Common
+	SIZE_T WriteToStream(OutputStream* Stream)override;
+
+private:
 	// Con-/Destructors
 	NodeUpdateClear(Node* Node);
 	static VOID Create(Node* Node);
-
-	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
 };
 
 
@@ -195,17 +183,20 @@ private:
 
 class NodeUpdateTagSet: public NodeUpdate
 {
-private:
+public:
 	// Friends
 	friend Node;
 	friend NodeUpdate;
 
+	// Common
+	SIZE_T WriteToStream(OutputStream* Stream)override;
+
+private:
 	// Con-/Destructors
 	NodeUpdateTagSet(Node* Node, Handle<String> Tag);
 	static VOID Create(Node* Node, Handle<String> Tag);
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
 	static SIZE_T WriteToStream(OutputStream* Stream, Handle<String> Tag);
 	Handle<String> m_Tag;
 };
@@ -217,17 +208,20 @@ private:
 
 class NodeUpdateValueSet: public NodeUpdate
 {
-private:
+public:
 	// Friends
 	friend Node;
 	friend NodeUpdate;
 
+	// Common
+	SIZE_T WriteToStream(OutputStream* Stream)override;
+
+private:
 	// Con-/Destructors
 	NodeUpdateValueSet(Node* Node, Handle<String> Value);
 	static VOID Create(Node* Node, Handle<String> Value);
 
 	// Common
-	SIZE_T WriteToStream(OutputStream* Stream)override;
 	static SIZE_T WriteToStream(OutputStream* Stream, Handle<String> Value);
 	Handle<String> m_Value;
 };

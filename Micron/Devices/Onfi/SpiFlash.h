@@ -37,14 +37,18 @@ public:
 	// Con-/Destructors
 	static inline Handle<SpiFlash> Create(SpiHost* Host) { return Object::Create<SpiFlash>(Host); }
 
+	// Common
+	VOID Reset();
+
 	// Volume
-	VOID Erase(UINT64 Offset, UINT Size);
-	UINT GetBlockSize();
-	UINT GetPageSize();
-	UINT64 GetSize();
-	VOID Read(UINT64 Position, VOID* Buffer, SIZE_T Size);
-	VOID SetSize(UINT64 Size);
-	VOID Write(UINT64 Position, VOID const* Buffer, SIZE_T Size);
+	VOID Erase(UINT64 Offset, UINT Size)override;
+	WORD GetAlignment()override;
+	UINT GetBlockSize()override;
+	UINT GetPageSize()override;
+	UINT64 GetSize()override;
+	VOID Read(UINT64 Position, VOID* Buffer, SIZE_T Size)override;
+	VOID SetSize(UINT64 Size)override;
+	VOID Write(UINT64 Position, VOID const* Buffer, SIZE_T Size)override;
 
 protected:
 	// Con-/Destructors

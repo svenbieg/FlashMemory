@@ -64,6 +64,7 @@ private:
 	VOID Initialize();
 	Handle<Node> ReadHeader();
 	VOID ValidateHeader(Node* Header);
+	WORD m_Alignment;
 	EntryMap m_Entries;
 	Mutex m_EntriesMutex;
 	Handle<Node> m_Header;

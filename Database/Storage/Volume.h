@@ -31,6 +31,7 @@ class Volume: public Object
 public:
 	// Common
 	virtual VOID Erase(UINT64 Offset, UINT Size)=0;
+	virtual WORD GetAlignment()=0;
 	virtual UINT GetBlockSize()=0;
 	virtual UINT GetPageSize()=0;
 	virtual UINT64 GetSize()=0;

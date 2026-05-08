@@ -29,6 +29,7 @@ namespace Storage {
 //==========================
 
 Database::Database(Volume* volume, FileCreateMode create):
+m_Alignment(volume->GetAlignment()),
 m_Volume(volume)
 {
 auto header=ReadHeader();

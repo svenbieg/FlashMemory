@@ -48,10 +48,9 @@ ValueSet
 // Node-Update
 //=============
 
-NodeUpdate** NodeUpdate::GetUpdate(Node* node)
-{
-return &node->m_Update;
-}
+NodeUpdate::NodeUpdate(Node* node):
+EntryUpdate(node)
+{}
 
 SIZE_T NodeUpdate::ReadFromStream(InputStream* stream, Node* node)
 {
@@ -131,7 +130,6 @@ while(stream->Available())
 			}
 		}
 	}
-FlagHelper::Set(node->m_Flags, Node::NodeFlags::Update);
 return size;
 }
 
@@ -187,7 +185,7 @@ auto update_ptr=GetUpdate(node);
 while(*update_ptr)
 	{
 	auto update=*update_ptr;
-	auto next_ptr=update->GetNext();
+	auto next_ptr=GetNext(update);
 	auto attr_set=dynamic_cast<NodeUpdateAttributeSet*>(update);
 	if(attr_set)
 		{
@@ -229,7 +227,7 @@ auto update_ptr=GetUpdate(node);
 while(*update_ptr)
 	{
 	auto update=*update_ptr;
-	auto next_ptr=update->GetNext();
+	auto next_ptr=GetNext(update);
 	auto attr_remove=dynamic_cast<NodeUpdateAttributeRemove*>(update);
 	if(attr_remove)
 		{
@@ -281,12 +279,7 @@ m_Child(child)
 
 VOID NodeUpdateChildAppend::Create(Node* node, UINT child)
 {
-auto update_ptr=GetUpdate(node);
-while(*update_ptr)
-	{
-	auto update=*update_ptr;
-	auto update_ptr=update->GetNext();
-	}
+auto update_ptr=AppendUpdate(node);
 *update_ptr=new NodeUpdateChildAppend(node, child);
 }
 
@@ -316,12 +309,7 @@ m_Child(child)
 
 VOID NodeUpdateChildRemove::Create(Node* node, UINT child)
 {
-auto update_ptr=GetUpdate(node);
-while(*update_ptr)
-	{
-	auto update=*update_ptr;
-	auto update_ptr=update->GetNext();
-	}
+auto update_ptr=AppendUpdate(node);
 *update_ptr=new NodeUpdateChildRemove(node, child);
 }
 
@@ -349,7 +337,7 @@ auto update_ptr=GetUpdate(node);
 while(*update_ptr)
 	{
 	auto update=*update_ptr;
-	auto next_ptr=update->GetNext();
+	auto next_ptr=GetNext(update);
 	auto tag_set=dynamic_cast<NodeUpdateTagSet*>(update);
 	if(!tag_set)
 		{
@@ -386,7 +374,7 @@ auto update_ptr=GetUpdate(node);
 while(*update_ptr)
 	{
 	auto update=*update_ptr;
-	auto next_ptr=update->GetNext();
+	auto next_ptr=GetNext(update);
 	auto tag_set=dynamic_cast<NodeUpdateTagSet*>(update);
 	if(tag_set)
 		{
@@ -428,7 +416,7 @@ auto update_ptr=GetUpdate(node);
 while(*update_ptr)
 	{
 	auto update=*update_ptr;
-	auto next_ptr=update->GetNext();
+	auto next_ptr=GetNext(update);
 	auto value_set=dynamic_cast<NodeUpdateValueSet*>(update);
 	if(value_set)
 		{

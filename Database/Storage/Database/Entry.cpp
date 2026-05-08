@@ -24,6 +24,16 @@ namespace Storage {
 	namespace Database {
 
 
+//==================
+// Con-/Destructors
+//==================
+
+Entry::~Entry()
+{
+ClearUpdate();
+}
+
+
 //============================
 // Con-/Destructors Protected
 //============================
@@ -32,18 +42,27 @@ Entry::Entry(Database* database, UINT block_id):
 m_BlockId(block_id),
 m_BlockPosition(0),
 m_Database(database),
-m_Id(0)
-{
-if(m_BlockId==-1)
-	return;
-m_Block=Block::Create(m_Database, m_BlockId);
-m_Block->Read(&m_Id, sizeof(UINT));
-}
+m_Id(0),
+m_SkipBits(database->GetVolume()),
+m_Update(nullptr)
+{}
 
 
 //==================
 // Common Protected
 //==================
+
+SIZE_T Entry::Align(OutputStream* stream, SIZE_T size)
+{
+WORD align=m_Database->m_Alignment;
+assert(align<=4);
+if(size%align==0)
+	return 0;
+SIZE_T append=align-(size%align);
+UINT zero=0;
+OutputStream::Write(stream, &zero, append);
+return append;
+}
 
 VOID Entry::Invalidate(Editor* editor)
 {
@@ -63,10 +82,47 @@ delete this;
 return 0;
 }
 
+SIZE_T Entry::WriteToBlock(UINT block_id)
+{
+SIZE_T size=0;
+auto block=Block::Create(m_Database, block_id);
+size+=WriteEntry(block);
+size+=Align(block, size);
+size+=m_SkipBits.WriteBlockBits(block, 0);
+size+=m_SkipBits.WritePageBits(block, 0);
+block->Flush();
+m_BlockId=block_id;
+m_BlockPosition=block->GetPosition();
+return size;
+}
+
+SIZE_T Entry::WriteUpdates(OutputStream* stream)
+{
+SIZE_T size=0;
+auto update=m_Update;
+while(update)
+	{
+	size+=update->WriteToStream(stream);
+	update=update->m_Next;
+	}
+size=Align(stream, size);
+return size;
+}
+
 
 //================
 // Common Private
 //================
+
+VOID Entry::ClearUpdate()
+{
+while(m_Update)
+	{
+	auto update=m_Update;
+	m_Update=update->m_Next;
+	delete update;
+	}
+}
 
 Mutex& Entry::GetEntriesMutex(Database* database)
 {

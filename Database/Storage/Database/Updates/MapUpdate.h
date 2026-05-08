@@ -9,7 +9,7 @@
 // Using
 //=======
 
-#include "Storage/Streams/InputStream.h"
+#include "Storage/Database/Updates/EntryUpdate.h"
 
 
 //======================
@@ -39,25 +39,14 @@ namespace Storage {
 //============
 
 template <class _key_t, class _value_t, class _size_t, WORD _group_size>
-class MapUpdate
+class MapUpdate: public EntryUpdate
 {
 public:
-	// Using
-	using InputStream=Storage::Streams::InputStream;
-
 	// Friends
 	friend Map<_key_t, _value_t, _size_t, _group_size>;
 
-private:
-	// Update
-	enum class Update: WORD
-		{
-		None,
-		RootSet='RS'
-		};
-
 	// Common
-	SIZE_T ReadFromStream(InputStream* Stream)
+	static SIZE_T ReadFromStream(InputStream* Stream)
 		{
 		SIZE_T size=0;
 		while(1)
@@ -71,11 +60,17 @@ private:
 				}
 			Update update(Update::None);
 			size+=Stream->Read(&update, sizeof(Update));
-
 			}
-		
 		return 0;
 		}
+
+private:
+	// Update
+	enum class Update: BYTE
+		{
+		None,
+		RootSet
+		};
 };
 
 }}}

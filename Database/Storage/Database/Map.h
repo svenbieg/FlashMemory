@@ -42,25 +42,38 @@ public:
 	VOID Clear();
 	BOOL Set(_key_t const& Key, _value_t const& Value);
 
+protected:
+	// Common
+	SIZE_T ReadEntry(Block* Block)
+		{
+		throw NotImplementedException();
+		return 0;
+		}
+	SIZE_T ReadUpdate(Block* Block)
+		{
+		throw NotImplementedException();
+		return 0;
+		}
+	SIZE_T WriteEntry(Block* Block)override
+		{
+		throw NotImplementedException();
+		return 0;
+		}
+
 private:
 	// Settings
-	static constexpr UINT MAP_ID=ENTRY_ID('MAP ');
+	static const UINT MAP_ID=ENTRY_ID('MAP ');
 
 	// Con-/Destructors
 	Map(Database* Database, UINT Block): Entry(Database, Block)
 		{
 		if(m_BlockId==-1)
-			{
-			m_Id=MAP_ID;
 			return;
-			}
-		if(m_Id!=MAP_ID)
-			throw InvalidArgumentException();
-		_update_t::ReadFromStream(m_Block, this);
-		SkipBits::Skip(m_Block, &m_SkipBlock, &m_SkipPage);
-		_update_t::ReadFromStream(m_Block, this);
-		m_BlockPosition=m_Block->GetPosition();
-		m_Block=nullptr;
+		auto block=Block::Create(m_Database, m_BlockId);
+		ReadEntry(block);
+		m_SkipBits.Skip(block);
+		ReadUpdate(block);
+		m_BlockPosition=block->GetPosition();
 		}
 	static inline Handle<Map> Create(Database* Database, UINT Block=-1)
 		{

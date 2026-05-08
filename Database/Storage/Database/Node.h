@@ -52,9 +52,6 @@ public:
 	friend NodeUpdate;
 	friend Object;
 
-	// Con-/Destructors
-	~Node();
-
 	// Common
 	BOOL Clear();
 	BOOL Clear(Editor* Editor);
@@ -79,27 +76,21 @@ protected:
 		return Entry::Create<Node>(Database, Block);
 		}
 
+	// Common
+	SIZE_T ReadEntry(Block* Block);
+	SIZE_T ReadUpdate(Block* Block);
+	SIZE_T WriteEntry(Block* Block)override;
+
 private:
 	// Settings
-	static constexpr UINT NODE_ID=ENTRY_ID('NODE');
-
-	// Flags
-	enum class NodeFlags: UINT
-		{
-		None=0,
-		Update=(1<<0)
-		};
+	static const UINT NODE_ID=ENTRY_ID('NODE');
 
 	// Common
 	BOOL ClearInternal(Editor* Editor);
-	VOID ClearUpdate();
-	VOID WriteToBlock(UINT Block);
 	AttributeMap m_Attributes;
 	ChildList m_Children;
-	NodeFlags m_Flags;
 	Handle<String> m_Tag;
 	Handle<String> m_Value;
-	NodeUpdate* m_Update;
 };
 
 }}

@@ -5,6 +5,13 @@
 #include "SpiFlash.h"
 
 
+//=======
+// Using
+//=======
+
+#include "Devices/Onfi/Onfi.h"
+
+
 //===========
 // Namespace
 //===========
@@ -14,12 +21,27 @@ namespace Devices {
 
 
 //========
+// Common
+//========
+
+VOID SpiFlash::Reset()
+{
+
+}
+
+
+//========
 // Volume
 //========
 
 VOID SpiFlash::Erase(UINT64 offset, UINT size)
 {
 throw NotImplementedException();
+}
+
+WORD SpiFlash::GetAlignment()
+{
+return 2;
 }
 
 UINT SpiFlash::GetBlockSize()

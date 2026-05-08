@@ -10,6 +10,7 @@
 //=======
 
 #include "Devices/System/Cpu.h"
+#include "Storage/Database/Database.h"
 
 using namespace Devices::System;
 
@@ -27,44 +28,89 @@ namespace Storage {
 // Common
 //========
 
-VOID SkipBits::Initialize(Block* block)
+VOID SkipBits::Skip(Block* block)
 {
-UINT block_size=block->GetSize();
-UINT page_size=block->GetPageSize();
-UINT page_count=block_size/page_size;
-UINT count=page_count/32;
-UINT bits=-1;
-for(UINT u=0; u<count; u++)
-	block->Write(&bits, sizeof(UINT));
-}
-
-VOID SkipBits::Skip(Block* block, UINT* block_ptr, UINT* page_ptr)
-{
-UINT block_size=block->GetSize();
-UINT page_size=block->GetPageSize();
-UINT page_count=block_size/page_size;
-UINT skip_block=page_count/32;
 auto buf=(UINT const*)block->BeginRead();
-*block_ptr=block->GetPosition();
-skip_block=SkipCount(buf, skip_block);
-if(skip_block)
+m_BlockBitsPosition=block->GetPosition();
+m_BlockSkipCount=SkipCount(buf, m_BlockBitsCount);
+if(m_BlockSkipCount)
 	{
-	block->SetPage(skip_block);
+	block->SetPage(m_BlockSkipCount);
 	buf=(UINT const*)block->BeginRead();
 	}
-UINT chunk_count=page_size/CHUNK_SIZE;
-UINT skip_page=chunk_count/32;
-*page_ptr=block->GetPosition();
-skip_page=SkipCount(buf, skip_page);
+m_PageBitsPosition=block->GetPosition();
+m_PageSkipCount=SkipCount(buf, m_PageBitsCount);
 UINT page_pos=block->GetPagePosition();
-if(skip_page>page_pos)
-	block->SetPagePosition(skip_page);
+UINT skip_pos=m_PageSkipCount*CHUNK_SIZE;
+if(skip_pos>page_pos)
+	block->SetPagePosition(skip_pos);
+}
+
+SIZE_T SkipBits::WriteBlockBits(Block* block, UINT skip)
+{
+SIZE_T size=m_BlockBitsCount*sizeof(UINT);
+if(!block)
+	return size;
+m_BlockBitsPosition=block->GetPosition();
+for(UINT u=0; u<m_BlockBitsCount; u++)
+	{
+	UINT bits=GetBits(u*32, skip);
+	block->Write(&bits, sizeof(UINT));
+	}
+return size;
+}
+
+SIZE_T SkipBits::WritePageBits(Block* block, UINT skip_bytes)
+{
+SIZE_T size=m_PageBitsCount*sizeof(UINT);
+if(!block)
+	return size;
+m_PageBitsPosition=block->GetPosition();
+UINT skip=skip_bytes/CHUNK_SIZE;
+for(UINT u=0; u<m_PageBitsCount; u++)
+	{
+	UINT bits=GetBits(u*32, skip);
+	block->Write(&bits, sizeof(UINT));
+	}
+return size;
+}
+
+
+//==========================
+// Con-/Destructors Private
+//==========================
+
+SkipBits::SkipBits(Volume* volume):
+m_BlockBitsCount(0),
+m_BlockBitsPosition(0),
+m_BlockSkipCount(0),
+m_PageBitsCount(0),
+m_PageBitsPosition(0),
+m_PageSkipCount(0)
+{
+UINT block_size=volume->GetBlockSize();
+UINT page_size=volume->GetPageSize();
+UINT page_count=block_size/page_size;
+UINT chunk_count=page_size/CHUNK_SIZE;
+m_BlockBitsCount=page_count/32;
+m_PageBitsCount=chunk_count/32;
 }
 
 
 //================
 // Common Private
 //================
+
+UINT SkipBits::GetBits(UINT pos, UINT skip)
+{
+if(pos>=skip)
+	return -1;
+UINT bits=-1;
+UINT shift=TypeHelper::Min(skip-pos, 32);
+bits>>=shift;
+bits<<=shift;
+return bits;
+}
 
 UINT SkipBits::SkipCount(UINT const* bits, UINT count)
 {
