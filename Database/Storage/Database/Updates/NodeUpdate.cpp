@@ -11,12 +11,9 @@
 
 #include "Storage/Database/Node.h"
 #include "Storage/Encoding/Dwarf.h"
-#include "Storage/Streams/StreamReader.h"
-#include "Storage/Streams/StreamWriter.h"
 #include "FlagHelper.h"
 
 using namespace Storage::Encoding;
-using namespace Storage::Streams;
 
 
 //===========
@@ -37,11 +34,10 @@ enum class Update: BYTE
 None=0,
 AttributeRemove,
 AttributeSet,
-AttributeSetInt64,
 ChildAppend,
 ChildRemove,
-ChildSelect,
 Clear,
+NodeBegin,
 NodeEnd,
 TagSet,
 ValueSet
@@ -52,14 +48,25 @@ ValueSet
 // Node-Update
 //=============
 
-SIZE_T NodeUpdate::ReadFromStream(StreamReader& reader, Node* node)
+NodeUpdate** NodeUpdate::GetUpdate(Node* node)
 {
-auto stream=reader.GetStream();
+return &node->m_Update;
+}
+
+SIZE_T NodeUpdate::ReadFromStream(InputStream* stream, Node* node)
+{
 SIZE_T size=0;
-Node* selected=node;
+Update update=Update::None;
 while(stream->Available())
 	{
-	Update update=Update::None;
+	size+=stream->Read(&update, sizeof(Update));
+	if(update==Update::NodeBegin)
+		break;
+	}
+if(update!=Update::NodeBegin)
+	throw InvalidArgumentException();
+while(stream->Available())
+	{
 	size+=stream->Read(&update, sizeof(Update));
 	if(update==Update::None)
 		continue;
@@ -69,93 +76,53 @@ while(stream->Available())
 		{
 		case Update::AttributeRemove:
 			{
-			UINT pos=0;
-			size+=Dwarf::ReadUnsigned(stream, &pos);
-			selected->m_Attributes.remove_at(pos);
+			Handle<String> key;
+			size+=key.ReadFromStream(stream);
+			node->m_Attributes.remove(key);
 			break;
 			}
 		case Update::AttributeSet:
 			{
-			UINT pos=0;
-			size+=Dwarf::ReadUnsigned(stream, &pos);
-			if(pos==0)
-				{
-				auto key=reader.ReadString(&size);
-				auto value=reader.ReadString(&size);
-				selected->m_Attributes.set(key, value);
-				}
-			else
-				{
-				auto& attr=selected->m_Attributes.get_at(pos-1);
-				auto value=reader.ReadString(&size);
-				attr.set_value(value);
-				}
-			return size;
-			}
-		case Update::AttributeSetInt64:
-			{
-			UINT pos=0;
-			size+=Dwarf::ReadUnsigned(stream, &pos);
-			if(pos==0)
-				{
-				auto key=reader.ReadString(&size);
-				INT64 value=0;
-				size+=Dwarf::ReadSigned(stream, &value);
-				selected->m_Attributes.set(key, String::Create("%i", value));
-				}
-			else
-				{
-				auto& attr=selected->m_Attributes.get_at(pos-1);
-				INT64 value=0;
-				size+=Dwarf::ReadSigned(stream, &value);
-				attr.set_value(String::Create("%i", value));
-				}
+			Handle<String> key;
+			size+=key.ReadFromStream(stream);
+			Handle<String> value;
+			size+=value.ReadFromStream(stream);
+			node->m_Attributes.set(key, value);
 			return size;
 			}
 		case Update::ChildAppend:
 			{
-			auto child=Node::Create(selected);
-			size+=ReadFromStream(reader, child);
+			UINT child=0;
+			size+=Dwarf::ReadUnsigned(stream, &child);
+			node->m_Children.append(child);
 			break;
 			}
 		case Update::ChildRemove:
 			{
-			UINT pos=0;
-			size+=Dwarf::ReadUnsigned(stream, &pos);
-			selected->m_Children.remove_at(pos);
-			break;
-			}
-		case Update::ChildSelect:
-			{
-			selected=node;
-			while(1)
-				{
-				UINT pos=0;
-				size+=Dwarf::ReadUnsigned(stream, &pos);
-				if(pos==0)
-					break;
-				auto child=node->GetChildAt(pos-1);
-				selected=child.As<Node>();
-				}
+			UINT child=0;
+			size+=Dwarf::ReadUnsigned(stream, &child);
+			node->m_Children.remove(child);
 			break;
 			}
 		case Update::Clear:
 			{
-			selected->m_Attributes.clear();
-			selected->m_Children.clear();
-			selected->m_Value=nullptr;
+			node->m_Attributes.clear();
+			node->m_Children.clear();
+			node->m_Value=nullptr;
 			break;
 			}
 		case Update::TagSet:
 			{
-			auto tag=reader.ReadString(&size);
-			selected->m_Tag=tag;
+			Handle<String> tag;
+			size+=tag.ReadFromStream(stream);
+			node->m_Tag=tag;
 			break;
 			}
 		case Update::ValueSet:
 			{
-			auto value=reader.ReadString(&size);
-			selected->m_Value=value;
+			Handle<String> value;
+			size+=value.ReadFromStream(stream);
+			node->m_Value=value;
 			break;
 			}
 		default:
@@ -168,31 +135,30 @@ FlagHelper::Set(node->m_Flags, Node::NodeFlags::Update);
 return size;
 }
 
-SIZE_T NodeUpdate::WriteToStream(StreamWriter& writer, Node* node)
+SIZE_T NodeUpdate::WriteToStream(OutputStream* stream, Node* node)
 {
-auto stream=writer.GetStream();
 SIZE_T size=0;
 auto const& tag=node->m_Tag;
 if(tag)
 	{
-	size+=NodeUpdateTagSet::WriteToStream(writer, tag);
+	size+=NodeUpdateTagSet::WriteToStream(stream, tag);
 	}
 for(auto const& it: node->m_Attributes)
 	{
 	auto const& key=it.get_key();
 	auto const& value=it.get_value();
-	size+=NodeUpdateAttributeSet::WriteToStream(writer, 0, key, value);
+	size+=NodeUpdateAttributeSet::WriteToStream(stream, key, value);
 	}
 auto const& value=node->m_Value;
 if(value)
 	{
-	size+=NodeUpdateValueSet::WriteToStream(writer, value);
+	size+=NodeUpdateValueSet::WriteToStream(stream, value);
 	}
 else
 	{
-	for(auto const& child: node->m_Children)
+	for(auto child: node->m_Children)
 		{
-		size+=NodeUpdateChildAppend::WriteToStream(writer, child);
+		size+=NodeUpdateChildAppend::WriteToStream(stream, child);
 		}
 	}
 auto update=Update::NodeEnd;
@@ -206,115 +172,285 @@ return size;
 }
 
 
+//==================
+// Attribute-Remove
+//==================
+
+NodeUpdateAttributeRemove::NodeUpdateAttributeRemove(Node* node, Handle<String> key):
+NodeUpdate(node),
+m_Key(key)
+{}
+
+VOID NodeUpdateAttributeRemove::Create(Node* node, Handle<String> key)
+{
+auto update_ptr=GetUpdate(node);
+while(*update_ptr)
+	{
+	auto update=*update_ptr;
+	auto next_ptr=update->GetNext();
+	auto attr_set=dynamic_cast<NodeUpdateAttributeSet*>(update);
+	if(attr_set)
+		{
+		if(attr_set->GetKey()==key)
+			{
+			*update_ptr=*next_ptr;
+			delete update;
+			continue;
+			}
+		}
+	update_ptr=next_ptr;
+	}
+*update_ptr=new NodeUpdateAttributeRemove(node, key);
+}
+
+SIZE_T NodeUpdateAttributeRemove::WriteToStream(OutputStream* stream)
+{
+SIZE_T size=0;
+auto update=Update::AttributeRemove;
+size+=stream->Write(&update, sizeof(Update));
+size+=m_Key.WriteToStream(stream);
+return size;
+}
+
+
+//===============
+// Attribute-Set
+//===============
+
+NodeUpdateAttributeSet::NodeUpdateAttributeSet(Node* node, Handle<String> key, Handle<String> value):
+NodeUpdate(node),
+m_Key(key),
+m_Value(value)
+{}
+
+VOID NodeUpdateAttributeSet::Create(Node* node, Handle<String> key, Handle<String> value)
+{
+auto update_ptr=GetUpdate(node);
+while(*update_ptr)
+	{
+	auto update=*update_ptr;
+	auto next_ptr=update->GetNext();
+	auto attr_remove=dynamic_cast<NodeUpdateAttributeRemove*>(update);
+	if(attr_remove)
+		{
+		if(attr_remove->GetKey()==key)
+			{
+			*update_ptr=*next_ptr;
+			delete update;
+			continue;
+			}
+		}
+	auto attr_set=dynamic_cast<NodeUpdateAttributeSet*>(update);
+	if(attr_set)
+		{
+		if(attr_set->GetKey()==key)
+			{
+			attr_set->SetValue(value);
+			return;
+			}
+		}
+	update_ptr=next_ptr;
+	}
+*update_ptr=new NodeUpdateAttributeSet(node, key, value);
+}
+
+SIZE_T NodeUpdateAttributeSet::WriteToStream(OutputStream* stream)
+{
+return WriteToStream(stream, m_Key, m_Value);
+}
+
+SIZE_T NodeUpdateAttributeSet::WriteToStream(OutputStream* stream, Handle<String> key, Handle<String> value)
+{
+SIZE_T size=0;
+auto update=Update::AttributeSet;
+size+=stream->Write(&update, sizeof(Update));
+size+=key.WriteToStream(stream);
+size+=value.WriteToStream(stream);
+return size;
+}
+
+
+//==============
+// Child-Append
+//==============
+
+NodeUpdateChildAppend::NodeUpdateChildAppend(Node* node, UINT child):
+NodeUpdate(node),
+m_Child(child)
+{}
+
+VOID NodeUpdateChildAppend::Create(Node* node, UINT child)
+{
+auto update_ptr=GetUpdate(node);
+while(*update_ptr)
+	{
+	auto update=*update_ptr;
+	auto update_ptr=update->GetNext();
+	}
+*update_ptr=new NodeUpdateChildAppend(node, child);
+}
+
+SIZE_T NodeUpdateChildAppend::WriteToStream(OutputStream* stream)
+{
+return WriteToStream(stream, m_Child);
+}
+
+SIZE_T NodeUpdateChildAppend::WriteToStream(OutputStream* stream, UINT child)
+{
+SIZE_T size=0;
+auto update=Update::ChildAppend;
+size+=stream->Write(&update, sizeof(Update));
+size+=Dwarf::WriteUnsigned(stream, child);
+return size;
+}
+
+
+//==============
+// Child-Remove
+//==============
+
+NodeUpdateChildRemove::NodeUpdateChildRemove(Node* node, UINT child):
+NodeUpdate(node),
+m_Child(child)
+{}
+
+VOID NodeUpdateChildRemove::Create(Node* node, UINT child)
+{
+auto update_ptr=GetUpdate(node);
+while(*update_ptr)
+	{
+	auto update=*update_ptr;
+	auto update_ptr=update->GetNext();
+	}
+*update_ptr=new NodeUpdateChildRemove(node, child);
+}
+
+SIZE_T NodeUpdateChildRemove::WriteToStream(OutputStream* stream)
+{
+SIZE_T size=0;
+auto update=Update::ChildRemove;
+size+=stream->Write(&update, sizeof(Update));
+size+=Dwarf::WriteUnsigned(stream, m_Child);
+return size;
+}
+
+
+//=======
+// Clear
+//=======
+
+NodeUpdateClear::NodeUpdateClear(Node* node):
+NodeUpdate(node)
+{}
+
+VOID NodeUpdateClear::Create(Node* node)
+{
+auto update_ptr=GetUpdate(node);
+while(*update_ptr)
+	{
+	auto update=*update_ptr;
+	auto next_ptr=update->GetNext();
+	auto tag_set=dynamic_cast<NodeUpdateTagSet*>(update);
+	if(!tag_set)
+		{
+		*update_ptr=*next_ptr;
+		delete update;
+		continue;
+		}
+	update_ptr=next_ptr;
+	}
+*update_ptr=new NodeUpdateClear(node);
+}
+
+SIZE_T NodeUpdateClear::WriteToStream(OutputStream* stream)
+{
+SIZE_T size=0;
+auto update=Update::Clear;
+size+=stream->Write(&update, sizeof(Update));
+return size;
+}
+
+
 //=========
-// Updates
+// Tag-Set
 //=========
 
-SIZE_T NodeUpdateAttributeRemove::WriteToStream(StreamWriter& writer)
-{
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::AttributeRemove;
-size+=stream->Write(&op, sizeof(Update));
-size+=Dwarf::WriteUnsigned(stream, m_Position);
-return size;
-}
+NodeUpdateTagSet::NodeUpdateTagSet(Node* node, Handle<String> tag):
+NodeUpdate(node),
+m_Tag(tag)
+{}
 
-SIZE_T NodeUpdateAttributeSet::WriteToStream(StreamWriter& writer, UINT pos, Handle<String> key, Handle<String> value)
+VOID NodeUpdateTagSet::Create(Node* node, Handle<String> tag)
 {
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::AttributeSet;
-size+=stream->Write(&op, sizeof(Update));
-if(key)
+auto update_ptr=GetUpdate(node);
+while(*update_ptr)
 	{
-	size+=Dwarf::WriteUnsigned(stream, 0);
-	size+=writer.WriteString(key);
+	auto update=*update_ptr;
+	auto next_ptr=update->GetNext();
+	auto tag_set=dynamic_cast<NodeUpdateTagSet*>(update);
+	if(tag_set)
+		{
+		tag_set->m_Tag=tag;
+		return;
+		}
+	update_ptr=next_ptr;
 	}
-else
+*update_ptr=new NodeUpdateTagSet(node, tag);
+}
+
+SIZE_T NodeUpdateTagSet::WriteToStream(OutputStream* stream)
+{
+return WriteToStream(stream, m_Tag);
+}
+
+SIZE_T NodeUpdateTagSet::WriteToStream(OutputStream* stream, Handle<String> tag)
+{
+SIZE_T size=0;
+auto update=Update::TagSet;
+size+=stream->Write(&update, sizeof(Update));
+size+=tag.WriteToStream(stream);
+return size;
+}
+
+
+//===========
+// Value-Set
+//===========
+
+NodeUpdateValueSet::NodeUpdateValueSet(Node* node, Handle<String> value):
+NodeUpdate(node),
+m_Value(value)
+{}
+
+VOID NodeUpdateValueSet::Create(Node* node, Handle<String> value)
+{
+auto update_ptr=GetUpdate(node);
+while(*update_ptr)
 	{
-	size+=Dwarf::WriteUnsigned(stream, pos+1);
+	auto update=*update_ptr;
+	auto next_ptr=update->GetNext();
+	auto value_set=dynamic_cast<NodeUpdateValueSet*>(update);
+	if(value_set)
+		{
+		value_set->m_Value=value;
+		return;
+		}
+	update_ptr=next_ptr;
 	}
-size+=writer.WriteString(value);
-return size;
+*update_ptr=new NodeUpdateValueSet(node, value);
 }
 
-SIZE_T NodeUpdateAttributeSetInt64::WriteToStream(StreamWriter& writer, UINT pos, Handle<String> key, INT64 value)
+SIZE_T NodeUpdateValueSet::WriteToStream(OutputStream* stream)
 {
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::AttributeSetInt64;
-size+=stream->Write(&op, sizeof(Update));
-if(key)
-	{
-	size+=Dwarf::WriteUnsigned(stream, 0);
-	size+=writer.WriteString(key);
-	}
-else
-	{
-	size+=Dwarf::WriteUnsigned(stream, pos+1);
-	}
-size+=Dwarf::WriteSigned(stream, value);
-return size;
+return WriteToStream(stream, m_Value);
 }
 
-SIZE_T NodeUpdateChildAppend::WriteToStream(StreamWriter& writer, Node* child)
+SIZE_T NodeUpdateValueSet::WriteToStream(OutputStream* stream, Handle<String> value)
 {
-auto stream=writer.GetStream();
 SIZE_T size=0;
-auto op=Update::ChildAppend;
-size+=stream->Write(&op, sizeof(Update));
-size+=NodeUpdate::WriteToStream(writer, child);
-return size;
-}
-
-SIZE_T NodeUpdateChildRemove::WriteToStream(StreamWriter& writer)
-{
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::ChildRemove;
-size+=stream->Write(&op, sizeof(Update));
-size+=Dwarf::WriteUnsigned(stream, m_Position);
-return size;
-}
-
-SIZE_T NodeUpdateChildSelect::WriteToStream(StreamWriter& writer)
-{
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::ChildSelect;
-size+=stream->Write(&op, sizeof(Update));
-for(auto it=m_Position->First(); it->HasCurrent(); it->MoveNext())
-	size+=Dwarf::WriteUnsigned(stream, it->GetCurrent());
-return size;
-}
-
-SIZE_T NodeUpdateClear::WriteToStream(StreamWriter& writer)
-{
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::Clear;
-size+=stream->Write(&op, sizeof(Update));
-return size;
-}
-
-SIZE_T NodeUpdateTagSet::WriteToStream(StreamWriter& writer, Handle<String> tag)
-{
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::TagSet;
-size+=stream->Write(&op, sizeof(Update));
-size+=writer.WriteString(tag);
-return size;
-}
-
-SIZE_T NodeUpdateValueSet::WriteToStream(StreamWriter& writer, Handle<String> value)
-{
-auto stream=writer.GetStream();
-SIZE_T size=0;
-auto op=Update::ValueSet;
-size+=stream->Write(&op, sizeof(Update));
-size+=writer.WriteString(value);
+auto update=Update::ValueSet;
+size+=stream->Write(&update, sizeof(Update));
+size+=value.WriteToStream(stream);
 return size;
 }
 

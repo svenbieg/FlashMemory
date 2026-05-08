@@ -44,7 +44,7 @@ class Node: public Entry
 public:
 	// Using
 	using AttributeMap=Collections::map<Handle<String>, Handle<String>, UINT>;
-	using ChildList=Collections::list<Handle<Node>, UINT>;
+	using ChildList=Collections::list<UINT, UINT>;
 	using NodeUpdate=Storage::Database::Updates::NodeUpdate;
 
 	// Friends
@@ -64,9 +64,7 @@ public:
 	BOOL RemoveAttribute(Editor* Editor, Handle<String> Key);
 	VOID RemoveChild(Handle<Node> Child);
 	VOID RemoveChild(Editor* Editor, Handle<Node> Child);
-	BOOL SetAttribute(Handle<String> Key, INT64 Value);
 	BOOL SetAttribute(Handle<String> Key, Handle<String> Value);
-	BOOL SetAttribute(Editor* Editor, Handle<String> Key, INT64 Value);
 	BOOL SetAttribute(Editor* Editor, Handle<String> Key, Handle<String> Value);
 	BOOL SetTag(Handle<String> Tag);
 	BOOL SetTag(Editor* Editor, Handle<String> Tag);
@@ -76,14 +74,9 @@ public:
 protected:
 	// Con-/Destructors
 	Node(Database* Database, UINT Block);
-	Node(Node* Parent, Handle<String> Tag=nullptr);
 	static inline Handle<Node> Create(Database* Database, UINT Block=-1)
 		{
 		return Entry::Create<Node>(Database, Block);
-		}
-	static inline Handle<Node> Create(Node* Parent, Handle<String> Tag=nullptr)
-		{
-		return Object::Create<Node>(Parent, Tag);
 		}
 
 private:
@@ -100,8 +93,6 @@ private:
 	// Common
 	BOOL ClearInternal(Editor* Editor);
 	VOID ClearUpdate();
-	VOID FreeChild(Editor* Editor, Node* Child);
-	Handle<Node> GetChildInternal(UINT Position);
 	VOID WriteToBlock(UINT Block);
 	AttributeMap m_Attributes;
 	ChildList m_Children;

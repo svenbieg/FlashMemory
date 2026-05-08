@@ -50,14 +50,17 @@ private:
 	Map(Database* Database, UINT Block): Entry(Database, Block)
 		{
 		if(m_BlockId==-1)
+			{
+			m_Id=MAP_ID;
 			return;
-		auto block=Block::Create(m_Database, m_BlockId);
-		UINT id=0;
-		block->Read(&id, sizeof(UINT));
-		if(id!=MAP_ID)
+			}
+		if(m_Id!=MAP_ID)
 			throw InvalidArgumentException();
-		SkipBits::Skip(block);
-		m_BlockPosition=block->GetPosition();
+		_update_t::ReadFromStream(m_Block, this);
+		SkipBits::Skip(m_Block, &m_SkipBlock, &m_SkipPage);
+		_update_t::ReadFromStream(m_Block, this);
+		m_BlockPosition=m_Block->GetPosition();
+		m_Block=nullptr;
 		}
 	static inline Handle<Map> Create(Database* Database, UINT Block=-1)
 		{

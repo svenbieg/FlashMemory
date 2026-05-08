@@ -62,7 +62,25 @@ return cleared;
 BOOL Node::Clear(Editor* editor)
 {
 WriteLock lock(m_Mutex);
-return ClearInternal(editor);
+BOOL clear=false;
+clear|=m_Attributes;
+clear|=m_Children;
+clear|=m_Value;
+if(!clear)
+	return false;
+m_Attributes.clear();
+UINT child_count=m_Children.get_count();
+for(UINT pos=0; pos<child_count; pos++)
+	{
+	auto child=GetChildAt(pos);
+	child->Clear();
+	editor->Free(child->m_BlockId);
+	}
+m_Value=nullptr;
+if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+	NodeUpdateClear::Create(this);
+Invalidate(editor);
+return true;
 }
 
 Handle<String> Node::GetAttribute(Handle<String> key)
@@ -74,7 +92,8 @@ return m_Attributes.get(key);
 Handle<Node> Node::GetChildAt(UINT pos)
 {
 ReadLock lock(m_Mutex);
-return GetChildInternal(pos);
+UINT block_id=m_Children.get_at(pos);
+return Node::Create(m_Database, block_id);
 }
 
 BOOL Node::RemoveAttribute(Handle<String> key)
@@ -89,12 +108,10 @@ return removed;
 BOOL Node::RemoveAttribute(Editor* editor, Handle<String> key)
 {
 WriteLock lock(m_Mutex);
-UINT pos=0;
-if(!m_Attributes.index_of(key, &pos))
+if(!m_Attributes.remove(key))
 	return false;
-m_Attributes.remove_at(pos);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateAttributeRemove>(&m_Update, pos);
+	NodeUpdateAttributeRemove::Create(this, key);
 Invalidate(editor);
 return true;
 }
@@ -109,21 +126,12 @@ editor->Flush();
 VOID Node::RemoveChild(Editor* editor, Handle<Node> child)
 {
 WriteLock lock(m_Mutex);
-if(!m_Children.remove(child))
+UINT block_id=child->m_BlockId;
+if(!m_Children.remove(block_id))
 	throw NotFoundException();
-FreeChild(editor, child);
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateChildRemove>(&m_Update, child);
+	NodeUpdateChildRemove::Create(this, block_id);
 Invalidate(editor);
-}
-
-BOOL Node::SetAttribute(Handle<String> key, INT64 value)
-{
-auto editor=m_Database->Edit();
-BOOL set=SetAttribute(editor, key, value);
-if(set)
-	editor->Flush();
-return set;
 }
 
 BOOL Node::SetAttribute(Handle<String> key, Handle<String> value)
@@ -135,42 +143,13 @@ if(set)
 return set;
 }
 
-BOOL Node::SetAttribute(Editor* editor, Handle<String> key, INT64 value)
-{
-WriteLock lock(m_Mutex);
-UINT pos=0;
-if(m_Attributes.index_of(key, &pos))
-	{
-	m_Attributes.set(key, String::Create("%i", value));
-	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-		NodeUpdate::Create<NodeUpdateAttributeSetInt64>(&m_Update, pos, value);
-	}
-else
-	{
-	m_Attributes.set(key, String::Create("%i", value));
-	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-		NodeUpdate::Create<NodeUpdateAttributeSetInt64>(&m_Update, key, value);
-	}
-Invalidate(editor);
-return true;
-}
-
 BOOL Node::SetAttribute(Editor* editor, Handle<String> key, Handle<String> value)
 {
 WriteLock lock(m_Mutex);
-UINT pos=0;
-if(m_Attributes.index_of(key, &pos))
-	{
-	m_Attributes.set(key, value);
-	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-		NodeUpdate::Create<NodeUpdateAttributeSet>(&m_Update, pos, value);
-	}
-else
-	{
-	m_Attributes.set(key, value);
-	if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-		NodeUpdate::Create<NodeUpdateAttributeSet>(&m_Update, key, value);
-	}
+if(!m_Attributes.set(key, value))
+	return false;
+if(FlagHelper::Get(m_Flags, NodeFlags::Update))
+	NodeUpdateAttributeSet::Create(this, key, value);
 Invalidate(editor);
 return true;
 }
@@ -191,7 +170,7 @@ if(m_Tag==tag)
 	return false;
 m_Tag=tag;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateTagSet>(&m_Update, tag);
+	NodeUpdateTagSet::Create(this, tag);
 Invalidate(editor);
 return true;
 }
@@ -212,7 +191,7 @@ if(m_Value==value)
 	return false;
 m_Value=value;
 if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateValueSet>(&m_Update, value);
+	NodeUpdateValueSet::Create(this, value);
 Invalidate(editor);
 return true;
 }
@@ -224,30 +203,20 @@ return true;
 
 Node::Node(Database* database, UINT block_id):
 Entry(database, block_id),
-m_Flags(NodeFlags::None),
-m_Update(nullptr)
+m_Flags(NodeFlags::None)
 {
 if(m_BlockId==-1)
+	{
+	m_Id=NODE_ID;
 	return;
-auto block=Block::Create(m_Database, m_BlockId);
-UINT id=0;
-block->Read(&id, sizeof(UINT));
-if(id!=NODE_ID)
+	}
+if(m_Id!=NODE_ID)
 	throw InvalidArgumentException();
-SkipBits::Skip(block);
-StreamReader reader(block);
-NodeUpdate::ReadFromStream(reader, this);
-m_BlockPosition=block->GetPosition();
-}
-
-Node::Node(Node* parent, Handle<String> tag):
-Entry(parent->m_Database),
-m_Flags(NodeFlags::None),
-m_Update(nullptr)
-{
-parent->m_Children.append(this);
-if(FlagHelper::Get(parent->m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateChildAppend>(&parent->m_Update, this);
+NodeUpdate::ReadFromStream(m_Block, this);
+SkipBits::Skip(m_Block, &m_SkipBlock, &m_SkipPage);
+NodeUpdate::ReadFromStream(m_Block, this);
+m_BlockPosition=m_Block->GetPosition();
+m_Block=nullptr;
 }
 
 
@@ -255,65 +224,14 @@ if(FlagHelper::Get(parent->m_Flags, NodeFlags::Update))
 // Common Private
 //================
 
-BOOL Node::ClearInternal(Editor* editor)
-{
-BOOL clear=false;
-clear|=m_Attributes;
-clear|=m_Children;
-clear|=m_Value;
-if(!clear)
-	return false;
-m_Attributes.clear();
-UINT child_count=m_Children.get_count();
-for(UINT pos=0; pos<child_count; pos++)
-	{
-	auto child=GetChildInternal(pos);
-	FreeChild(editor, child);
-	}
-m_Value=nullptr;
-if(FlagHelper::Get(m_Flags, NodeFlags::Update))
-	NodeUpdate::Create<NodeUpdateClear>(&m_Update);
-Invalidate(editor);
-return true;
-}
-
 VOID Node::ClearUpdate()
 {
-auto update=m_Update;
-while(update)
+while(m_Update)
 	{
-	auto next=update->m_Next;
+	auto update=m_Update;
+	m_Update=update->m_Next;
 	delete update;
-	update=next;
 	}
-m_Update=nullptr;
-}
-
-VOID Node::FreeChild(Editor* editor, Node* child)
-{
-WriteLock child_lock(child->m_Mutex);
-child->ClearInternal(editor);
-child->ClearUpdate();
-if(child->m_BlockId!=-1)
-	{
-	editor->Free(child->m_BlockId);
-	child->m_BlockId=-1;
-	}
-}
-
-Handle<Node> Node::GetChildInternal(UINT pos)
-{
-auto child=m_Children.get_at(pos);
-auto at=child->GetAttribute("@");
-if(!at)
-	return child;
-INT relative=0;
-if(at->Scan("%i", &relative)!=1)
-	throw InvalidArgumentException();
-UINT block_id=m_BlockId+relative;
-child=Node::Create(m_Database, block_id);
-m_Children.set_at(pos, child);
-return child;
 }
 
 VOID Node::WriteToBlock(UINT block_id)
@@ -321,8 +239,7 @@ VOID Node::WriteToBlock(UINT block_id)
 auto block=Block::Create(m_Database, block_id);
 block->Write(&NODE_ID, sizeof(UINT));
 SkipBits::Initialize(block);
-StreamWriter writer(block);
-NodeUpdate::WriteToStream(writer, this);
+NodeUpdate::WriteToStream(block, this);
 block->Flush();
 m_BlockId=block_id;
 m_BlockPosition=block->GetPosition();

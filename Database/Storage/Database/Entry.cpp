@@ -31,8 +31,14 @@ namespace Storage {
 Entry::Entry(Database* database, UINT block_id):
 m_BlockId(block_id),
 m_BlockPosition(0),
-m_Database(database)
-{}
+m_Database(database),
+m_Id(0)
+{
+if(m_BlockId==-1)
+	return;
+m_Block=Block::Create(m_Database, m_BlockId);
+m_Block->Read(&m_Id, sizeof(UINT));
+}
 
 
 //==================

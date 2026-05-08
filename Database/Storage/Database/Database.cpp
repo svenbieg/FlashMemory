@@ -84,8 +84,6 @@ VOID Database::Initialize()
 {
 m_Header=Node::Create(this);
 m_Header->SetTag("Header");
-m_Header->SetAttribute("Update", 0);
-m_Header->SetAttribute("UpdateSize", 0);
 m_Header->WriteToBlock(0);
 m_Header->WriteToBlock(1);
 }

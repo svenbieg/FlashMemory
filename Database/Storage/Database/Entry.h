@@ -75,10 +75,14 @@ protected:
 	// Common
 	virtual VOID Invalidate(Editor* Editor);
 	UINT Release()noexcept override;
+	Handle<Block> m_Block;
 	UINT m_BlockId;
 	UINT m_BlockPosition;
 	Handle<Database> m_Database;
+	UINT m_Id;
 	Mutex m_Mutex;
+	UINT m_SkipBlock;
+	UINT m_SkipPage;
 
 private:
 	// Common

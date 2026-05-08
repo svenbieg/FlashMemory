@@ -54,30 +54,33 @@ m_Page=page;
 return m_Buffer;
 }
 
-VOID Block::Seek(UINT pos)
+UINT Block::GetPagePosition()const
 {
-if(m_Position==pos)
+return m_Position%m_PageSize;
+}
+
+VOID Block::SetPage(UINT page)
+{
+if(m_Page==page)
 	return;
+m_Position=page*m_PageSize;
+m_Page=-1;
+}
+
+VOID Block::SetPagePosition(UINT pos)
+{
+UINT page=m_Position/m_PageSize;
+m_Position=page*m_PageSize+pos;
+}
+
+VOID Block::SetPosition(UINT pos)
+{
 m_Position=pos;
 m_Written=0;
 UINT page=m_Position/m_PageSize;
 if(m_Page==page)
 	return;
 m_Page=-1;
-}
-
-VOID Block::Seek(UINT block, UINT pos)
-{
-UINT64 offset=(UINT64)block*m_Size;
-if(offset==m_Offset)
-	{
-	Seek(pos);
-	return;
-	}
-m_Offset=offset;
-m_Page=-1;
-m_Position=pos;
-m_Written=0;
 }
 
 

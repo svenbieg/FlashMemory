@@ -38,21 +38,27 @@ for(UINT u=0; u<count; u++)
 	block->Write(&bits, sizeof(UINT));
 }
 
-VOID SkipBits::Skip(Block* block)
+VOID SkipBits::Skip(Block* block, UINT* block_ptr, UINT* page_ptr)
 {
 UINT block_size=block->GetSize();
 UINT page_size=block->GetPageSize();
 UINT page_count=block_size/page_size;
-UINT count=page_count/32;
+UINT skip_block=page_count/32;
 auto buf=(UINT const*)block->BeginRead();
-UINT skip_count=SkipCount(buf, count);
-UINT pos=skip_count*page_size;
-block->Seek(pos);
-buf=(UINT const*)block->BeginRead();
-skip_count=SkipCount(buf, 1);
-UINT chunk_size=page_size/32;
-pos+=skip_count*chunk_size;
-block->Seek(pos);
+*block_ptr=block->GetPosition();
+skip_block=SkipCount(buf, skip_block);
+if(skip_block)
+	{
+	block->SetPage(skip_block);
+	buf=(UINT const*)block->BeginRead();
+	}
+UINT chunk_count=page_size/CHUNK_SIZE;
+UINT skip_page=chunk_count/32;
+*page_ptr=block->GetPosition();
+skip_page=SkipCount(buf, skip_page);
+UINT page_pos=block->GetPagePosition();
+if(skip_page>page_pos)
+	block->SetPagePosition(skip_page);
 }
 
 

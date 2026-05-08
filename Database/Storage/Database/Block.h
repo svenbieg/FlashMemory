@@ -47,11 +47,13 @@ public:
 
 	// Common
 	BYTE const* BeginRead();
+	UINT GetPagePosition()const;
 	inline UINT GetPageSize()const { return m_PageSize; }
 	inline UINT GetPosition()const { return m_Position; }
 	inline UINT GetSize()const { return m_Size; }
-	VOID Seek(UINT Position);
-	VOID Seek(UINT Block, UINT Position);
+	VOID SetPage(UINT Page);
+	VOID SetPagePosition(UINT Position);
+	VOID SetPosition(UINT Position);
 
 	// Input-Stream
 	SIZE_T Available()override;
