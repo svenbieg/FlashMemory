@@ -213,13 +213,13 @@ SIZE_T size=0;
 size+=block->Read(&m_Id, sizeof(UINT));
 if(m_Id!=NODE_ID)
 	throw InvalidArgumentException();
-size+=NodeUpdate::ReadFromStream(block, this);
+size+=NodeUpdate::ReadFromBlock(block, this);
 return size;
 }
 
 SIZE_T Node::ReadUpdate(Block* block)
 {
-return NodeUpdate::ReadFromStream(block, this);
+return NodeUpdate::ReadFromBlock(block, this, &m_Update);
 }
 
 SIZE_T Node::WriteEntry(Block* block)
