@@ -196,9 +196,14 @@ Entry(database, block_id)
 if(m_BlockId==-1)
 	return;
 auto block=Block::Create(m_Database, m_BlockId);
-ReadEntry(block);
+block->Read(&m_Id, sizeof(UINT));
+if(m_Id!=NODE_ID)
+	throw InvalidArgumentException();
+m_SkipBits.ReadBlockBits(block);
+NodeUpdate::ReadFromStream(block, this);
+m_SkipBits.ReadPageBits(block);
 m_SkipBits.Skip(block);
-ReadUpdate(block);
+NodeUpdate::ReadFromStream(block, this, &m_Update);
 m_BlockPosition=block->GetPosition();
 }
 
@@ -207,27 +212,11 @@ m_BlockPosition=block->GetPosition();
 // Common Protected
 //==================
 
-SIZE_T Node::ReadEntry(Block* block)
-{
-SIZE_T size=0;
-size+=block->Read(&m_Id, sizeof(UINT));
-if(m_Id!=NODE_ID)
-	throw InvalidArgumentException();
-size+=NodeUpdate::ReadFromBlock(block, this);
-return size;
-}
-
-SIZE_T Node::ReadUpdate(Block* block)
-{
-return NodeUpdate::ReadFromBlock(block, this, &m_Update);
-}
-
 SIZE_T Node::WriteEntry(Block* block)
 {
 SIZE_T size=0;
-m_Id=NODE_ID;
-size+=OutputStream::Write(block, &m_Id, sizeof(UINT));
 size+=NodeUpdate::WriteToStream(block, this);
+size+=Align(block, size);
 return size;
 }
 

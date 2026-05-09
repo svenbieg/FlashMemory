@@ -77,8 +77,6 @@ protected:
 		}
 
 	// Common
-	SIZE_T ReadEntry(Block* Block);
-	SIZE_T ReadUpdate(Block* Block);
 	SIZE_T WriteEntry(Block* Block)override;
 
 private:

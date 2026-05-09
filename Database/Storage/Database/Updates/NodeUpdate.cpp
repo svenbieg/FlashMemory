@@ -52,23 +52,16 @@ NodeUpdate::NodeUpdate(Node* node):
 EntryUpdate(node)
 {}
 
-SIZE_T NodeUpdate::ReadFromBlock(Block* block, Node* node, EntryUpdate** update_ptr)
+SIZE_T NodeUpdate::ReadFromStream(InputStream* stream, Node* node, EntryUpdate** update_ptr)
 {
 SIZE_T size=0;
 Update update=Update::None;
-auto updates=(Update const*)block->BeginRead();
-UINT pos=SkipBits::CHUNK_SIZE;
-for(; pos>0; pos--)
-	{
-	if(updates[pos]==Update::NodeBegin)
-		break;
-	}
-if(updates[pos]!=Update::NodeBegin)
+size+=stream->Read(&update, sizeof(Update));
+if(update!=Update::NodeBegin)
 	throw InvalidArgumentException();
-block->Skip(pos+1);
-while(block->Available())
+while(stream->Available())
 	{
-	size+=block->Read(&update, sizeof(Update));
+	size+=stream->Read(&update, sizeof(Update));
 	if(update==Update::None)
 		continue;
 	if(update==Update::NodeEnd)
@@ -78,7 +71,7 @@ while(block->Available())
 		case Update::AttributeRemove:
 			{
 			Handle<String> key;
-			size+=key.ReadFromStream(block);
+			size+=key.ReadFromStream(stream);
 			node->m_Attributes.remove(key);
 			if(update_ptr)
 				{
@@ -91,9 +84,9 @@ while(block->Available())
 		case Update::AttributeSet:
 			{
 			Handle<String> key;
-			size+=key.ReadFromStream(block);
+			size+=key.ReadFromStream(stream);
 			Handle<String> value;
-			size+=value.ReadFromStream(block);
+			size+=value.ReadFromStream(stream);
 			node->m_Attributes.set(key, value);
 			if(update_ptr)
 				{
@@ -106,7 +99,7 @@ while(block->Available())
 		case Update::ChildAppend:
 			{
 			UINT child=0;
-			size+=Dwarf::ReadUnsigned(block, &child);
+			size+=Dwarf::ReadUnsigned(stream, &child);
 			node->m_Children.append(child);
 			if(update_ptr)
 				{
@@ -119,7 +112,7 @@ while(block->Available())
 		case Update::ChildRemove:
 			{
 			UINT child=0;
-			size+=Dwarf::ReadUnsigned(block, &child);
+			size+=Dwarf::ReadUnsigned(stream, &child);
 			node->m_Children.remove(child);
 			if(update_ptr)
 				{
@@ -145,7 +138,7 @@ while(block->Available())
 		case Update::TagSet:
 			{
 			Handle<String> tag;
-			size+=tag.ReadFromStream(block);
+			size+=tag.ReadFromStream(stream);
 			node->m_Tag=tag;
 			if(update_ptr)
 				{
@@ -158,7 +151,7 @@ while(block->Available())
 		case Update::ValueSet:
 			{
 			Handle<String> value;
-			size+=value.ReadFromStream(block);
+			size+=value.ReadFromStream(stream);
 			node->m_Value=value;
 			if(update_ptr)
 				{
@@ -180,36 +173,21 @@ return size;
 SIZE_T NodeUpdate::WriteToStream(OutputStream* stream, Node* node)
 {
 SIZE_T size=0;
-auto const& tag=node->m_Tag;
-if(tag)
+if(node->m_Tag)
+	size+=NodeUpdateTagSet::WriteToStream(stream, node->m_Tag);
+for(auto const& attr: node->m_Attributes)
+	size+=NodeUpdateAttributeSet::WriteToStream(stream, attr.get_key(), attr.get_value());
+if(node->m_Value)
 	{
-	size+=NodeUpdateTagSet::WriteToStream(stream, tag);
-	}
-for(auto const& it: node->m_Attributes)
-	{
-	auto const& key=it.get_key();
-	auto const& value=it.get_value();
-	size+=NodeUpdateAttributeSet::WriteToStream(stream, key, value);
-	}
-auto const& value=node->m_Value;
-if(value)
-	{
-	size+=NodeUpdateValueSet::WriteToStream(stream, value);
+	size+=NodeUpdateValueSet::WriteToStream(stream, node->m_Value);
 	}
 else
 	{
-	for(auto child: node->m_Children)
-		{
+	for(auto const& child: node->m_Children)
 		size+=NodeUpdateChildAppend::WriteToStream(stream, child);
-		}
 	}
 auto update=Update::NodeEnd;
 size+=stream->Write(&update, sizeof(Update));
-if(size%2)
-	{
-	update=Update::None;
-	size+=stream->Write(&update, sizeof(Update));
-	}
 return size;
 }
 

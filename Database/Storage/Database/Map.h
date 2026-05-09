@@ -44,16 +44,6 @@ public:
 
 protected:
 	// Common
-	SIZE_T ReadEntry(Block* Block)
-		{
-		throw NotImplementedException();
-		return 0;
-		}
-	SIZE_T ReadUpdate(Block* Block)
-		{
-		throw NotImplementedException();
-		return 0;
-		}
 	SIZE_T WriteEntry(Block* Block)override
 		{
 		throw NotImplementedException();
@@ -70,9 +60,14 @@ private:
 		if(m_BlockId==-1)
 			return;
 		auto block=Block::Create(m_Database, m_BlockId);
-		ReadEntry(block);
+		block->Read(&m_Id, sizeof(UINT));
+		if(m_Id!=MAP_ID)
+			throw InvalidArgumentException();
+		m_SkipBits.ReadBlockBits(block);
+		_update_t::ReadFromStream(block, this);
+		m_SkipBits.ReadPageBits(block);
 		m_SkipBits.Skip(block);
-		ReadUpdate(block);
+		_update_t::ReadFromStream(block, this, &m_Update);
 		m_BlockPosition=block->GetPosition();
 		}
 	static inline Handle<Map> Create(Database* Database, UINT Block=-1)

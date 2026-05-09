@@ -54,7 +54,7 @@ public:
 	VOID SetPage(UINT Page);
 	VOID SetPagePosition(UINT Position);
 	VOID SetPosition(UINT Position);
-	VOID Skip(UINT Size);
+	UINT Skip(UINT Size);
 
 	// Input-Stream
 	SIZE_T Available()override;

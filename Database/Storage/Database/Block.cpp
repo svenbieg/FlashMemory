@@ -83,9 +83,10 @@ if(m_Page==page)
 m_Page=-1;
 }
 
-VOID Block::Skip(UINT size)
+UINT Block::Skip(UINT size)
 {
 SetPosition(m_Position+size);
+return size;
 }
 
 

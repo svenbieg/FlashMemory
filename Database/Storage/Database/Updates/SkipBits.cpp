@@ -28,24 +28,26 @@ namespace Storage {
 // Common
 //========
 
-VOID SkipBits::Skip(Block* block)
+SIZE_T SkipBits::ReadBlockBits(Block* block)
 {
 auto buf=(UINT const*)block->BeginRead();
-m_BlockBitsPosition=block->GetPosition();
 m_BlockSkipCount=SkipCount(buf, m_BlockBitsCount);
-block->Skip(m_BlockSkipCount*sizeof(UINT));
-if(m_BlockSkipCount)
-	{
-	block->SetPage(m_BlockSkipCount);
-	buf=(UINT const*)block->BeginRead();
-	}
-m_PageBitsPosition=block->GetPosition();
+return block->Skip(m_BlockSkipCount*sizeof(UINT));
+}
+
+SIZE_T SkipBits::ReadPageBits(Block* block)
+{
+auto buf=(UINT const*)block->BeginRead();
 m_PageSkipCount=SkipCount(buf, m_PageBitsCount);
-block->Skip(m_PageSkipCount*sizeof(UINT));
-UINT page_pos=block->GetPagePosition();
-UINT skip_pos=m_PageSkipCount*CHUNK_SIZE;
-if(skip_pos>page_pos)
-	block->SetPagePosition(skip_pos);
+return block->Skip(m_PageSkipCount*sizeof(UINT));
+}
+
+VOID SkipBits::Skip(Block* block)
+{
+UINT page_size=block->GetPageSize();
+UINT pos=m_BlockSkipCount*page_size;
+pos+=m_PageSkipCount*m_Alignment;
+block->SetPosition(pos);
 }
 
 SIZE_T SkipBits::WriteBlockBits(Block* block, UINT skip)
@@ -53,7 +55,6 @@ SIZE_T SkipBits::WriteBlockBits(Block* block, UINT skip)
 SIZE_T size=m_BlockBitsCount*sizeof(UINT);
 if(!block)
 	return size;
-m_BlockBitsPosition=block->GetPosition();
 for(UINT u=0; u<m_BlockBitsCount; u++)
 	{
 	UINT bits=GetBits(u*32, skip);
@@ -67,8 +68,7 @@ SIZE_T SkipBits::WritePageBits(Block* block, UINT skip_bytes)
 SIZE_T size=m_PageBitsCount*sizeof(UINT);
 if(!block)
 	return size;
-m_PageBitsPosition=block->GetPosition();
-UINT skip=skip_bytes/CHUNK_SIZE;
+UINT skip=skip_bytes/m_Alignment;
 for(UINT u=0; u<m_PageBitsCount; u++)
 	{
 	UINT bits=GetBits(u*32, skip);
@@ -83,19 +83,20 @@ return size;
 //==========================
 
 SkipBits::SkipBits(Volume* volume):
+m_Alignment(0),
 m_BlockBitsCount(0),
-m_BlockBitsPosition(0),
 m_BlockSkipCount(0),
 m_PageBitsCount(0),
-m_PageBitsPosition(0),
 m_PageSkipCount(0)
 {
+WORD align=volume->GetAlignment();
+m_Alignment=TypeHelper::Min(align, 4U);
 UINT block_size=volume->GetBlockSize();
 UINT page_size=volume->GetPageSize();
 UINT page_count=block_size/page_size;
-UINT chunk_count=page_size/CHUNK_SIZE;
-m_BlockBitsCount=page_count/32;
-m_PageBitsCount=chunk_count/32;
+UINT chunk_count=page_size/m_Alignment;
+m_BlockBitsCount=(WORD)(page_count/32);
+m_PageBitsCount=(WORD)(chunk_count/32);
 }
 
 

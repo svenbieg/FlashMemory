@@ -41,13 +41,15 @@ namespace Storage {
 class SkipBits
 {
 public:
-	// Settings
-	static const UINT CHUNK_SIZE=32;
-
 	// Friends
 	friend Entry;
 
 	// Con-/Destructors
+	inline WORD GetAlignment()const { return m_Alignment; }
+	inline UINT GetBlockBitsSize()const { return m_BlockBitsCount*sizeof(UINT); }
+	inline UINT GetPageBitsSize()const { return m_PageBitsCount*sizeof(UINT); }
+	SIZE_T ReadBlockBits(Block* Block);
+	SIZE_T ReadPageBits(Block* Block);
 	VOID Skip(Block* Block);
 	SIZE_T WriteBlockBits(Block* Block, UINT SkipPages);
 	SIZE_T WritePageBits(Block* Block, UINT SkipBytes);
@@ -59,12 +61,11 @@ private:
 	// Common
 	static UINT GetBits(UINT Position, UINT Skip);
 	static UINT SkipCount(UINT const* SkipBits, UINT Count);
-	UINT m_BlockBitsCount;
-	UINT m_BlockBitsPosition;
-	UINT m_BlockSkipCount;
-	UINT m_PageBitsCount;
-	UINT m_PageBitsPosition;
-	UINT m_PageSkipCount;
+	WORD m_Alignment;
+	WORD m_BlockBitsCount;
+	WORD m_BlockSkipCount;
+	WORD m_PageBitsCount;
+	WORD m_PageSkipCount;
 };
 
 }}}

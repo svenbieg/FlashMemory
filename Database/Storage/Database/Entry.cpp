@@ -55,11 +55,11 @@ m_Update(nullptr)
 SIZE_T Entry::Align(OutputStream* stream, SIZE_T size)
 {
 WORD align=m_Database->m_Alignment;
-assert(align<=4);
+assert(align<=8);
 if(size%align==0)
 	return 0;
 SIZE_T append=align-(size%align);
-UINT zero=0;
+UINT64 zero=0;
 OutputStream::Write(stream, &zero, append);
 return append;
 }
@@ -86,13 +86,13 @@ SIZE_T Entry::WriteToBlock(UINT block_id)
 {
 SIZE_T size=0;
 auto block=Block::Create(m_Database, block_id);
-size+=WriteEntry(block);
-size+=Align(block, size);
+size+=block->Write(&m_Id, sizeof(UINT));
 size+=m_SkipBits.WriteBlockBits(block, 0);
+size+=WriteEntry(block);
 size+=m_SkipBits.WritePageBits(block, 0);
 block->Flush();
 m_BlockId=block_id;
-m_BlockPosition=block->GetPosition();
+m_BlockPosition=(UINT)size;
 return size;
 }
 
