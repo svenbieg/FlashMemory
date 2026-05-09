@@ -49,7 +49,7 @@ protected:
 	NodeUpdate(Node* Node);
 
 	// Common
-	static SIZE_T ReadFromStream(InputStream* Stream, Node* Node);
+	static SIZE_T ReadFromBlock(Block* Block, Node* Node, EntryUpdate** Update=nullptr);
 	static SIZE_T WriteToStream(OutputStream* Stream, Node* Node);
 };
 

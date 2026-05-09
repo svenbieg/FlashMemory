@@ -33,6 +33,7 @@ VOID SkipBits::Skip(Block* block)
 auto buf=(UINT const*)block->BeginRead();
 m_BlockBitsPosition=block->GetPosition();
 m_BlockSkipCount=SkipCount(buf, m_BlockBitsCount);
+block->Skip(m_BlockSkipCount*sizeof(UINT));
 if(m_BlockSkipCount)
 	{
 	block->SetPage(m_BlockSkipCount);
@@ -40,6 +41,7 @@ if(m_BlockSkipCount)
 	}
 m_PageBitsPosition=block->GetPosition();
 m_PageSkipCount=SkipCount(buf, m_PageBitsCount);
+block->Skip(m_PageSkipCount*sizeof(UINT));
 UINT page_pos=block->GetPagePosition();
 UINT skip_pos=m_PageSkipCount*CHUNK_SIZE;
 if(skip_pos>page_pos)

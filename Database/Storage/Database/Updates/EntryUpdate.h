@@ -9,8 +9,7 @@
 // Using
 //=======
 
-#include "Storage/Streams/InputStream.h"
-#include "Storage/Streams/OutputStream.h"
+#include "Storage/Database/Block.h"
 #include "StringClass.h"
 
 

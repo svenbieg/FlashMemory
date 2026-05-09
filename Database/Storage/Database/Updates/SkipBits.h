@@ -41,6 +41,9 @@ namespace Storage {
 class SkipBits
 {
 public:
+	// Settings
+	static const UINT CHUNK_SIZE=32;
+
 	// Friends
 	friend Entry;
 
@@ -50,9 +53,6 @@ public:
 	SIZE_T WritePageBits(Block* Block, UINT SkipBytes);
 
 private:
-	// Settings
-	static const UINT CHUNK_SIZE=32;
-
 	// Con-/Destructors
 	SkipBits(Volume* Volume);
 

@@ -83,6 +83,11 @@ if(m_Page==page)
 m_Page=-1;
 }
 
+VOID Block::Skip(UINT size)
+{
+SetPosition(m_Position+size);
+}
+
 
 //==============
 // Input-Stream

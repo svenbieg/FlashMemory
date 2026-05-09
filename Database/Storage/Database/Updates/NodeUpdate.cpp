@@ -52,21 +52,23 @@ NodeUpdate::NodeUpdate(Node* node):
 EntryUpdate(node)
 {}
 
-SIZE_T NodeUpdate::ReadFromStream(InputStream* stream, Node* node)
+SIZE_T NodeUpdate::ReadFromBlock(Block* block, Node* node, EntryUpdate** update_ptr)
 {
 SIZE_T size=0;
 Update update=Update::None;
-while(stream->Available())
+auto updates=(Update const*)block->BeginRead();
+UINT pos=SkipBits::CHUNK_SIZE;
+for(; pos>0; pos--)
 	{
-	size+=stream->Read(&update, sizeof(Update));
-	if(update==Update::NodeBegin)
+	if(updates[pos]==Update::NodeBegin)
 		break;
 	}
-if(update!=Update::NodeBegin)
+if(updates[pos]!=Update::NodeBegin)
 	throw InvalidArgumentException();
-while(stream->Available())
+block->Skip(pos+1);
+while(block->Available())
 	{
-	size+=stream->Read(&update, sizeof(Update));
+	size+=block->Read(&update, sizeof(Update));
 	if(update==Update::None)
 		continue;
 	if(update==Update::NodeEnd)
@@ -76,31 +78,55 @@ while(stream->Available())
 		case Update::AttributeRemove:
 			{
 			Handle<String> key;
-			size+=key.ReadFromStream(stream);
+			size+=key.ReadFromStream(block);
 			node->m_Attributes.remove(key);
+			if(update_ptr)
+				{
+				auto attr_remove=new NodeUpdateAttributeRemove(node, key);
+				*update_ptr=attr_remove;
+				update_ptr=&attr_remove->m_Next;
+				}
 			break;
 			}
 		case Update::AttributeSet:
 			{
 			Handle<String> key;
-			size+=key.ReadFromStream(stream);
+			size+=key.ReadFromStream(block);
 			Handle<String> value;
-			size+=value.ReadFromStream(stream);
+			size+=value.ReadFromStream(block);
 			node->m_Attributes.set(key, value);
+			if(update_ptr)
+				{
+				auto attr_set=new NodeUpdateAttributeSet(node, key, value);
+				*update_ptr=attr_set;
+				update_ptr=&attr_set->m_Next;
+				}
 			return size;
 			}
 		case Update::ChildAppend:
 			{
 			UINT child=0;
-			size+=Dwarf::ReadUnsigned(stream, &child);
+			size+=Dwarf::ReadUnsigned(block, &child);
 			node->m_Children.append(child);
+			if(update_ptr)
+				{
+				auto child_append=new NodeUpdateChildAppend(node, child);
+				*update_ptr=child_append;
+				update_ptr=&child_append->m_Next;
+				}
 			break;
 			}
 		case Update::ChildRemove:
 			{
 			UINT child=0;
-			size+=Dwarf::ReadUnsigned(stream, &child);
+			size+=Dwarf::ReadUnsigned(block, &child);
 			node->m_Children.remove(child);
+			if(update_ptr)
+				{
+				auto child_remove=new NodeUpdateChildRemove(node, child);
+				*update_ptr=child_remove;
+				update_ptr=&child_remove->m_Next;
+				}
 			break;
 			}
 		case Update::Clear:
@@ -108,20 +134,38 @@ while(stream->Available())
 			node->m_Attributes.clear();
 			node->m_Children.clear();
 			node->m_Value=nullptr;
+			if(update_ptr)
+				{
+				auto clear=new NodeUpdateClear(node);
+				*update_ptr=clear;
+				update_ptr=&clear->m_Next;
+				}
 			break;
 			}
 		case Update::TagSet:
 			{
 			Handle<String> tag;
-			size+=tag.ReadFromStream(stream);
+			size+=tag.ReadFromStream(block);
 			node->m_Tag=tag;
+			if(update_ptr)
+				{
+				auto tag_set=new NodeUpdateTagSet(node, tag);
+				*update_ptr=tag_set;
+				update_ptr=&tag_set->m_Next;
+				}
 			break;
 			}
 		case Update::ValueSet:
 			{
 			Handle<String> value;
-			size+=value.ReadFromStream(stream);
+			size+=value.ReadFromStream(block);
 			node->m_Value=value;
+			if(update_ptr)
+				{
+				auto value_set=new NodeUpdateValueSet(node, value);
+				*update_ptr=value_set;
+				update_ptr=&value_set->m_Next;
+				}
 			break;
 			}
 		default:
