@@ -43,6 +43,7 @@ class Node: public Entry
 {
 public:
 	// Using
+	using AttributeIndex=Collections::index<Handle<String>, UINT>;
 	using AttributeMap=Collections::map<Handle<String>, Handle<String>, UINT>;
 	using ChildList=Collections::list<UINT, UINT>;
 	using NodeUpdate=Storage::Database::Updates::NodeUpdate;
@@ -85,6 +86,7 @@ private:
 
 	// Common
 	BOOL ClearInternal(Editor* Editor);
+	AttributeIndex m_AttributeIndex;
 	AttributeMap m_Attributes;
 	ChildList m_Children;
 	Handle<String> m_Tag;

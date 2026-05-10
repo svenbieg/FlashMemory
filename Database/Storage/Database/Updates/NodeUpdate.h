@@ -34,6 +34,28 @@ namespace Storage {
 		namespace Updates {
 
 
+//=========
+// Updates
+//=========
+
+enum class NodeUpdateId: BYTE
+{
+None=0,
+AttributeRemove_Id,
+AttributeRemove_Key,
+AttributeSet_Id_Int64,
+AttributeSet_Id_String,
+AttributeSet_Key_Int64,
+AttributeSet_Key_String,
+ChildAppend,
+ChildRemove,
+Clear,
+TagSet,
+ValueSet_Int64,
+ValueSet_String
+};
+
+
 //=============
 // Node-Update
 //=============
@@ -49,8 +71,9 @@ protected:
 	NodeUpdate(Node* Node);
 
 	// Common
+	BOOL AttributeIndex(Handle<String> Key, UINT* Id);
 	static SIZE_T ReadFromStream(InputStream* Stream, Node* Node, EntryUpdate** Update=nullptr);
-	static SIZE_T WriteToStream(OutputStream* Stream, Node* Node);
+	Node* m_Node;
 };
 
 
@@ -101,6 +124,9 @@ private:
 	static VOID Create(Node* Node, Handle<String> Key, Handle<String> Value);
 
 	// Common
+	static SIZE_T WriteToStream(OutputStream* Stream, UINT Key, INT64 Value);
+	static SIZE_T WriteToStream(OutputStream* Stream, UINT Key, Handle<String> Value);
+	static SIZE_T WriteToStream(OutputStream* Stream, Handle<String> Key, INT64 Value);
 	static SIZE_T WriteToStream(OutputStream* Stream, Handle<String> Key, Handle<String> Value);
 	Handle<String> m_Key;
 	Handle<String> m_Value;
@@ -222,6 +248,7 @@ private:
 	static VOID Create(Node* Node, Handle<String> Value);
 
 	// Common
+	static SIZE_T WriteToStream(OutputStream* Stream, INT64 Value);
 	static SIZE_T WriteToStream(OutputStream* Stream, Handle<String> Value);
 	Handle<String> m_Value;
 };

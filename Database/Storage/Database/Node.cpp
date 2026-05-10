@@ -201,6 +201,8 @@ if(m_Id!=NODE_ID)
 	throw InvalidArgumentException();
 m_SkipBits.ReadBlockBits(block);
 NodeUpdate::ReadFromStream(block, this);
+for(auto const& attr: m_Attributes)
+	m_AttributeIndex.add(attr.get_key());
 m_SkipBits.ReadPageBits(block);
 m_SkipBits.Skip(block);
 NodeUpdate::ReadFromStream(block, this, &m_Update);
@@ -215,7 +217,21 @@ m_BlockPosition=block->GetPosition();
 SIZE_T Node::WriteEntry(Block* block)
 {
 SIZE_T size=0;
-size+=NodeUpdate::WriteToStream(block, this);
+if(m_Tag)
+	size+=NodeUpdateTagSet::WriteToStream(block, m_Tag);
+for(auto const& attr: m_Attributes)
+	size+=NodeUpdateAttributeSet::WriteToStream(block, attr.get_key(), attr.get_value());
+if(m_Value)
+	{
+	size+=NodeUpdateValueSet::WriteToStream(block, m_Value);
+	}
+else
+	{
+	for(auto const& child: m_Children)
+		size+=NodeUpdateChildAppend::WriteToStream(block, child);
+	}
+auto update=NodeUpdateId::None;
+size+=block->Write(&update, sizeof(NodeUpdateId));
 size+=Align(block, size);
 return size;
 }
