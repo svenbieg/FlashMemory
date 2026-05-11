@@ -43,6 +43,11 @@ while(pos<size)
 	}
 }
 
+WORD FlashMemory::GetAlignment()
+{
+return 1;
+}
+
 UINT FlashMemory::GetBlockSize()
 {
 return BLOCK_SIZE;
@@ -55,9 +60,7 @@ return PAGE_SIZE;
 
 UINT64 FlashMemory::GetSize()
 {
-LARGE_INTEGER size;
-GetFileSizeEx(m_File, &size);
-return size.QuadPart;
+return 0;
 }
 
 VOID FlashMemory::Read(UINT64 offset, VOID* buf, SIZE_T size)

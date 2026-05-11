@@ -32,6 +32,7 @@ public:
 
 	// Volume
 	VOID Erase(UINT64 Position, UINT Size);
+	WORD GetAlignment()override;
 	UINT GetBlockSize()override;
 	UINT GetPageSize()override;
 	UINT64 GetSize()override;
