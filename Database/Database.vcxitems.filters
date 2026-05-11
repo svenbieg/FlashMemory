@@ -47,9 +47,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h">
-      <Filter>Storage</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h">
       <Filter>Storage</Filter>
     </ClInclude>

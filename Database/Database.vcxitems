@@ -38,6 +38,5 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReliableVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h" />
   </ItemGroup>
 </Project>
