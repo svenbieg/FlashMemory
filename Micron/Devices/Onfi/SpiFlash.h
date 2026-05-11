@@ -38,7 +38,7 @@ public:
 	static inline Handle<SpiFlash> Create(SpiHost* Host) { return Object::Create<SpiFlash>(Host); }
 
 	// Common
-	VOID Reset();
+	inline WORD GetId()const { return m_Id; }
 
 	// Volume
 	VOID Erase(UINT64 Offset, UINT Size)override;
@@ -55,9 +55,14 @@ protected:
 	SpiFlash(SpiHost* Host);
 
 	// Common
+	VOID OnSpiHostDataReceived();
+	WORD ReadId();
+	VOID Reset();
 	UINT m_BlockSize;
-	UINT m_PageSize;
-	UINT64 m_Size;
+	WORD m_Id;
+	WORD m_PageSize;
+	WORD m_PageSpare;
+	UINT m_Size;
 	Handle<SpiHost> m_SpiHost;
 };
 
