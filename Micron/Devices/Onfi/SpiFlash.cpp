@@ -158,22 +158,21 @@ switch(model)
 
 WORD SpiFlash::ReadId()
 {
-BYTE tx[8]={ 0 };
-tx[0]=CMD_READ_ID;
-BYTE rx[8]={ 0 };
-m_SpiHost->Transmit(tx, rx, 8);
+BYTE tx[2]={ CMD_READ_ID, 0 };
 WORD id=0;
-//m_SpiHost->Write(cmd, 2);
-//m_SpiHost->Flush();
-//WORD id=0;
-//m_SpiHost->Read(&id, 2);
+m_SpiHost->SpiBegin(2, 2);
+m_SpiHost->SpiWrite(tx, 2);
+m_SpiHost->SpiRead(&id, 2);
+m_SpiHost->SpiEnd();
 return id;
 }
 
 VOID SpiFlash::Reset()
 {
-BYTE tx=CMD_RESET;
-m_SpiHost->Write(&tx, 1);
+BYTE tx[2]={ CMD_RESET, 0 };
+m_SpiHost->SpiBegin(2, 0);
+m_SpiHost->SpiWrite(tx, 2);
+m_SpiHost->SpiEnd();
 Task::Sleep(10);
 }
 
