@@ -46,6 +46,10 @@ public:
 		UINT64 reverse=this->m_Size-Offset-Size;
 		_base_t::Erase(reverse, Size);
 		}
+	virtual UINT64 GetSize()override
+		{
+		return 0;
+		}
 	virtual VOID Read(UINT64 Offset, VOID* Buffer, SIZE_T Size)override
 		{
 		UINT64 reverse=Reverse(Offset, Size);
