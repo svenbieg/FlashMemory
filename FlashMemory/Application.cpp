@@ -19,7 +19,7 @@ using namespace UI;
 
 #ifdef _PICO2W
 #include "Devices/Onfi/SpiFlash.h"
-#include "Storage/EmbeddedVolume.h"
+#include "Storage/ReliableVolume.h"
 using namespace Devices::Onfi;
 using namespace Devices::Spi;
 #else
@@ -51,14 +51,25 @@ namespace FlashMemory {
 
 Application::Application()
 {
-Console::Print("Creating database...\n");
 #ifdef _PICO2W
-auto spi_host=SpiHost::Create();
-auto volume=EmbeddedVolume<SpiFlash>::Create(FileCreateMode::OpenAlways, 64, spi_host);
+auto task=Task::Create(this, [this]()
+	{
+	Console::Print("Initializing flash-chip...\n");
+	auto spi_host=SpiHost::Create();
+	auto spi_flash=SpiFlash::Create(spi_host);
+	Console::Print("OK\n");
+	//auto volume=ReliableVolume<SpiFlash>::Create(FileCreateMode::OpenAlways, 64, spi_host);
+	}, "test");
+task->Then(this, [this]()
+	{
+	Console::Print("Failed\n");
+	});
 #else
 auto volume=Storage::FlashMemory::Create("flash.bin");
-#endif
+Console::Print("Creating database...\n");
 m_Database=Database::Create(volume, FileCreateMode::OpenAlways);
+auto editor=m_Database->Edit();
+#endif
 }
 
 }
