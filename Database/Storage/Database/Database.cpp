@@ -29,7 +29,6 @@ namespace Storage {
 //==========================
 
 Database::Database(Volume* volume, FileCreateMode create):
-m_Alignment(volume->GetAlignment()),
 m_Volume(volume)
 {
 auto header=ReadHeader();
@@ -108,12 +107,12 @@ return header;
 
 VOID Database::ValidateHeader(Node* header)
 {
-if(header->m_BlockId==0)
+if(header->m_Block==0)
 	{
 	try
 		{
 		auto header1=Node::Create(this, 1);
-		if(header1->m_BlockPosition!=header->m_BlockPosition)
+		if(header1->m_Size!=header->m_Size)
 			throw InvalidArgumentException();
 		}
 	catch(InvalidArgumentException)

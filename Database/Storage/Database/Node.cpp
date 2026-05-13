@@ -14,7 +14,6 @@
 
 #include "Concurrency/ReadLock.h"
 #include "Concurrency/WriteLock.h"
-#include "Storage/Database/Block.h"
 #include "Storage/Database/Database.h"
 #include "Storage/Encoding/Dwarf.h"
 #include "Storage/Streams/StreamReader.h"
@@ -63,10 +62,10 @@ for(UINT pos=0; pos<child_count; pos++)
 	{
 	auto child=GetChildAt(pos);
 	child->Clear();
-	editor->Free(child->m_BlockId);
+	editor->Free(child->m_Block);
 	}
 m_Value=nullptr;
-if(m_BlockId!=-1)
+if(m_Block!=-1)
 	NodeUpdateClear::Create(this);
 Invalidate(editor);
 return true;
@@ -99,7 +98,7 @@ BOOL Node::RemoveAttribute(Editor* editor, Handle<String> key)
 WriteLock lock(m_Mutex);
 if(!m_Attributes.remove(key))
 	return false;
-if(m_BlockId!=-1)
+if(m_Block!=-1)
 	NodeUpdateAttributeRemove::Create(this, key);
 Invalidate(editor);
 return true;
@@ -115,10 +114,10 @@ editor->Flush();
 VOID Node::RemoveChild(Editor* editor, Handle<Node> child)
 {
 WriteLock lock(m_Mutex);
-UINT block_id=child->m_BlockId;
+UINT block_id=child->m_Block;
 if(!m_Children.remove(block_id))
 	throw NotFoundException();
-if(m_BlockId!=-1)
+if(m_Block!=-1)
 	NodeUpdateChildRemove::Create(this, block_id);
 Invalidate(editor);
 }
@@ -137,7 +136,7 @@ BOOL Node::SetAttribute(Editor* editor, Handle<String> key, Handle<String> value
 WriteLock lock(m_Mutex);
 if(!m_Attributes.set(key, value))
 	return false;
-if(m_BlockId!=-1)
+if(m_Block!=-1)
 	NodeUpdateAttributeSet::Create(this, key, value);
 Invalidate(editor);
 return true;
@@ -158,7 +157,7 @@ WriteLock lock(m_Mutex);
 if(m_Tag==tag)
 	return false;
 m_Tag=tag;
-if(m_BlockId!=-1)
+if(m_Block!=-1)
 	NodeUpdateTagSet::Create(this, tag);
 Invalidate(editor);
 return true;
@@ -179,7 +178,7 @@ WriteLock lock(m_Mutex);
 if(m_Value==value)
 	return false;
 m_Value=value;
-if(m_BlockId!=-1)
+if(m_Block!=-1)
 	NodeUpdateValueSet::Create(this, value);
 Invalidate(editor);
 return true;
@@ -193,20 +192,19 @@ return true;
 Node::Node(Database* database, UINT block_id):
 Entry(database, block_id)
 {
-if(m_BlockId==-1)
+if(m_Block==-1)
 	return;
-auto block=Block::Create(m_Database, m_BlockId);
+auto volume=GetVolume();
+auto block=Block::Create(volume, m_Block);
 block->Read(&m_Id, sizeof(UINT));
 if(m_Id!=NODE_ID)
 	throw InvalidArgumentException();
-m_SkipBits.ReadBlockBits(block);
 NodeUpdate::ReadFromStream(block, this);
 for(auto const& attr: m_Attributes)
 	m_AttributeIndex.add(attr.get_key());
-m_SkipBits.ReadPageBits(block);
-m_SkipBits.Skip(block);
+block->Skip();
 NodeUpdate::ReadFromStream(block, this, &m_Update);
-m_BlockPosition=block->GetPosition();
+m_Size=block->GetPosition();
 }
 
 
@@ -214,25 +212,24 @@ m_BlockPosition=block->GetPosition();
 // Common Protected
 //==================
 
-SIZE_T Node::WriteEntry(Block* block)
+SIZE_T Node::WriteEntry(OutputStream* stream)
 {
 SIZE_T size=0;
 if(m_Tag)
-	size+=NodeUpdateTagSet::WriteToStream(block, m_Tag);
+	size+=NodeUpdateTagSet::WriteToStream(stream, m_Tag);
 for(auto const& attr: m_Attributes)
-	size+=NodeUpdateAttributeSet::WriteToStream(block, attr.get_key(), attr.get_value());
+	size+=NodeUpdateAttributeSet::WriteToStream(stream, attr.get_key(), attr.get_value());
 if(m_Value)
 	{
-	size+=NodeUpdateValueSet::WriteToStream(block, m_Value);
+	size+=NodeUpdateValueSet::WriteToStream(stream, m_Value);
 	}
 else
 	{
 	for(auto const& child: m_Children)
-		size+=NodeUpdateChildAppend::WriteToStream(block, child);
+		size+=NodeUpdateChildAppend::WriteToStream(stream, child);
 	}
 auto update=NodeUpdateId::None;
-size+=block->Write(&update, sizeof(NodeUpdateId));
-size+=Align(block, size);
+size+=stream->Write(&update, sizeof(NodeUpdateId));
 return size;
 }
 

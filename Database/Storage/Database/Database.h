@@ -54,7 +54,6 @@ public:
 
 	// Common
 	inline Handle<Editor> Edit() { return Editor::Create(this); }
-	inline Handle<Volume> GetVolume()const { return m_Volume; }
 
 private:
 	// Con-/Destructors
@@ -64,7 +63,6 @@ private:
 	VOID Initialize();
 	Handle<Node> ReadHeader();
 	VOID ValidateHeader(Node* Header);
-	WORD m_Alignment;
 	EntryMap m_Entries;
 	Mutex m_EntriesMutex;
 	Handle<Node> m_Header;

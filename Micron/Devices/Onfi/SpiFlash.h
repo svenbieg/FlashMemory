@@ -42,11 +42,10 @@ public:
 
 	// Volume
 	VOID Erase(UINT64 Offset, UINT Size)override;
-	WORD GetAlignment()override;
 	UINT GetBlockSize()override;
-	UINT GetPageSize()override;
+	WORD GetPageSize(WORD* Spare=nullptr)override;
 	UINT64 GetSize()override;
-	VOID Read(UINT64 Position, VOID* Buffer, SIZE_T Size)override;
+	VOID ReadPage(UINT Block, WORD Id, Page* Page)override;
 	VOID SetSize(UINT64 Size)override;
 	VOID Write(UINT64 Position, VOID const* Buffer, SIZE_T Size)override;
 
@@ -55,9 +54,10 @@ protected:
 	SpiFlash(SpiHost* Host);
 
 	// Common
-	VOID OnSpiHostDataReceived();
+	BYTE GetFeatures(BYTE Feature);
 	WORD ReadId();
 	VOID Reset();
+	VOID SetFeatures(BYTE Feature, BYTE Value);
 	UINT m_BlockSize;
 	WORD m_Id;
 	WORD m_PageSize;

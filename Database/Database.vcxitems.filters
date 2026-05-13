@@ -21,20 +21,26 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Block.cpp">
-      <Filter>Storage\Database</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.cpp">
       <Filter>Storage\Database\Updates</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.cpp">
-      <Filter>Storage\Database\Updates</Filter>
-    </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\EntryUpdate.cpp">
       <Filter>Storage\Database\Updates</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Block.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Page.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\SkipBits.cpp">
+      <Filter>Storage</Filter>
+    </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.cpp">
+      <Filter>Storage</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -59,9 +65,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Map.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Block.h">
-      <Filter>Storage\Database</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
@@ -71,11 +74,23 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\MapUpdate.h">
       <Filter>Storage\Database\Updates</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\SkipBits.h">
-      <Filter>Storage\Database\Updates</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\EntryUpdate.h">
       <Filter>Storage\Database\Updates</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Page.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Block.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\SkipBits.h">
+      <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.h">
+      <Filter>Storage</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

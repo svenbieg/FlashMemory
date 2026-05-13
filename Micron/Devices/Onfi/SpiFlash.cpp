@@ -13,6 +13,7 @@
 
 using namespace Concurrency;
 using namespace Devices::Spi;
+using namespace Storage;
 
 
 //===========
@@ -23,9 +24,9 @@ namespace Devices {
 	namespace Onfi {
 
 
-//==========
-// Settings
-//==========
+//===========
+// Device-Id
+//===========
 
 const BYTE MICRON_ID=0x2C;
 
@@ -39,36 +40,44 @@ M78A_1Gb=0x14
 // Commands
 //==========
 
-const UINT8 CMD_ERASE_BLOCK			=0xD8;
-const UINT8 CMD_GET_FEATURES		=0x0F;
-const UINT8 CMD_PROGRAM_EXEC		=0x10;
-const UINT8 CMD_PROGRAM_LOAD		=0x02;
-const UINT8 CMD_PROGRAM_LOAD_RND	=0x84;
-const UINT8 CMD_READ_CACHE			=0x03;
-const UINT8 CMD_READ_CACHE_LAST		=0x3F;
-const UINT8 CMD_READ_CACHE_RND		=0x30;
-const UINT8 CMD_READ_ID				=0x9F;
-const UINT8 CMD_READ_PAGE			=0x13;
-const UINT8 CMD_RESET				=0xFF;
-const UINT8 CMD_SET_FEATURES		=0x1F;
+const BYTE CMD_ERASE_BLOCK			=0xD8;
+const BYTE CMD_GET_FEATURES			=0x0F;
+const BYTE CMD_PROGRAM_EXEC			=0x10;
+const BYTE CMD_PROGRAM_LOAD			=0x02;
+const BYTE CMD_PROGRAM_LOAD_RND		=0x84;
+const BYTE CMD_READ_CACHE			=0x03;
+const BYTE CMD_READ_CACHE_LAST		=0x3F;
+const BYTE CMD_READ_CACHE_RND		=0x30;
+const BYTE CMD_READ_ID				=0x9F;
+const BYTE CMD_READ_PAGE			=0x13;
+const BYTE CMD_RESET				=0xFF;
+const BYTE CMD_SET_FEATURES			=0x1F;
+
+
+//==========
+// Features
+//==========
+
+const BYTE FEAT_CONFIG		=0xB0;
+const BYTE FEAT_STATUS		=0xC0;
+
+
+//===============
+// Configuration
+//===============
+
+const BYTE CONFIG_ECC_EN	=(1<<4);
 
 
 //========
 // Status
 //========
 
-const UINT8 STATUS_CRBSY	=(1<<7);
-const BITS8 STATUS_ECC		={ 0x7, 4 };
-const UINT8 STATUS_PFAIL	=(1<<3);
-const UINT8 STATUS_EFAIL	=(1<<2);
-const UINT8 STATUS_WEL		=(1<<1);
-const UINT8 STATUS_OIP		=(1<<0);
-
-const UINT8 ECC_OK			=0;
-const UINT8 ECC_1_TO_3		=1;
-const UINT8 ECC_FAILED		=2;
-const UINT8 ECC_4_TO_6		=3;
-const UINT8 ECC_7_TO_8		=5;
+const BYTE STATUS_CRBSY		=(1<<7);
+const BYTE STATUS_PFAIL		=(1<<3);
+const BYTE STATUS_EFAIL		=(1<<2);
+const BYTE STATUS_WEL		=(1<<1);
+const BYTE STATUS_OIP		=(1<<0);
 
 
 //========
@@ -80,18 +89,15 @@ VOID SpiFlash::Erase(UINT64 offset, UINT size)
 throw NotImplementedException();
 }
 
-WORD SpiFlash::GetAlignment()
-{
-return 1;
-}
-
 UINT SpiFlash::GetBlockSize()
 {
 return m_BlockSize;
 }
 
-UINT SpiFlash::GetPageSize()
+WORD SpiFlash::GetPageSize(WORD* spare_ptr)
 {
+if(spare_ptr)
+	*spare_ptr=m_PageSpare;
 return m_PageSize;
 }
 
@@ -100,8 +106,9 @@ UINT64 SpiFlash::GetSize()
 return m_Size;
 }
 
-VOID SpiFlash::Read(UINT64 offset, VOID* buf, SIZE_T size)
+VOID SpiFlash::ReadPage(UINT block, WORD id, Page* page)
 {
+auto buf=page->Begin();
 throw NotImplementedException();
 }
 
@@ -128,7 +135,6 @@ m_PageSize(0),
 m_Size(0),
 m_SpiHost(spi_host)
 {
-Reset();
 m_Id=ReadId();
 BYTE micron=TypeHelper::LowByte(m_Id);
 if(micron!=MICRON_ID)
@@ -149,12 +155,26 @@ switch(model)
 		throw NotImplementedException();
 		}
 	}
+BYTE config=GetFeatures(FEAT_CONFIG);
+BitHelper::Clear(config, CONFIG_ECC_EN);
+SetFeatures(FEAT_CONFIG, config);
 }
 
 
 //================
 // Common Private
 //================
+
+BYTE SpiFlash::GetFeatures(BYTE feature)
+{
+BYTE tx[2]={ CMD_GET_FEATURES, feature };
+BYTE rx[1];
+m_SpiHost->SpiBegin(2, 1);
+m_SpiHost->SpiWrite(tx, 2);
+m_SpiHost->SpiRead(rx, 1);
+m_SpiHost->SpiEnd();
+return rx[0];
+}
 
 WORD SpiFlash::ReadId()
 {
@@ -174,6 +194,14 @@ m_SpiHost->SpiBegin(2, 0);
 m_SpiHost->SpiWrite(tx, 2);
 m_SpiHost->SpiEnd();
 Task::Sleep(10);
+}
+
+VOID SpiFlash::SetFeatures(BYTE feature, BYTE value)
+{
+BYTE tx[3]={ CMD_GET_FEATURES, feature, value };
+m_SpiHost->SpiBegin(3, 0);
+m_SpiHost->SpiWrite(tx, 3);
+m_SpiHost->SpiEnd();
 }
 
 }}

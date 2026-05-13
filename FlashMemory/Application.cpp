@@ -65,6 +65,7 @@ auto task=Task::Create(this, [this]()
 	Console::Print("Initializing flash-chip...");
 	SpiConfiguration config;
 	config.Divisor=2;
+	config.Mode=SpiMode::Bits8;
 	config.PinChipSelect=GpioPin::Gpio17;
 	config.PinClock=GpioPin::Gpio18;
 	config.PinRx=GpioPin::Gpio16;

@@ -32,18 +32,17 @@ public:
 
 	// Volume
 	VOID Erase(UINT64 Position, UINT Size);
-	WORD GetAlignment()override;
 	UINT GetBlockSize()override;
-	UINT GetPageSize()override;
+	WORD GetPageSize(WORD* Spare=nullptr)override;
 	UINT64 GetSize()override;
-	VOID Read(UINT64 Position, VOID* Buffer, SIZE_T Size)override;
+	VOID ReadPage(UINT Block, WORD Id, Page* Page)override;
 	VOID SetSize(UINT64 Size)override;
 	VOID Write(UINT64 Position, VOID const* Buffer, SIZE_T Size)override;
 
 private:
 	// Settings
 	static const UINT BLOCK_SIZE=4096;
-	static const UINT PAGE_SIZE=512;
+	static const WORD PAGE_SIZE=512;
 
 	// Con-/Destructors
 	FlashMemory(Handle<String> Path);

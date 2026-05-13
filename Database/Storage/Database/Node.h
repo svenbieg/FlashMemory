@@ -78,7 +78,7 @@ protected:
 		}
 
 	// Common
-	SIZE_T WriteEntry(Block* Block)override;
+	SIZE_T WriteEntry(OutputStream* Stream)override;
 
 private:
 	// Settings

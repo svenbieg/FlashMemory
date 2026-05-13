@@ -11,7 +11,7 @@
 
 #include "Concurrency/WriteLock.h"
 #include "Storage/Database/Updates/EntryUpdate.h"
-#include "Storage/Database/Updates/SkipBits.h"
+#include "Storage/Volume.h"
 
 
 //===========
@@ -53,7 +53,6 @@ public:
 	using Mutex=Concurrency::Mutex;
 	using OutputStream=Storage::Streams::OutputStream;
 	using WriteLock=Concurrency::WriteLock;
-	using SkipBits=Storage::Database::Updates::SkipBits;
 
 	// Friends
 	friend Database;
@@ -86,19 +85,18 @@ protected:
 		}
 
 	// Common
-	SIZE_T Align(OutputStream* Stream, SIZE_T Size);
 	VOID ClearUpdate();
+	Handle<Volume> GetVolume()const;
 	virtual VOID Invalidate(Editor* Editor);
 	UINT Release()noexcept override;
-	virtual SIZE_T WriteEntry(Block* Block)=0;
+	virtual SIZE_T WriteEntry(OutputStream* Stream)=0;
 	SIZE_T WriteToBlock(UINT Block);
 	SIZE_T WriteUpdates(OutputStream* Stream);
-	UINT m_BlockId;
-	UINT m_BlockPosition;
+	UINT m_Block;
 	Handle<Database> m_Database;
 	UINT m_Id;
 	Mutex m_Mutex;
-	SkipBits m_SkipBits;
+	UINT m_Size;
 	EntryUpdate* m_Update;
 
 private:

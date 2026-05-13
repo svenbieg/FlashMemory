@@ -38,12 +38,11 @@ ClearUpdate();
 // Con-/Destructors Protected
 //============================
 
-Entry::Entry(Database* database, UINT block_id):
-m_BlockId(block_id),
-m_BlockPosition(0),
+Entry::Entry(Database* database, UINT block):
+m_Block(block),
 m_Database(database),
 m_Id(0),
-m_SkipBits(database->GetVolume()),
+m_Size(0),
 m_Update(nullptr)
 {}
 
@@ -52,21 +51,14 @@ m_Update(nullptr)
 // Common Protected
 //==================
 
-SIZE_T Entry::Align(OutputStream* stream, SIZE_T size)
+Handle<Volume> Entry::GetVolume()const
 {
-WORD align=m_Database->m_Alignment;
-assert(align<=8);
-if(size%align==0)
-	return 0;
-SIZE_T append=align-(size%align);
-UINT64 zero=0;
-OutputStream::Write(stream, &zero, append);
-return append;
+return m_Database->m_Volume;
 }
 
 VOID Entry::Invalidate(Editor* editor)
 {
-if(m_BlockId!=-1)
+if(m_Block!=-1)
 	editor->m_ChangedEntries.add(this);
 }
 
@@ -76,8 +68,8 @@ WriteLock lock(m_Database->m_EntriesMutex);
 UINT ref_count=Cpu::InterlockedDecrement(&m_ReferenceCount);
 if(ref_count>0)
 	return ref_count;
-if(m_BlockId!=-1)
-	m_Database->m_Entries.remove(m_BlockId);
+if(m_Block!=-1)
+	m_Database->m_Entries.remove(m_Block);
 delete this;
 return 0;
 }
@@ -85,14 +77,12 @@ return 0;
 SIZE_T Entry::WriteToBlock(UINT block_id)
 {
 SIZE_T size=0;
-auto block=Block::Create(m_Database, block_id);
+auto volume=m_Database->m_Volume;
+auto block=Block::Create(volume, block_id);
 size+=block->Write(&m_Id, sizeof(UINT));
-size+=m_SkipBits.WriteBlockBits(block, 0);
 size+=WriteEntry(block);
-size+=m_SkipBits.WritePageBits(block, 0);
 block->Flush();
-m_BlockId=block_id;
-m_BlockPosition=(UINT)size;
+m_Block=block_id;
 return size;
 }
 
@@ -105,7 +95,6 @@ while(update)
 	size+=update->WriteToStream(stream);
 	update=update->m_Next;
 	}
-size=Align(stream, size);
 return size;
 }
 

@@ -44,7 +44,7 @@ public:
 
 protected:
 	// Common
-	SIZE_T WriteEntry(Block* Block)override
+	SIZE_T WriteEntry(OutputStream* Stream)override
 		{
 		throw NotImplementedException();
 		return 0;
@@ -57,18 +57,17 @@ private:
 	// Con-/Destructors
 	Map(Database* Database, UINT Block): Entry(Database, Block)
 		{
-		if(m_BlockId==-1)
+		if(m_Block==-1)
 			return;
-		auto block=Block::Create(m_Database, m_BlockId);
+		auto volume=GetVolume();
+		auto block=Block::Create(volume, m_Block);
 		block->Read(&m_Id, sizeof(UINT));
 		if(m_Id!=MAP_ID)
 			throw InvalidArgumentException();
-		m_SkipBits.ReadBlockBits(block);
 		_update_t::ReadFromStream(block, this);
-		m_SkipBits.ReadPageBits(block);
-		m_SkipBits.Skip(block);
+		block->Skip();
 		_update_t::ReadFromStream(block, this, &m_Update);
-		m_BlockPosition=block->GetPosition();
+		m_Size=block->GetPosition();
 		}
 	static inline Handle<Map> Create(Database* Database, UINT Block=-1)
 		{

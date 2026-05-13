@@ -43,18 +43,15 @@ while(pos<size)
 	}
 }
 
-WORD FlashMemory::GetAlignment()
-{
-return 1;
-}
-
 UINT FlashMemory::GetBlockSize()
 {
 return BLOCK_SIZE;
 }
 
-UINT FlashMemory::GetPageSize()
+WORD FlashMemory::GetPageSize(WORD* spare_ptr)
 {
+if(spare_ptr)
+	*spare_ptr=0;
 return PAGE_SIZE;
 }
 
@@ -63,22 +60,19 @@ UINT64 FlashMemory::GetSize()
 return 0;
 }
 
-VOID FlashMemory::Read(UINT64 offset, VOID* buf, SIZE_T size)
+VOID FlashMemory::ReadPage(UINT block, WORD id, Page* page)
 {
+UINT64 offset=block*BLOCK_SIZE;
+offset+=id*PAGE_SIZE;
 OVERLAPPED it={ 0 };
 it.Offset=TypeHelper::LowLong(offset);
 it.OffsetHigh=TypeHelper::HighLong(offset);
-SIZE_T pos=0;
-while(pos<size)
-	{
-	UINT copy=TypeHelper::Min(0x10000000UL, size-pos);
-	UINT read=0;
-	if(!ReadFile(m_File, buf, copy, (DWORD*)&read, &it))
-		throw DeviceNotReadyException();
-	if(read!=copy)
-		throw DeviceNotReadyException();
-	pos+=read;
-	}
+auto buf=page->Begin();
+UINT copy=PAGE_SIZE;
+DWORD read=0;
+ReadFile(m_File, buf, copy, &read, &it);
+if(read!=copy)
+	throw DeviceNotReadyException();
 }
 
 VOID FlashMemory::SetSize(UINT64 size)
