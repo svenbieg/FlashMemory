@@ -2,6 +2,11 @@
 // ErrorCorrection.h
 //===================
 
+// Checksum of variable sized blocks.
+
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Database/wiki/Storage#Error-Correction
+
 #pragma once
 
 

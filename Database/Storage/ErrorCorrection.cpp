@@ -2,6 +2,11 @@
 // ErrorCorrection.cpp
 //=====================
 
+// Checksum of variable sized blocks.
+
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Database/wiki/Storage#Error-Correction
+
 #include "ErrorCorrection.h"
 
 
@@ -115,11 +120,12 @@ if(errc_y==1)
 if(errc_x==2)
 	{
 	BYTE square=ECC_SQUARE[size];
-	MemoryHelper::Zero(err_x, square);
-	err_x[square-1]=err_y[square-1];
+	BYTE square_2=square/2;
+	MemoryHelper::Zero(err_x, square_2);
+	MemoryHelper::Copy(&err_x[square_2], &err_y[square_2], square_2);
 	CorrectX(err_x, y, size, buf);
-	err_x[square-1]=0;
-	err_x[0]=err_y[0];
+	MemoryHelper::Copy(err_x, err_y, square_2);
+	MemoryHelper::Zero(&err_x[square_2], square_2);
 	CorrectX(err_x, y+1, size, buf);
 	return;
 	}
@@ -133,7 +139,7 @@ WORD pos=y*square;
 BYTE chk=0;
 for(BYTE x=0; x<square; x++)
 	{
-	buf[pos]+=err_y[x];
+	buf[pos]-=err_y[x];
 	chk+=buf[pos];
 	pos++;
 	}
@@ -150,7 +156,7 @@ WORD pos=x;
 BYTE chk=0;
 for(BYTE y=0; y<square; y++)
 	{
-	buf[pos]+=err_x[y];
+	buf[pos]-=err_x[y];
 	chk+=buf[pos];
 	pos+=square;
 	}
