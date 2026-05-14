@@ -44,54 +44,59 @@ public:
 		}
 
 	// Volume
-	virtual VOID Erase(UINT64 Offset, UINT Size)override
+	virtual VOID Erase(UINT Block)override
 		{
-		UINT64 redir=Redirect(Offset);
+		UINT redir=Redirect(Block);
 		try
 			{
-			_base_t::Erase(redir, Size);
-			return;
+			_base_t::Erase(redir);
 			}
 		catch(ErrorException e)
 			{
-			redir=Spare(Offset);
+			redir=Spare(Block);
+			_base_t::Erase(redir);
 			}
-		_base_t::Erase(redir, Size);
 		}
-	virtual VOID Read(UINT64 Offset, VOID* Buffer, SIZE_T Size)override
+	virtual VOID ReadPage(UINT Block, WORD Id, Page* Page)override
 		{
-		Offset=Redirect(Offset);
-		_base_t::Read(Offset, Buffer, Size);
+		Block=Redirect(Block);
+		_base_t::ReadPage(Block, Id, Page);
 		}
-	virtual VOID Write(UINT64 Offset, VOID const* Buffer, SIZE_T Size)override
+	virtual BOOL SetSize(UINT64 Size)override
 		{
-		UINT64 redir=Redirect(Offset);
+		return Size+m_Spare<=this->m_Size;
+		}
+	virtual VOID Write(UINT Block, WORD Page, WORD Position, VOID const* Buffer, WORD Size)override
+		{
+		UINT redir=Redirect(Block);
 		try
 			{
-			_base_t::Write(redir, Buffer, Size);
-			return;
+			_base_t::WritePage(redir, Page, Position, Buffer, Size);
 			}
-		catch(ErrorException e)
+		catch(ErrorException)
 			{
-			UINT64 spare=Spare(Offset);
-			UINT block_pos=redir%this->m_BlockSize;
-			if(block_pos>0)
+			UINT spare=Spare(Block);
+			if(Page>0)
 				{
-				UINT src=redir/this->m_BlockSize;
-				UINT dst=spare/this->m_BlockSize;
-				auto buf=Buffer::Create(this->m_PageSize);
-				auto buf_ptr=buf->Begin();
-				for(UINT pos=0; pos<block_pos; )
+				WORD page_size=this->m_PageSize;
+				auto page=Page::Create(this);
+				auto buf=page->Begin();
+				for(UINT pos=0; pos<Page; pos++)
 					{
-					UINT copy=TypeHelper::Min(block_pos-pos, this->m_PageSize);
-					_base_t::Read(redir+pos, buf_ptr, copy);
-					_base_t::Write(spare+pos, buf_ptr, copy);
-					pos+=copy;
+					_base_t::ReadPage(redir, pos, page);
+					_base_t::Write(spare, pos, 0, buf, page_size);
 					}
 				}
+			if(Position>0)
+				{
+				auto page=Page::Create(this);
+				auto buf=page->Begin();
+				_base_t::ReadPage(redir, Page, page);
+				_base_t::Write(spare, Page, 0, buf, Position);
+				}
 			redir=spare;
+			_base_t::Write(redir, Page, Position, Buffer, Size);
 			}
-		_base_t::Write(redir, Buffer, Size);
 		}
 
 protected:
@@ -103,9 +108,9 @@ protected:
 		m_Spare(Spare)
 		{
 		this->m_Size-=m_Spare*this->m_BlockSize;
-		auto buf=Buffer::Create(this->m_PageSize);
-		auto entries=(UINT*)buf->Begin();
-		_base_t::Read(0, entries, this->m_PageSize);
+		auto page=Page::Create(this);
+		_base_t::ReadPage(0, 0, page);
+		auto entries=(UINT*)page->Begin();
 		if(Create==FileCreateMode::CreateAlways)
 			entries[0]=0;
 		if(entries[0]!=REDIR_ID)
@@ -113,8 +118,8 @@ protected:
 			if(Create==FileCreateMode::OpenExisting)
 				throw NotFoundException();
 			entries[0]=REDIR_ID;
-			_base_t::Erase(0, this->m_BlockSize);
-			_base_t::Write(0, entries, sizeof(UINT));
+			_base_t::Erase(0);
+			_base_t::Write(0, 0, 0, entries, sizeof(UINT));
 			return;
 			}
 		if(Create==FileCreateMode::CreateNew)
@@ -123,61 +128,45 @@ protected:
 		for(UINT pos=1; pos<count; pos+=2)
 			{
 			if(entries[pos]==-1)
-				return;
-			if(entries[pos+1]==REDIR_ID)
+				{
+				m_RedirectPosition=pos*sizeof(UINT);
+				break;
+				}
+			if(entries[pos]==~entries[pos+1])
 				{
 				m_Redirect.set(entries[pos], m_RedirectCount++);
 				m_RedirectPosition=(pos+2)*sizeof(UINT);
-				continue;
 				}
-			if(entries[pos+1]==0)
-				{
-				m_RedirectPosition=(pos+2)*sizeof(UINT);
-				continue;
-				}
-			if(entries[pos+2]!=-1)
-				throw ErrorException();
-			entries[pos]=0;
-			entries[pos+1]=0;
-			_base_t::Write(pos*sizeof(UINT), &entries[pos], 2*sizeof(UINT));
-			m_RedirectPosition=(pos+2)*sizeof(UINT);
-			return;
 			}
-		throw ErrorException();
 		}
 
 private:
 	// Settings
-	static const UINT REDIR_ID='RDIR';
+	static const UINT REDIR_ID='RIDR';
+	static const UINT ENTRY_SIZE=2*sizeof(UINT);
 
 	// Common
-	UINT64 Redirect(UINT64 Offset)
+	UINT Redirect(UINT Block)
 		{
-		Offset+=m_Spare*this->m_BlockSize;
-		UINT block=Offset/this->m_BlockSize;
+		Block+=m_Spare;
 		UINT redir=0;
-		if(m_Redirect.try_get(block, &redir))
-			{
-			UINT block_pos=Offset%this->m_BlockSize;
-			Offset=(UINT64)redir*this->m_BlockSize+block_pos;
-			}
-		return Offset;
+		if(m_Redirect.try_get(Block, &redir))
+			return redir;
+		return Block;
 		}
-	UINT64 Spare(UINT64 Offset)
+	UINT Spare(UINT Block)
 		{
 		if(m_RedirectCount==m_Spare)
-			throw AbortException();
-		Offset+=m_Spare*this->m_BlockSize;
-		UINT block=Offset/this->m_BlockSize;
+			throw ErrorException();
 		UINT redir=m_RedirectCount++;
-		m_Redirect.set(block, redir);
+		m_Redirect.set(Block, redir);
 		UINT entry[2];
-		entry[0]=block;
-		entry[1]=REDIR_ID;
-		_base_t::Write(m_RedirectPosition, entry, 2*sizeof(UINT));
-		m_RedirectPosition+=2*sizeof(UINT);
-		UINT block_pos=Offset%this->m_BlockSize;
-		return (UINT64)redir*this->m_BlockSize+block_pos;
+		entry[0]=Block;
+		entry[1]=~Block;
+		if(!_base_t::Write(m_RedirectPosition, entry, ENTRY_SIZE))
+			return false;
+		m_RedirectPosition+=ENTRY_SIZE;
+		return redir;
 		}
 	Collections::map<UINT, UINT, BYTE, 8> m_Redirect;
 	UINT m_RedirectCount;

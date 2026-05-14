@@ -41,13 +41,13 @@ public:
 	inline WORD GetId()const { return m_Id; }
 
 	// Volume
-	VOID Erase(UINT64 Offset, UINT Size)override;
+	VOID Erase(UINT Block)override;
 	UINT GetBlockSize()override;
 	WORD GetPageSize(WORD* Spare=nullptr)override;
 	UINT64 GetSize()override;
 	VOID ReadPage(UINT Block, WORD Id, Page* Page)override;
-	VOID SetSize(UINT64 Size)override;
-	VOID Write(UINT64 Position, VOID const* Buffer, SIZE_T Size)override;
+	BOOL SetSize(UINT64 Size)override;
+	VOID Write(UINT Block, WORD Page, WORD Position, VOID const* Buffer, WORD Size)override;
 
 protected:
 	// Con-/Destructors

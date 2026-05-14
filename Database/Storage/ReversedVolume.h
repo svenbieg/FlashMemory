@@ -41,24 +41,24 @@ public:
 		}
 
 	// Volume
-	virtual VOID Erase(UINT64 Offset, UINT Size)override
+	virtual VOID Erase(UINT Block)override
 		{
-		UINT64 reverse=this->m_Size-Offset-Size;
-		_base_t::Erase(reverse, Size);
+		UINT reverse=m_BlockCount-Block-1;
+		_base_t::Erase(reverse);
 		}
 	virtual UINT64 GetSize()override
 		{
 		return 0;
 		}
-	virtual VOID Read(UINT64 Offset, VOID* Buffer, SIZE_T Size)override
+	virtual VOID ReadPage(UINT Block, WORD Id, Page* Page)override
 		{
-		UINT64 reverse=Reverse(Offset, Size);
-		_base_t::Read(reverse, Buffer, Size);
+		UINT reverse=m_BlockCount-Block-1;
+		_base_t::ReadPage(reverse, Id, Page);
 		}
-	virtual VOID Write(UINT64 Offset, VOID const* Buffer, SIZE_T Size)override
+	virtual VOID Write(UINT Block, WORD Page, WORD Position, VOID const* Buffer, WORD Size)override
 		{
-		UINT64 reverse=Reverse(Offset, Size);
-		_base_t::Write(reverse, Buffer, Size);
+		UINT reverse=m_BlockCount-Block-1;
+		_base_t::Write(reverse, Page, Position, Buffer, Size);
 		}
 
 protected:
@@ -69,15 +69,9 @@ protected:
 
 private:
 	// Common
-	UINT64 Reverse(UINT64 Offset, SIZE_T Size)
+	UINT Reverse(UINT Block)
 		{
-		UINT block_size=this->m_BlockSize;
-		UINT block=Offset/block_size;
-		UINT block_pos=Offset%block_size;
-		SIZE_T copy=TypeHelper::AlignUp(Size, block_size);
-		UINT block_count=copy/block_size;
-		block=m_BlockCount-block-block_count;
-		return block*block_size+block_pos;
+		return m_BlockCount-Block-1;
 		}
 	UINT m_BlockCount;
 };

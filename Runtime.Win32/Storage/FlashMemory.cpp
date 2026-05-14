@@ -24,23 +24,17 @@ namespace Storage {
 // Volume
 //========
 
-VOID FlashMemory::Erase(UINT64 offset, UINT size)
+VOID FlashMemory::Erase(UINT block)
 {
-assert(size>0);
-assert(size%BLOCK_SIZE==0);
+UINT64 offset=block*BLOCK_SIZE;
 OVERLAPPED it={ 0 };
 it.Offset=TypeHelper::LowLong(offset);
 it.OffsetHigh=TypeHelper::HighLong(offset);
-UINT pos=0;
-while(pos<size)
-	{
-	UINT written=0;
-	if(!WriteFile(m_File, m_Erase, BLOCK_SIZE, (DWORD*)&written, &it))
-		throw DeviceNotReadyException();
-	if(written!=BLOCK_SIZE)
-		throw DeviceNotReadyException();
-	pos+=written;
-	}
+DWORD written=0;
+if(!WriteFile(m_File, m_Erase, BLOCK_SIZE, &written, &it))
+	throw ErrorException();
+if(written!=BLOCK_SIZE)
+	throw ErrorException();
 }
 
 UINT FlashMemory::GetBlockSize()
@@ -70,37 +64,37 @@ it.OffsetHigh=TypeHelper::HighLong(offset);
 auto buf=page->Begin();
 UINT copy=PAGE_SIZE;
 DWORD read=0;
-ReadFile(m_File, buf, copy, &read, &it);
+if(!ReadFile(m_File, buf, copy, &read, &it))
+	throw ErrorException();
 if(read!=copy)
-	throw DeviceNotReadyException();
+	throw ErrorException();
 }
 
-VOID FlashMemory::SetSize(UINT64 size)
+BOOL FlashMemory::SetSize(UINT64 size)
 {
 LARGE_INTEGER pos;
 pos.QuadPart=size;
 if(!SetFilePointerEx(m_File, pos, nullptr, FILE_BEGIN))
-	throw OutOfMemoryException();
+	return false;
 if(!SetEndOfFile(m_File))
-	throw OutOfMemoryException();
+	return false;
+return true;
 }
 
-VOID FlashMemory::Write(UINT64 offset, VOID const* buf, SIZE_T size)
+VOID FlashMemory::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)
 {
+UINT64 offset=block*BLOCK_SIZE;
+offset+=page*PAGE_SIZE;
+offset+=pos;
 OVERLAPPED it={ 0 };
 it.Offset=TypeHelper::LowLong(offset);
 it.OffsetHigh=TypeHelper::HighLong(offset);
-SIZE_T pos=0;
-while(pos<size)
-	{
-	UINT copy=TypeHelper::Min(0x10000000UL, size-pos);
-	UINT written=0;
-	if(!WriteFile(m_File, buf, copy, (DWORD*)&written, &it))
-		throw DeviceNotReadyException();
-	if(written!=copy)
-		throw DeviceNotReadyException();
-	pos+=written;
-	}
+UINT copy=size-pos;
+UINT written=0;
+if(!WriteFile(m_File, buf, copy, (DWORD*)&written, &it))
+	throw ErrorException();
+if(written!=copy)
+	throw ErrorException();
 }
 
 

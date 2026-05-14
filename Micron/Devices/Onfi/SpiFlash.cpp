@@ -84,7 +84,7 @@ const BYTE STATUS_OIP		=(1<<0);
 // Volume
 //========
 
-VOID SpiFlash::Erase(UINT64 offset, UINT size)
+VOID SpiFlash::Erase(UINT block)
 {
 throw NotImplementedException();
 }
@@ -112,13 +112,12 @@ auto buf=page->Begin();
 throw NotImplementedException();
 }
 
-VOID SpiFlash::SetSize(UINT64 size)
+BOOL SpiFlash::SetSize(UINT64 size)
 {
-if(size>m_Size)
-	throw OutOfMemoryException();
+return size<=m_Size;
 }
 
-VOID SpiFlash::Write(UINT64 offset, VOID const* buf, SIZE_T size)
+VOID SpiFlash::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)
 {
 throw NotImplementedException();
 }
