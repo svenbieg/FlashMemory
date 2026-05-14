@@ -41,6 +41,7 @@ public:
 	static Handle<Block> Create(Volume* Volume, UINT Id);
 
 	// Common
+	VOID Erase();
 	inline WORD GetPageCount()const { return m_PageCount; }
 	UINT GetPosition()const;
 	inline UINT GetSize()const { return m_Size; }

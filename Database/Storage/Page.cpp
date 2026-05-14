@@ -31,44 +31,21 @@ return Object::CreateEx<Page>(size+spare, sizeof(SIZE_T), volume);
 }
 
 
-//========
-// Common
-//========
-
-WORD Page::GetPosition()const
-{
-return m_ErrorCorrection.m_Next;
-}
-
-
 //==============
 // Input-Stream
 //==============
 
 SIZE_T Page::Available()
 {
-if(!m_Available)
-	m_Available=m_ErrorCorrection.Available(this);
-return m_Available;
+return m_Size-m_Position;
 }
 
 SIZE_T Page::Read(VOID* buf, SIZE_T size)
 {
-auto dst=(BYTE*)buf;
-SIZE_T pos=0;
-while(pos<size)
-	{
-	if(!m_Available)
-		m_Available=m_ErrorCorrection.Available(this);
-	if(!m_Available)
-		break;
-	WORD copy=TypeHelper::Min(size-pos, m_Available);
-	MemoryHelper::Copy(&dst[pos], &m_Buffer[m_Position], copy);
-	m_Position+=copy;
-	m_Available-=copy;
-	pos+=copy;
-	}
-return pos;
+WORD copy=TypeHelper::Min(size, m_Size-m_Position);
+MemoryHelper::Copy(buf, &m_Buffer[m_Position], copy);
+m_Position+=copy;
+return copy;
 }
 
 
@@ -78,13 +55,14 @@ return pos;
 
 VOID Page::Flush()
 {
-throw NotImplementedException();
 }
 
 SIZE_T Page::Write(VOID const* buf, SIZE_T size)
 {
-throw NotImplementedException();
-return 0;
+WORD copy=TypeHelper::Min(size, m_Size-m_Position);
+MemoryHelper::Copy(&m_Buffer[m_Position], buf, copy);
+m_Position+=copy;
+return copy;
 }
 
 
@@ -93,10 +71,8 @@ return 0;
 //==========================
 
 Page::Page(BYTE* buf, SIZE_T size, Volume* volume):
-m_Available(0),
 m_Position(0),
-m_Size(volume->GetPageSize()),
-z_SkipBits(this)
+m_Size(volume->GetPageSize())
 {}
 
 }

@@ -10,8 +10,6 @@
 //=======
 
 #include "Storage/Streams/RandomAccessStream.h"
-#include "Storage/ErrorCorrection.h"
-#include "Storage/SkipBits.h"
 #include "Handle.h"
 
 
@@ -27,6 +25,8 @@ namespace Storage {
 //======================
 
 class Block;
+class ErrorCorrection;
+class SkipBits;
 class Volume;
 
 
@@ -48,7 +48,7 @@ public:
 
 	// Common
 	inline BYTE* Begin()const { return m_Buffer; }
-	WORD GetPosition()const;
+	inline WORD GetPosition()const { return m_Position; }
 	inline WORD GetSize()const { return m_Size; }
 
 	// Input-Stream
@@ -60,24 +60,13 @@ public:
 	SIZE_T Write(VOID const* Buffer, SIZE_T Size)override;
 
 private:
-	// Flags
-	enum class PageFlags: UINT
-		{
-		None=0,
-		Last=(1<<0)
-		};
-
 	// Con-/Destructors
 	Page(BYTE* Buffer, SIZE_T Size, Volume* Volume);
 
 	// Common
-	WORD m_Available;
 	BYTE* m_Buffer;
-	ErrorCorrection m_ErrorCorrection;
-	PageFlags m_Flags;
 	WORD m_Position;
 	WORD m_Size;
-	SkipBits z_SkipBits;
 };
 
 }

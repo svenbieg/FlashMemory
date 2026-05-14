@@ -45,18 +45,13 @@ WORD page_pos=m_Next;
 if(page_pos==0)
 	page_pos=page->m_Position;
 WORD page_size=page->m_Size;
-if(page_size-page_pos<2)
+if(page_size-page_pos<10)
 	return 0;
 auto buf=page->Begin();
 WORD size_bits=0;
 MemoryHelper::Copy(&size_bits, &buf[page_pos], sizeof(WORD));
-if(size_bits==0)
+if(size_bits==0||size_bits==0xFFFF)
 	return 0;
-if(size_bits==0xFFFF)
-	{
-	FlagHelper::Set(page->m_Flags, Page::PageFlags::Last);
-	return 0;
-	}
 UINT size=GetSize(page, size_bits);
 page_pos+=sizeof(WORD);
 Correct(&buf[page_pos], size);

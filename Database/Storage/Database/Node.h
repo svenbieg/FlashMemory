@@ -71,14 +71,20 @@ public:
 
 protected:
 	// Con-/Destructors
+	Node(Database* Database);
 	Node(Database* Database, UINT Block);
-	static inline Handle<Node> Create(Database* Database, UINT Block=-1)
+	static inline Handle<Node> Create(Database* Database)
+		{
+		return Object::Create<Node>(Database);
+		}
+	static inline Handle<Node> Create(Database* Database, UINT Block)
 		{
 		return Entry::Create<Node>(Database, Block);
 		}
 
 	// Common
-	SIZE_T WriteEntry(OutputStream* Stream)override;
+	SIZE_T ReadFromStream(InputStream* Stream)override;
+	SIZE_T WriteToStream(OutputStream* Stream)override;
 
 private:
 	// Settings

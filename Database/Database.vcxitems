@@ -20,6 +20,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Editor.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Node.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Redirectory.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\EntryUpdate.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.cpp" />
@@ -33,13 +34,12 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Entry.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Map.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Node.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Redirectory.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\EntryUpdate.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\MapUpdate.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Updates\NodeUpdate.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Page.h" />
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReliableVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\SkipBits.h" />
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Volume.h" />

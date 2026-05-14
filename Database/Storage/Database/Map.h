@@ -44,7 +44,16 @@ public:
 
 protected:
 	// Common
-	SIZE_T WriteEntry(OutputStream* Stream)override
+	SIZE_T ReadFromStream(InputStream* Stream)override
+		{
+		SIZE_T size=0;
+		size+=Entry::ReadFromStream(Stream);
+		if(m_Id!=MAP_ID)
+			throw NotFoundException();
+		size+=_update_t::ReadFromStream(Stream, this);
+		return size;
+		}
+	SIZE_T WriteToStream(OutputStream* Stream)override
 		{
 		throw NotImplementedException();
 		return 0;
@@ -55,16 +64,12 @@ private:
 	static const UINT MAP_ID=ENTRY_ID('MAP ');
 
 	// Con-/Destructors
-	Map(Database* Database, UINT Block): Entry(Database, Block)
+	Map(Database* Database): Entry(Database, -1, MAP_ID) {}
+	Map(Database* Database, UINT Block): Entry(Database, Block, MAP_ID)
 		{
-		if(m_Block==-1)
-			return;
 		auto volume=GetVolume();
 		auto block=Block::Create(volume, m_Block);
-		block->Read(&m_Id, sizeof(UINT));
-		if(m_Id!=MAP_ID)
-			throw InvalidArgumentException();
-		_update_t::ReadFromStream(block, this);
+		ReadFromStream(block);
 		block->Skip();
 		_update_t::ReadFromStream(block, this, &m_Update);
 		m_Size=block->GetPosition();

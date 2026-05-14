@@ -189,19 +189,16 @@ return true;
 // Con-/Destructors Protected
 //============================
 
+Node::Node(Database* database):
+Entry(database, -1, NODE_ID)
+{}
+
 Node::Node(Database* database, UINT block_id):
-Entry(database, block_id)
+Entry(database, block_id, NODE_ID)
 {
-if(m_Block==-1)
-	return;
 auto volume=GetVolume();
 auto block=Block::Create(volume, m_Block);
-block->Read(&m_Id, sizeof(UINT));
-if(m_Id!=NODE_ID)
-	throw InvalidArgumentException();
-NodeUpdate::ReadFromStream(block, this);
-for(auto const& attr: m_Attributes)
-	m_AttributeIndex.add(attr.get_key());
+ReadFromStream(block);
 block->Skip();
 NodeUpdate::ReadFromStream(block, this, &m_Update);
 m_Size=block->GetPosition();
@@ -212,11 +209,23 @@ m_Size=block->GetPosition();
 // Common Protected
 //==================
 
-SIZE_T Node::WriteEntry(OutputStream* stream)
+SIZE_T Node::ReadFromStream(InputStream* stream)
 {
 SIZE_T size=0;
-if(m_Tag)
-	size+=NodeUpdateTagSet::WriteToStream(stream, m_Tag);
+size+=Entry::ReadFromStream(stream);
+if(m_Id!=NODE_ID)
+	throw NotFoundException();
+size+=NodeUpdate::ReadFromStream(stream, this);
+for(auto const& attr: m_Attributes)
+	m_AttributeIndex.add(attr.get_key());
+return size;
+}
+
+SIZE_T Node::WriteToStream(OutputStream* stream)
+{
+SIZE_T size=0;
+size+=Entry::WriteToStream(stream);
+size+=NodeUpdateTagSet::WriteToStream(stream, m_Tag);
 for(auto const& attr: m_Attributes)
 	size+=NodeUpdateAttributeSet::WriteToStream(stream, attr.get_key(), attr.get_value());
 if(m_Value)

@@ -12,8 +12,10 @@
 #include "Concurrency/WriteLock.h"
 #include "Storage/Database/Database.h"
 #include "Storage/Database/Editor.h"
+#include "Storage/Encoding/Dwarf.h"
 
 using namespace Concurrency;
+using namespace Storage::Encoding;
 
 
 //===========
@@ -22,6 +24,32 @@ using namespace Concurrency;
 
 namespace Storage {
 	namespace Database {
+
+
+//========
+// Common
+//========
+
+SIZE_T Entry::ReadFromStream(InputStream* stream)
+{
+SIZE_T size=0;
+UINT id=0;
+size+=stream->Read(&id, sizeof(UINT));
+if(m_Id!=id)
+	return 0;
+size+=Dwarf::ReadUnsigned(stream, &m_EraseCount);
+size+=Dwarf::ReadUnsigned(stream, &m_Parent);
+return size;
+}
+
+SIZE_T Entry::WriteToStream(OutputStream* stream)
+{
+SIZE_T size=0;
+size+=stream->Write(&m_Id, sizeof(UINT));
+size+=Dwarf::WriteUnsigned(stream, m_EraseCount);
+size+=Dwarf::WriteUnsigned(stream, m_Parent);
+return size;
+}
 
 
 //==================
@@ -38,10 +66,10 @@ ClearUpdate();
 // Con-/Destructors Protected
 //============================
 
-Entry::Entry(Database* database, UINT block):
+Entry::Entry(Database* database, UINT block, UINT id):
 m_Block(block),
 m_Database(database),
-m_Id(0),
+m_Id(id),
 m_Size(0),
 m_Update(nullptr)
 {}
@@ -76,14 +104,13 @@ return 0;
 
 SIZE_T Entry::WriteToBlock(UINT block_id)
 {
-SIZE_T size=0;
 auto volume=m_Database->m_Volume;
 auto block=Block::Create(volume, block_id);
-size+=block->Write(&m_Id, sizeof(UINT));
-size+=WriteEntry(block);
+WriteToStream(block);
 block->Flush();
 m_Block=block_id;
-return size;
+m_Size=block->GetPosition();
+return m_Size;
 }
 
 SIZE_T Entry::WriteUpdates(OutputStream* stream)

@@ -64,11 +64,9 @@ public:
 
 protected:
 	// Con-/Destructors
-	Entry(Database* Database, UINT Block=-1);
+	Entry(Database* Database, UINT Block, UINT Id);
 	template <class _entry_t> static Handle<_entry_t> Create(Database* Database, UINT Block)
 		{
-		if(Block==-1)
-			return Object::Create<_entry_t>(Database, Block);
 		auto& mutex=GetEntriesMutex(Database);
 		WriteLock lock(mutex);
 		auto open=GetEntry(Database, Block);
@@ -88,14 +86,17 @@ protected:
 	VOID ClearUpdate();
 	Handle<Volume> GetVolume()const;
 	virtual VOID Invalidate(Editor* Editor);
+	virtual SIZE_T ReadFromStream(InputStream* Stream);
 	UINT Release()noexcept override;
-	virtual SIZE_T WriteEntry(OutputStream* Stream)=0;
 	SIZE_T WriteToBlock(UINT Block);
+	virtual SIZE_T WriteToStream(OutputStream* Stream);
 	SIZE_T WriteUpdates(OutputStream* Stream);
 	UINT m_Block;
 	Handle<Database> m_Database;
+	UINT m_EraseCount;
 	UINT m_Id;
 	Mutex m_Mutex;
+	UINT m_Parent;
 	UINT m_Size;
 	EntryUpdate* m_Update;
 

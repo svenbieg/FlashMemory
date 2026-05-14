@@ -21,7 +21,6 @@ using namespace UI;
 
 #include "Devices/Onfi/SpiFlash.h"
 #include "Devices/Pio/SpiEmulator.h"
-#include "Storage/ReliableVolume.h"
 
 using namespace Devices::Gpio;
 using namespace Devices::Onfi;
@@ -73,7 +72,6 @@ auto task=Task::Create(this, [this]()
 	auto spi_host=SpiEmulator::Create(config);
 	auto spi_flash=SpiFlash::Create(spi_host);
 	Console::Print("OK\n");
-	//auto volume=ReliableVolume<SpiFlash>::Create(FileCreateMode::OpenAlways, 64, spi_host);
 	}, "test");
 task->Then(this, [this]()
 	{

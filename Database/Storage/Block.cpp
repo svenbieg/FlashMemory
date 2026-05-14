@@ -33,6 +33,11 @@ return Object::Create<Block>(volume, id);
 // Common
 //========
 
+VOID Block::Erase()
+{
+m_Volume->Erase(m_Id);
+}
+
 UINT Block::GetPosition()const
 {
 UINT pos=m_PageId*m_PageSize;

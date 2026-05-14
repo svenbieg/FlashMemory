@@ -42,6 +42,9 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.cpp">
       <Filter>Storage</Filter>
     </ClCompile>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Redirectory.cpp">
+      <Filter>Storage\Database</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Database.h">
@@ -54,12 +57,6 @@
       <Filter>Storage\Database</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReversedVolume.h">
-      <Filter>Storage</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ReliableVolume.h">
-      <Filter>Storage</Filter>
-    </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\EmbeddedVolume.h">
       <Filter>Storage</Filter>
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Map.h">
@@ -91,6 +88,9 @@
     </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.h">
       <Filter>Storage</Filter>
+    </ClInclude>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Redirectory.h">
+      <Filter>Storage\Database</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

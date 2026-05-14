@@ -34,6 +34,17 @@ namespace Storage {
 		namespace Updates {
 
 
+//=========
+// Updates
+//=========
+
+enum class MapUpdateId: BYTE
+{
+None,
+RootSet
+};
+
+
 //============
 // Map-Update
 //============
@@ -42,11 +53,14 @@ template <class _key_t, class _value_t, class _size_t, WORD _group_size>
 class MapUpdate: public EntryUpdate
 {
 public:
+	// Using
+	using _map_t=Map<_key_t, _value_t, _size_t, _group_size>;
+
 	// Friends
-	friend Map<_key_t, _value_t, _size_t, _group_size>;
+	friend _map_t;
 
 	// Common
-	static SIZE_T ReadFromStream(InputStream* Stream)
+	static SIZE_T ReadFromStream(InputStream* Stream, _map_t* Map, EntryUpdate** Update=nullptr)
 		{
 		SIZE_T size=0;
 		while(1)
@@ -58,19 +72,11 @@ public:
 				size+=Stream->Read(nullptr, skip);
 				continue;
 				}
-			Update update(Update::None);
-			size+=Stream->Read(&update, sizeof(Update));
+			MapUpdateId update=MapUpdateId::None;
+			size+=Stream->Read(&update, sizeof(MapUpdateId));
 			}
 		return 0;
 		}
-
-private:
-	// Update
-	enum class Update: BYTE
-		{
-		None,
-		RootSet
-		};
 };
 
 }}}
