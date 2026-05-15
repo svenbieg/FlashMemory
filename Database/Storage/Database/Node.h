@@ -45,7 +45,7 @@ public:
 	// Using
 	using AttributeIndex=Collections::index<Handle<String>, UINT>;
 	using AttributeMap=Collections::map<Handle<String>, Handle<String>, UINT>;
-	using ChildList=Collections::list<UINT, UINT>;
+	using ChildList=Collections::list<Handle<Node>, UINT>;
 	using NodeUpdate=Storage::Database::Updates::NodeUpdate;
 
 	// Friends
@@ -57,7 +57,10 @@ public:
 	BOOL Clear();
 	BOOL Clear(Editor* Editor);
 	Handle<String> GetAttribute(Handle<String> Key);
+	Handle<Node> GetChild(Handle<String> Tag);
 	Handle<Node> GetChildAt(UINT Position);
+	Handle<String> GetTag();
+	SIZE_T ReadFromStream(InputStream* Stream);
 	BOOL RemoveAttribute(Handle<String> Key);
 	BOOL RemoveAttribute(Editor* Editor, Handle<String> Key);
 	VOID RemoveChild(Handle<Node> Child);
@@ -68,27 +71,34 @@ public:
 	BOOL SetTag(Editor* Editor, Handle<String> Tag);
 	BOOL SetValue(Handle<String> Value);
 	BOOL SetValue(Editor* Editor, Handle<String> Value);
+	SIZE_T WriteToStream(OutputStream* Stream);
 
 protected:
 	// Con-/Destructors
-	Node(Database* Database);
-	Node(Database* Database, UINT Block);
-	static inline Handle<Node> Create(Database* Database)
-		{
-		return Object::Create<Node>(Database);
-		}
+	Node(Database* Database, UINT Id);
+	Node(Database* Database, Handle<String> Tag=nullptr);
+	Node(Node* Parent, Handle<String> Tag=nullptr);
 	static inline Handle<Node> Create(Database* Database, UINT Block)
 		{
 		return Entry::Create<Node>(Database, Block);
 		}
+	static inline Handle<Node> Create(Database* Database, Handle<String> Tag=nullptr)
+		{
+		return Object::Create<Node>(Database, Tag);
+		}
+	static inline Handle<Node> Create(Node* Parent, Handle<String> Tag=nullptr)
+		{
+		assert(Parent);
+		return Object::Create<Node>(Parent, Tag);
+		}
 
 	// Common
-	SIZE_T ReadFromStream(InputStream* Stream)override;
-	SIZE_T WriteToStream(OutputStream* Stream)override;
+	SIZE_T ReadEntry(InputStream* Stream)override;
+	SIZE_T WriteEntry(OutputStream* Stream)override;
 
 private:
 	// Settings
-	static const UINT NODE_ID=ENTRY_ID('NODE');
+	static const UINT NODE_TYPE=ENTRY_TYPE('NODE');
 
 	// Common
 	BOOL ClearInternal(Editor* Editor);

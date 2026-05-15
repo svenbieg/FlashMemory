@@ -1,8 +1,8 @@
-//=================
-// Redirectory.cpp
-//=================
+//==============
+// Redirect.cpp
+//==============
 
-#include "Redirectory.h"
+#include "Redirect.h"
 
 
 //=======
@@ -24,18 +24,30 @@ namespace Storage {
 // Con-/Destructors Private
 //==========================
 
-Redirectory::Redirectory(Database* database):
+Redirect::Redirect(Database* database):
 m_Database(database),
+m_Id(database->m_Used),
 m_Size(0)
-{}
+{
+auto volume=m_Database->m_Volume;
+UINT block=m_Id;
+UINT count=REDIR_COUNT+1;
+for(UINT u=0; u<count; u++)
+	{
+	volume->Erase(block);
+	block++;
+	}
+m_Database->m_Used+=count;
+}
 
-Redirectory::Redirectory(Database* database, UINT block_id):
+Redirect::Redirect(Database* database, UINT id):
 m_Database(database),
+m_Id(id),
 m_Size(0)
 {
 auto volume=m_Database->m_Volume;
 auto page=Page::Create(volume);
-volume->ReadPage(block_id, 0, page);
+volume->ReadPage(m_Id, 0, page);
 m_Size=ReadFromStream(page);
 }
 
@@ -44,7 +56,7 @@ m_Size=ReadFromStream(page);
 // Common Protected
 //==================
 
-WORD Redirectory::ReadFromStream(InputStream* stream)
+WORD Redirect::ReadFromStream(InputStream* stream)
 {
 WORD size=0;
 while(stream->Available())
@@ -54,7 +66,7 @@ while(stream->Available())
 	if(id==-1)
 		break;
 	size+=sizeof(UINT);
-	if(id!=REDIR_ID)
+	if(id!=REDIR_TYPE)
 		continue;
 	UINT block[2];
 	size+=stream->Read(&block[0], sizeof(UINT));

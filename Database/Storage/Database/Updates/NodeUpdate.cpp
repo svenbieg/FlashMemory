@@ -83,7 +83,7 @@ while(stream->Available())
 			auto key=node->m_AttributeIndex.get_at(id);
 			INT64 ivalue=0;
 			size+=Dwarf::ReadSigned(stream, &ivalue);
-			auto value=String::FromInt64(ivalue);
+			auto value=String::From(ivalue);
 			node->m_Attributes.set(key, value);
 			if(update_ptr)
 				{
@@ -113,7 +113,7 @@ while(stream->Available())
 			auto key=String::ReadFromStream(stream, &size);
 			INT64 ivalue=0;
 			size+=Dwarf::ReadSigned(stream, &ivalue);
-			auto value=String::FromInt64(ivalue);
+			auto value=String::From(ivalue);
 			node->m_Attributes.set(key, value);
 			if(update_ptr)
 				{
@@ -138,8 +138,8 @@ while(stream->Available())
 			}
 		case NodeUpdateId::ChildAppend:
 			{
-			UINT child=0;
-			size+=Dwarf::ReadUnsigned(stream, &child);
+			auto child=Node::Create(node);
+			size+=ReadFromStream(stream, child);
 			node->m_Children.append(child);
 			if(update_ptr)
 				{
@@ -151,12 +151,12 @@ while(stream->Available())
 			}
 		case NodeUpdateId::ChildRemove:
 			{
-			UINT child=0;
-			size+=Dwarf::ReadUnsigned(stream, &child);
-			node->m_Children.remove(child);
+			UINT pos=0;
+			size+=Dwarf::ReadUnsigned(stream, &pos);
+			node->m_Children.remove_at(pos);
 			if(update_ptr)
 				{
-				auto child_remove=new NodeUpdateChildRemove(node, child);
+				auto child_remove=new NodeUpdateChildRemove(node, pos);
 				*update_ptr=child_remove;
 				update_ptr=&child_remove->m_Next;
 				}
@@ -191,7 +191,7 @@ while(stream->Available())
 			{
 			INT64 ivalue=0;
 			size+=Dwarf::ReadSigned(stream, &ivalue);
-			auto value=String::FromInt64(ivalue);
+			auto value=String::From(ivalue);
 			node->m_Value=value;
 			if(update_ptr)
 				{
@@ -391,12 +391,12 @@ return size;
 // Child-Append
 //==============
 
-NodeUpdateChildAppend::NodeUpdateChildAppend(Node* node, UINT child):
+NodeUpdateChildAppend::NodeUpdateChildAppend(Node* node, Node* child):
 NodeUpdate(node),
 m_Child(child)
 {}
 
-VOID NodeUpdateChildAppend::Create(Node* node, UINT child)
+VOID NodeUpdateChildAppend::Create(Node* node, Node* child)
 {
 auto update_ptr=AppendUpdate(node);
 *update_ptr=new NodeUpdateChildAppend(node, child);
@@ -407,12 +407,12 @@ SIZE_T NodeUpdateChildAppend::WriteToStream(OutputStream* stream)
 return WriteToStream(stream, m_Child);
 }
 
-SIZE_T NodeUpdateChildAppend::WriteToStream(OutputStream* stream, UINT child)
+SIZE_T NodeUpdateChildAppend::WriteToStream(OutputStream* stream, Node* child)
 {
 SIZE_T size=0;
 auto update=NodeUpdateId::ChildAppend;
 size+=stream->Write(&update, sizeof(NodeUpdateId));
-size+=Dwarf::WriteUnsigned(stream, child);
+size+=child->WriteToStream(stream);
 return size;
 }
 

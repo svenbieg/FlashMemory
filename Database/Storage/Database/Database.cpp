@@ -29,6 +29,7 @@ namespace Storage {
 //==========================
 
 Database::Database(Volume* volume, FileCreateMode create):
+m_Used(0),
 m_Volume(volume)
 {
 auto header=ReadHeader();
@@ -53,18 +54,16 @@ switch(create)
 	case FileCreateMode::CreateAlways:
 		{
 		Initialize();
-		break;
+		return;
 		}
 	case FileCreateMode::OpenAlways:
 		{
 		if(!header)
 			{
 			Initialize();
+			return;
 			}
-		else
-			{
-			ValidateHeader(header);
-			}
+		ValidateHeader(header);
 		break;
 		}
 	case FileCreateMode::OpenExisting:
@@ -73,6 +72,8 @@ switch(create)
 		break;
 		}
 	}
+auto redir=m_Header->GetAttribute("Redirect");
+m_Redirection=Redirect::Create(this, redir->ToUInt());
 }
 
 
@@ -82,8 +83,11 @@ switch(create)
 
 VOID Database::Initialize()
 {
-m_Header=Node::Create(this);
-m_Header->SetTag("Header");
+m_Header=Node::Create(this, "Header");
+m_Used=2;
+m_Redirection=Redirect::Create(this);
+UINT redir_id=m_Redirection->GetId();
+m_Header->SetAttribute("Redirect", String::From(redir_id));
 m_Header->WriteToBlock(0);
 m_Header->WriteToBlock(1);
 }
@@ -107,7 +111,7 @@ return header;
 
 VOID Database::ValidateHeader(Node* header)
 {
-if(header->m_Block==0)
+if(header->m_Id==0)
 	{
 	try
 		{

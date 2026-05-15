@@ -36,7 +36,6 @@ public:
 	virtual WORD GetPageSize(WORD* Spare=nullptr)=0;
 	virtual UINT64 GetSize()=0;
 	virtual VOID ReadPage(UINT Block, WORD Id, Page* Page)=0;
-	virtual BOOL SetSize(UINT64 Size)=0;
 	virtual VOID Write(UINT Block, WORD Page, WORD Position, VOID const* Buffer, WORD Size)=0;
 
 protected:

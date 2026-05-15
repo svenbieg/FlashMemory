@@ -149,12 +149,12 @@ public:
 
 private:
 	// Con-/Destructors
-	NodeUpdateChildAppend(Node* Node, UINT Child);
-	static VOID Create(Node* Node, UINT Child);
+	NodeUpdateChildAppend(Node* Parent, Node* Child);
+	static VOID Create(Node* Parent, Node* Child);
 
 	// Common
-	static SIZE_T WriteToStream(OutputStream* Stream, UINT Child);
-	UINT m_Child;
+	static SIZE_T WriteToStream(OutputStream* Stream, Node* Child);
+	Handle<Node> m_Child;
 };
 
 

@@ -1,6 +1,6 @@
-//===============
-// Redirectory.h
-//===============
+//============
+// Redirect.h
+//============
 
 #pragma once
 
@@ -30,11 +30,11 @@ namespace Storage {
 class Database;
 
 
-//=============
-// Redirectory
-//=============
+//==========
+// Redirect
+//==========
 
-class Redirectory: public Object
+class Redirect: public Object
 {
 public:
 	// Using
@@ -45,26 +45,31 @@ public:
 	friend Database;
 	friend Object;
 
+	// Common
+	UINT GetId()const { return m_Id; }
+
 private:
 	// Settings
-	static const UINT REDIR_ID=ENTRY_ID('RDIR');
+	static const UINT REDIR_COUNT=4;
+	static const UINT REDIR_TYPE=ENTRY_TYPE('RDIR');
 
 	// Con-/Destructors
-	Redirectory(Database* Database);
-	Redirectory(Database* Database, UINT Block);
-	static inline Handle<Redirectory> Create(Database* Database)
+	Redirect(Database* Database);
+	Redirect(Database* Database, UINT Block);
+	static inline Handle<Redirect> Create(Database* Database)
 		{
-		return Object::Create<Redirectory>(Database);
+		return Object::Create<Redirect>(Database);
 		}
-	static inline Handle<Redirectory> Create(Database* Database, UINT Block)
+	static inline Handle<Redirect> Create(Database* Database, UINT Block)
 		{
-		return Object::Create<Redirectory>(Database, Block);
+		return Object::Create<Redirect>(Database, Block);
 		}
 
 	// Common
 	WORD ReadFromStream(InputStream* Stream);
 	Collections::index<UINT, BYTE, 8> m_Blocks;
 	Database* m_Database;
+	UINT m_Id;
 	UINT m_Size;
 };
 

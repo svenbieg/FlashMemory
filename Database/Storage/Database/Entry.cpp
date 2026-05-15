@@ -9,7 +9,6 @@
 // Using
 //=======
 
-#include "Concurrency/WriteLock.h"
 #include "Storage/Database/Database.h"
 #include "Storage/Database/Editor.h"
 #include "Storage/Encoding/Dwarf.h"
@@ -26,32 +25,6 @@ namespace Storage {
 	namespace Database {
 
 
-//========
-// Common
-//========
-
-SIZE_T Entry::ReadFromStream(InputStream* stream)
-{
-SIZE_T size=0;
-UINT id=0;
-size+=stream->Read(&id, sizeof(UINT));
-if(m_Id!=id)
-	return 0;
-size+=Dwarf::ReadUnsigned(stream, &m_EraseCount);
-size+=Dwarf::ReadUnsigned(stream, &m_Parent);
-return size;
-}
-
-SIZE_T Entry::WriteToStream(OutputStream* stream)
-{
-SIZE_T size=0;
-size+=stream->Write(&m_Id, sizeof(UINT));
-size+=Dwarf::WriteUnsigned(stream, m_EraseCount);
-size+=Dwarf::WriteUnsigned(stream, m_Parent);
-return size;
-}
-
-
 //==================
 // Con-/Destructors
 //==================
@@ -66,11 +39,11 @@ ClearUpdate();
 // Con-/Destructors Protected
 //============================
 
-Entry::Entry(Database* database, UINT block, UINT id):
-m_Block(block),
+Entry::Entry(Database* database, UINT id, UINT type):
 m_Database(database),
 m_Id(id),
 m_Size(0),
+m_Type(type),
 m_Update(nullptr)
 {}
 
@@ -86,8 +59,20 @@ return m_Database->m_Volume;
 
 VOID Entry::Invalidate(Editor* editor)
 {
-if(m_Block!=-1)
+if(m_Id!=-1)
 	editor->m_ChangedEntries.add(this);
+}
+
+SIZE_T Entry::ReadEntry(InputStream* stream)
+{
+SIZE_T size=0;
+UINT type=0;
+size+=stream->Read(&type, sizeof(UINT));
+if(m_Type!=type)
+	throw NotFoundException();
+size+=Dwarf::ReadUnsigned(stream, &m_EraseCount);
+size+=Dwarf::ReadUnsigned(stream, &m_Parent);
+return size;
 }
 
 UINT Entry::Release()noexcept
@@ -96,21 +81,28 @@ WriteLock lock(m_Database->m_EntriesMutex);
 UINT ref_count=Cpu::InterlockedDecrement(&m_ReferenceCount);
 if(ref_count>0)
 	return ref_count;
-if(m_Block!=-1)
-	m_Database->m_Entries.remove(m_Block);
+if(m_Id!=-1)
+	m_Database->m_Entries.remove(m_Id);
 delete this;
 return 0;
 }
 
-SIZE_T Entry::WriteToBlock(UINT block_id)
+SIZE_T Entry::WriteEntry(OutputStream* stream)
+{
+SIZE_T size=0;
+size+=stream->Write(&m_Type, sizeof(UINT));
+size+=Dwarf::WriteUnsigned(stream, m_EraseCount);
+size+=Dwarf::WriteUnsigned(stream, m_Parent);
+return size;
+}
+
+SIZE_T Entry::WriteToBlock(UINT id)
 {
 auto volume=m_Database->m_Volume;
-auto block=Block::Create(volume, block_id);
-WriteToStream(block);
+auto block=Block::Create(volume, id);
+WriteEntry(block);
 block->Flush();
-m_Block=block_id;
-m_Size=block->GetPosition();
-return m_Size;
+return block->GetPosition();
 }
 
 SIZE_T Entry::WriteUpdates(OutputStream* stream)
@@ -145,16 +137,16 @@ Mutex& Entry::GetEntriesMutex(Database* database)
 return database->m_EntriesMutex;
 }
 
-Entry* Entry::GetEntry(Database* database, UINT block)
+Entry* Entry::GetEntry(Database* database, UINT id)
 {
 Entry* entry=nullptr;
-database->m_Entries.try_get(block, &entry);
+database->m_Entries.try_get(id, &entry);
 return entry;
 }
 
-VOID Entry::SetEntry(Database* database, UINT block, Entry* entry)
+VOID Entry::SetEntry(Database* database, UINT id, Entry* entry)
 {
-database->m_Entries.set(block, entry);
+database->m_Entries.set(id, entry);
 }
 
 }}

@@ -62,10 +62,10 @@ for(UINT pos=0; pos<child_count; pos++)
 	{
 	auto child=GetChildAt(pos);
 	child->Clear();
-	editor->Free(child->m_Block);
+	editor->Free(child->m_Id);
 	}
 m_Value=nullptr;
-if(m_Block!=-1)
+if(m_Id!=-1)
 	NodeUpdateClear::Create(this);
 Invalidate(editor);
 return true;
@@ -77,11 +77,34 @@ ReadLock lock(m_Mutex);
 return m_Attributes.get(key);
 }
 
+Handle<Node> Node::GetChild(Handle<String> tag)
+{
+ReadLock lock(m_Mutex);
+for(auto child: m_Children)
+	{
+	if(child->GetTag()==tag)
+		return child;
+	}
+throw NotFoundException();
+}
+
 Handle<Node> Node::GetChildAt(UINT pos)
 {
 ReadLock lock(m_Mutex);
 UINT block_id=m_Children.get_at(pos);
 return Node::Create(m_Database, block_id);
+}
+
+Handle<String> Node::GetTag()
+{
+ReadLock lock(m_Mutex);
+return m_Tag;
+}
+
+SIZE_T Node::ReadFromStream(InputStream* stream)
+{
+WriteLock lock(m_Mutex);
+return NodeUpdate::ReadFromStream(stream, this);
 }
 
 BOOL Node::RemoveAttribute(Handle<String> key)
@@ -98,7 +121,7 @@ BOOL Node::RemoveAttribute(Editor* editor, Handle<String> key)
 WriteLock lock(m_Mutex);
 if(!m_Attributes.remove(key))
 	return false;
-if(m_Block!=-1)
+if(m_Id!=-1)
 	NodeUpdateAttributeRemove::Create(this, key);
 Invalidate(editor);
 return true;
@@ -114,11 +137,10 @@ editor->Flush();
 VOID Node::RemoveChild(Editor* editor, Handle<Node> child)
 {
 WriteLock lock(m_Mutex);
-UINT block_id=child->m_Block;
-if(!m_Children.remove(block_id))
+if(!m_Children.remove(child))
 	throw NotFoundException();
-if(m_Block!=-1)
-	NodeUpdateChildRemove::Create(this, block_id);
+if(m_Id!=-1)
+	NodeUpdateChildRemove::Create(this, child);
 Invalidate(editor);
 }
 
@@ -136,7 +158,7 @@ BOOL Node::SetAttribute(Editor* editor, Handle<String> key, Handle<String> value
 WriteLock lock(m_Mutex);
 if(!m_Attributes.set(key, value))
 	return false;
-if(m_Block!=-1)
+if(m_Id!=-1)
 	NodeUpdateAttributeSet::Create(this, key, value);
 Invalidate(editor);
 return true;
@@ -157,7 +179,7 @@ WriteLock lock(m_Mutex);
 if(m_Tag==tag)
 	return false;
 m_Tag=tag;
-if(m_Block!=-1)
+if(m_Id!=-1)
 	NodeUpdateTagSet::Create(this, tag);
 Invalidate(editor);
 return true;
@@ -178,53 +200,16 @@ WriteLock lock(m_Mutex);
 if(m_Value==value)
 	return false;
 m_Value=value;
-if(m_Block!=-1)
+if(m_Id!=-1)
 	NodeUpdateValueSet::Create(this, value);
 Invalidate(editor);
 return true;
 }
 
-
-//============================
-// Con-/Destructors Protected
-//============================
-
-Node::Node(Database* database):
-Entry(database, -1, NODE_ID)
-{}
-
-Node::Node(Database* database, UINT block_id):
-Entry(database, block_id, NODE_ID)
-{
-auto volume=GetVolume();
-auto block=Block::Create(volume, m_Block);
-ReadFromStream(block);
-block->Skip();
-NodeUpdate::ReadFromStream(block, this, &m_Update);
-m_Size=block->GetPosition();
-}
-
-
-//==================
-// Common Protected
-//==================
-
-SIZE_T Node::ReadFromStream(InputStream* stream)
-{
-SIZE_T size=0;
-size+=Entry::ReadFromStream(stream);
-if(m_Id!=NODE_ID)
-	throw NotFoundException();
-size+=NodeUpdate::ReadFromStream(stream, this);
-for(auto const& attr: m_Attributes)
-	m_AttributeIndex.add(attr.get_key());
-return size;
-}
-
 SIZE_T Node::WriteToStream(OutputStream* stream)
 {
+ReadLock lock(m_Mutex);
 SIZE_T size=0;
-size+=Entry::WriteToStream(stream);
 size+=NodeUpdateTagSet::WriteToStream(stream, m_Tag);
 for(auto const& attr: m_Attributes)
 	size+=NodeUpdateAttributeSet::WriteToStream(stream, attr.get_key(), attr.get_value());
@@ -239,6 +224,57 @@ else
 	}
 auto update=NodeUpdateId::None;
 size+=stream->Write(&update, sizeof(NodeUpdateId));
+return size;
+}
+
+
+//============================
+// Con-/Destructors Protected
+//============================
+
+Node::Node(Database* database, UINT id):
+Entry(database, id, NODE_TYPE)
+{
+auto volume=GetVolume();
+auto block=Block::Create(volume, id);
+ReadEntry(block);
+block->Skip();
+NodeUpdate::ReadFromStream(block, this, &m_Update);
+m_Size=block->GetPosition();
+}
+
+Node::Node(Database* database, Handle<String> tag):
+Entry(database, -1, NODE_TYPE),
+m_Tag(tag)
+{}
+
+Node::Node(Node* parent, Handle<String> tag):
+Entry(parent->m_Database, -1, NODE_TYPE),
+m_Tag(tag)
+{
+throw NotImplementedException();
+}
+
+
+//==================
+// Common Protected
+//==================
+
+SIZE_T Node::ReadEntry(InputStream* stream)
+{
+SIZE_T size=0;
+size+=Entry::ReadEntry(stream);
+size+=ReadFromStream(stream);
+for(auto const& attr: m_Attributes)
+	m_AttributeIndex.add(attr.get_key());
+return size;
+}
+
+SIZE_T Node::WriteEntry(OutputStream* stream)
+{
+SIZE_T size=0;
+size+=Entry::WriteEntry(stream);
+size+=WriteToStream(stream);
 return size;
 }
 

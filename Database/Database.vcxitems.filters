@@ -42,7 +42,7 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.cpp">
       <Filter>Storage</Filter>
     </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Redirectory.cpp">
+    <ClCompile Include="$(MSBuildThisFileDirectory)Storage\Database\Redirect.cpp">
       <Filter>Storage\Database</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,7 +89,7 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Storage\ErrorCorrection.h">
       <Filter>Storage</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Redirectory.h">
+    <ClInclude Include="$(MSBuildThisFileDirectory)Storage\Database\Redirect.h">
       <Filter>Storage\Database</Filter>
     </ClInclude>
   </ItemGroup>

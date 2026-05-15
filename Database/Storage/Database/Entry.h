@@ -22,13 +22,16 @@ namespace Storage {
 	namespace Database {
 
 
-//====
-// ID
-//====
+//======
+// Type
+//======
 
-constexpr UINT ENTRY_ID(UINT Value)
+constexpr UINT ENTRY_TYPE(UINT Value)
 {
-return TypeHelper::BigEndian(Value);
+UINT value=TypeHelper::BigEndian(Value);
+while(value&0xFF==0)
+	value>>=8;
+return value;
 }
 
 
@@ -64,12 +67,12 @@ public:
 
 protected:
 	// Con-/Destructors
-	Entry(Database* Database, UINT Block, UINT Id);
-	template <class _entry_t> static Handle<_entry_t> Create(Database* Database, UINT Block)
+	Entry(Database* Database, UINT Id, UINT Type);
+	template <class _entry_t> static Handle<_entry_t> Create(Database* Database, UINT Id)
 		{
 		auto& mutex=GetEntriesMutex(Database);
 		WriteLock lock(mutex);
-		auto open=GetEntry(Database, Block);
+		auto open=GetEntry(Database, Id);
 		if(open)
 			{
 			auto entry=dynamic_cast<_entry_t*>(open);
@@ -77,8 +80,8 @@ protected:
 				throw InvalidArgumentException();
 			return entry;
 			}
-		auto entry=Object::Create<_entry_t>(Database, Block);
-		SetEntry(Database, Block, entry);
+		auto entry=Object::Create<_entry_t>(Database, Id);
+		SetEntry(Database, Id, entry);
 		return entry;
 		}
 
@@ -86,25 +89,25 @@ protected:
 	VOID ClearUpdate();
 	Handle<Volume> GetVolume()const;
 	virtual VOID Invalidate(Editor* Editor);
-	virtual SIZE_T ReadFromStream(InputStream* Stream);
+	virtual SIZE_T ReadEntry(InputStream* Stream);
 	UINT Release()noexcept override;
-	SIZE_T WriteToBlock(UINT Block);
-	virtual SIZE_T WriteToStream(OutputStream* Stream);
+	SIZE_T WriteToBlock(UINT Id);
+	virtual SIZE_T WriteEntry(OutputStream* Stream);
 	SIZE_T WriteUpdates(OutputStream* Stream);
-	UINT m_Block;
 	Handle<Database> m_Database;
 	UINT m_EraseCount;
 	UINT m_Id;
 	Mutex m_Mutex;
 	UINT m_Parent;
 	UINT m_Size;
+	UINT m_Type;
 	EntryUpdate* m_Update;
 
 private:
 	// Common
 	static Mutex& GetEntriesMutex(Database* Database);
-	static Entry* GetEntry(Database* Database, UINT Block);
-	static VOID SetEntry(Database* Database, UINT Block, Entry* Entry);
+	static Entry* GetEntry(Database* Database, UINT Id);
+	static VOID SetEntry(Database* Database, UINT Id, Entry* Entry);
 };
 
 }}

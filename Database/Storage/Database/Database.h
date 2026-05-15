@@ -17,7 +17,7 @@
 #include "Storage/Database/Editor.h"
 #include "Storage/Database/Map.h"
 #include "Storage/Database/Node.h"
-#include "Storage/Database/Redirectory.h"
+#include "Storage/Database/Redirect.h"
 #include "Storage/Encoding/Unsigned.h"
 #include "Storage/File.h"
 #include "Storage/Volume.h"
@@ -49,7 +49,7 @@ public:
 	friend Editor;
 	friend Entry;
 	friend Object;
-	friend Redirectory;
+	friend Redirect;
 
 	// Con-/Destructors
 	static inline Handle<Database> Create(Volume* Volume, FileCreateMode Create=FileCreateMode::OpenExisting) { return Object::Create<Database>(Volume, Create); }
@@ -70,6 +70,8 @@ private:
 	Handle<Node> m_Header;
 	Handle<BlockMap> m_MapFree;
 	Mutex m_Mutex;
+	Handle<Redirect> m_Redirection;
+	UINT m_Used;
 	Handle<Volume> m_Volume;
 };
 
