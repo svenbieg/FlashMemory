@@ -38,8 +38,10 @@ VOID Block::Erase()
 {
 m_Volume->Erase(m_Id);
 m_Available=0;
+m_Page=nullptr;
 m_PageId=-1;
 m_Position=0;
+m_Writable=0;
 }
 
 VOID Block::Skip()
@@ -49,8 +51,8 @@ FlagHelper::Set(m_Flags, BlockFlags::SkipPage);
 WORD page_id=m_SkipBlock.m_SkipCount;
 if(m_PageId!=page_id)
 	{
+	m_Page=Page::Create(m_Volume);
 	m_Volume->ReadPage(m_Id, page_id, m_Page);
-	m_Page->m_Position=0;
 	m_PageId=page_id;
 	m_SkipPage.ReadFromPage(m_Page);
 	m_Available=0;
@@ -88,8 +90,8 @@ while(read<size)
 			throw OutOfRangeException();
 		if(m_PageId!=page_id)
 			{
+			m_Page=Page::Create(m_Volume);
 			m_Volume->ReadPage(m_Id, page_id, m_Page);
-			m_Page->m_Position=0;
 			m_PageId=page_id;
 			}
 		if(FlagHelper::Get(m_Flags, BlockFlags::SkipBits))
@@ -140,16 +142,15 @@ return read;
 
 VOID Block::Flush()
 {
+if(m_PageId==-1)
+	return;
 if(FlagHelper::Get(m_Flags, BlockFlags::ErrorCorrection))
 	{
 	m_ErrorCorrection.Flush(m_Page);
 	m_Writable=0;
 	}
-if(m_PageId!=-1)
-	{
-	auto buf=m_Page->Begin();
-	m_Volume->Write(m_Id, m_PageId, 0, buf, m_PageSize);
-	}
+auto buf=m_Page->Begin();
+m_Volume->Write(m_Id, m_PageId, 0, buf, m_PageSize);
 }
 
 SIZE_T Block::Write(VOID const* buf, SIZE_T size)
@@ -166,9 +167,7 @@ while(written<size)
 		WORD page_id=m_Position/m_PageSize;
 		if(page_id>=m_PageCount)
 			throw OutOfRangeException();
-		if(!m_Page)
-			m_Page=Page::Create(m_Volume);
-		m_Page->m_Position=0;
+		m_Page=Page::Create(m_Volume);
 		m_PageId=page_id;
 		if(FlagHelper::Get(m_Flags, BlockFlags::SkipBits))
 			{

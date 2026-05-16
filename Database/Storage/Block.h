@@ -34,10 +34,8 @@ class Volume;
 
 enum class BlockMode: UINT
 {
-None=0,
-ErrorCorrection=1,
-SkipBits=2,
-Entry=ErrorCorrection|SkipBits
+Entry=3,
+File=0
 };
 
 
@@ -52,10 +50,11 @@ public:
 	friend Object;
 
 	// Con-/Destructors
-	static Handle<Block> Create(Volume* Volume, UINT Id, BlockMode Mode=BlockMode::None);
+	static Handle<Block> Create(Volume* Volume, UINT Id, BlockMode Mode=BlockMode::Entry);
 
 	// Common
 	VOID Erase();
+	inline Handle<Page> GetCurrentPage()const { return m_Page; }
 	inline WORD GetPageCount()const { return m_PageCount; }
 	inline UINT GetPosition()const { return m_Position; }
 	inline UINT GetSize()const { return m_Size; }
@@ -78,6 +77,8 @@ private:
 		SkipBits=2,
 		SkipPage=4
 		};
+	static_assert((UINT)BlockMode::File==(UINT)0);
+	static_assert((UINT)BlockMode::Entry==(UINT)BlockFlags::ErrorCorrection|(UINT)BlockFlags::SkipBits);
 
 	// Con-/Destructors
 	Block(Volume* Volume, UINT Id, BlockMode Mode);

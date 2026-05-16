@@ -71,6 +71,7 @@ return copy;
 //==========================
 
 Page::Page(BYTE* buf, SIZE_T size, Volume* volume):
+m_Buffer(buf),
 m_Position(0),
 m_Size(volume->GetPageSize())
 {}

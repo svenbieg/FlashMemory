@@ -84,8 +84,10 @@ VOID Database::Initialize()
 {
 m_Redirection=Redirect::Create(this);
 m_Header=Node::Create(this, "Header");
+m_Header->SetAttribute("Update", "0");
 m_Header->WriteToBlock(ID_HEADER_0);
 m_Header->WriteToBlock(ID_HEADER_1);
+m_Used+=HEADER_SIZE;
 }
 
 Handle<Node> Database::ReadHeader()

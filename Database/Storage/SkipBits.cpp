@@ -20,9 +20,9 @@
 namespace Storage {
 
 
-//==========================
-// Con-/Destructors Private
-//==========================
+//============================
+// Con-/Destructors Protected
+//============================
 
 SkipBits::SkipBits(WORD bits_count):
 m_BitsCount(bits_count/32),
@@ -30,20 +30,9 @@ m_SkipCount(0)
 {}
 
 
-//================
-// Common Private
-//================
-
-UINT SkipBits::GetBits(WORD pos, WORD skip)
-{
-if(pos>=skip)
-	return -1;
-UINT bits=-1;
-UINT shift=TypeHelper::Min(skip-pos, 32);
-bits>>=shift;
-bits<<=shift;
-return bits;
-}
+//==================
+// Common Protected
+//==================
 
 WORD SkipBits::ReadFromPage(Page* page)
 {
@@ -77,6 +66,22 @@ for(WORD u=0; u<m_BitsCount; u++)
 	stream->Write(&bits, sizeof(UINT));
 	}
 return size;
+}
+
+
+//================
+// Common Private
+//================
+
+UINT SkipBits::GetBits(WORD pos, WORD skip)
+{
+if(pos>=skip)
+	return -1;
+UINT bits=-1;
+UINT shift=TypeHelper::Min(skip-pos, 32);
+bits>>=shift;
+bits<<=shift;
+return bits;
 }
 
 }

@@ -30,9 +30,9 @@ namespace Storage {
 // Settings
 //==========
 
-constexpr BYTE ECC_SQUARE[]		={  4,  6,  8,  10,  12,  14,  16,  18 };
-constexpr WORD ECC_PAYLOAD[]	={ 16, 36, 64, 100, 144, 196, 256, 324 };
-constexpr WORD ECC_SIZE[]		={ 24, 48, 80, 120, 168, 224, 288, 360 };
+constexpr BYTE ECC_SQUARE[]		={ 2,  4,  6,  8,  10,  12,  14,  16 };
+constexpr WORD ECC_PAYLOAD[]	={ 4, 16, 36, 64, 100, 144, 196, 256 };
+constexpr WORD ECC_SIZE[]		={ 8, 24, 48, 80, 120, 168, 224, 288 };
 constexpr BYTE ECC_BUFFER		=ECC_SQUARE[TypeHelper::ArraySize(ECC_SQUARE)-1];
 
 
@@ -52,9 +52,9 @@ if(page_size-m_Position<ECC_SIZE[0])
 auto buf=page->Begin();
 WORD size_bits=0;
 MemoryHelper::Copy(&size_bits, &buf[m_Position], sizeof(WORD));
-if(size_bits==0||size_bits==0xFFFF)
+if(size_bits==0xFFFF)
 	return 0;
-UINT size=GetSize(page, size_bits);
+WORD size=GetSize(page, size_bits);
 Correct(&buf[m_Position], size);
 m_Size=ECC_SIZE[size];
 page->m_Position+=sizeof(WORD);
@@ -240,6 +240,8 @@ for(WORD size=0; size<count; size++)
 		ChecksumX(sum_x, size, buf);
 		ChecksumY(sum_y, size, buf);
 		m_Position+=ECC_SIZE[size];
+		if(page->m_Size-m_Position>=ECC_SIZE[0])
+			MemoryHelper::Fill(&buf[m_Position], sizeof(UINT), 0xFF);
 		page->m_Position=m_Position;
 		return;
 		}

@@ -9,7 +9,6 @@
 // Using
 //=======
 
-#include "Storage/Streams/InputStream.h"
 #include "Storage/Streams/OutputStream.h"
 
 
@@ -36,23 +35,25 @@ class SkipBits
 {
 public:
 	// Using
-	using InputStream=Storage::Streams::InputStream;
 	using OutputStream=Storage::Streams::OutputStream;
 
 	// Friends
 	friend Block;
 
-private:
+protected:
 	// Con-/Destructors
 	SkipBits(WORD BitsCount);
 
 	// Common
-	static UINT GetBits(WORD Position, WORD Skip);
 	inline WORD GetSize()const { return m_BitsCount*sizeof(UINT); }
 	WORD ReadFromPage(Page* Page);
 	WORD WriteToStream(OutputStream* Stream);
 	WORD m_BitsCount;
 	WORD m_SkipCount;
+
+private:
+	// Common
+	static UINT GetBits(WORD Position, WORD Skip);
 };
 
 }
