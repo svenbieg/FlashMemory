@@ -83,7 +83,7 @@ while(stream->Available())
 			auto key=node->m_AttributeIndex.get_at(id);
 			INT64 ivalue=0;
 			size+=Dwarf::ReadSigned(stream, &ivalue);
-			auto value=String::From(ivalue);
+			auto value=String::Create(ivalue);
 			node->m_Attributes.set(key, value);
 			if(update_ptr)
 				{
@@ -113,7 +113,7 @@ while(stream->Available())
 			auto key=String::ReadFromStream(stream, &size);
 			INT64 ivalue=0;
 			size+=Dwarf::ReadSigned(stream, &ivalue);
-			auto value=String::From(ivalue);
+			auto value=String::Create(ivalue);
 			node->m_Attributes.set(key, value);
 			if(update_ptr)
 				{
@@ -191,7 +191,7 @@ while(stream->Available())
 			{
 			INT64 ivalue=0;
 			size+=Dwarf::ReadSigned(stream, &ivalue);
-			auto value=String::From(ivalue);
+			auto value=String::Create(ivalue);
 			node->m_Value=value;
 			if(update_ptr)
 				{
