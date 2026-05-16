@@ -11,6 +11,7 @@
 
 #include "Concurrency/Scheduler.h"
 #include "UI/Console.h"
+#include "StatusHelper.h"
 
 using namespace Concurrency;
 using namespace FlashMemory;
@@ -81,9 +82,17 @@ auto task=Task::Create(this, [this]()
 	Console::Print("OK\n\n");
 	PrintPage(page);
 	}, "test");
-task->Then(this, [this]()
+task->Then(this, [this, task]()
 	{
-	Console::Print("Done\n");
+	auto status=task->GetStatus();
+	if(StatusHelper::Failed(status))
+		{
+		Console::Print("\nFailed (%u)\n", (UINT)status);
+		}
+	else
+		{
+		Console::Print("\nSuccess\n");
+		}
 	});
 }
 

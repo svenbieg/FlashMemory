@@ -64,10 +64,24 @@ it.OffsetHigh=TypeHelper::HighLong(offset);
 auto dst=buf->Begin();
 UINT copy=PAGE_SIZE;
 DWORD read=0;
+SetLastError(0);
 if(!ReadFile(m_File, buf, copy, &read, &it))
-	throw ErrorException();
-if(read!=copy)
-	throw ErrorException();
+	{
+	DWORD err=GetLastError();
+	switch(err)
+		{
+		case ERROR_HANDLE_EOF:
+			{
+			break;
+			}
+		default:
+			{
+			throw ErrorException();
+			}
+		}
+	}
+if(read<copy)
+	MemoryHelper::Fill(&dst[read], copy-read, 0xFF);
 }
 
 VOID FlashMemory::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)

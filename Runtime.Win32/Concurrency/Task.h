@@ -47,6 +47,7 @@ public:
 	static Handle<Task> Get();
 	inline HANDLE GetHandle()const { return m_Thread; }
 	Handle<Object> GetResult();
+	inline Status GetStatus()const { return m_Status; }
 	Handle<Object> Result;
 	virtual VOID Run()=0;
 	static inline VOID SetResult(Handle<Object> Result) { Task::Get()->Result=Result; }
