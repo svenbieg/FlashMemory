@@ -72,8 +72,7 @@ switch(create)
 		break;
 		}
 	}
-auto redir=m_Header->GetAttribute("Redirect");
-m_Redirection=Redirect::Create(this, redir->ToUInt());
+m_Redirection=Redirect::Create(this, ID_REDIR);
 }
 
 
@@ -83,23 +82,20 @@ m_Redirection=Redirect::Create(this, redir->ToUInt());
 
 VOID Database::Initialize()
 {
-m_Header=Node::Create(this, "Header");
-m_Used=2;
 m_Redirection=Redirect::Create(this);
-UINT redir_id=m_Redirection->GetId();
-m_Header->SetAttribute("Redirect", String::From(redir_id));
-m_Header->WriteToBlock(0);
-m_Header->WriteToBlock(1);
+m_Header=Node::Create(this, "Header");
+m_Header->WriteToBlock(ID_HEADER_0);
+m_Header->WriteToBlock(ID_HEADER_1);
 }
 
 Handle<Node> Database::ReadHeader()
 {
 Handle<Node> header;
-for(UINT block=0; block<2; block++)
+for(UINT id=0; id<2; id++)
 	{
 	try
 		{
-		header=Node::Create(this, block);
+		header=Node::Create(this, ID_HEADER_0+id);
 		}
 	catch(InvalidArgumentException)
 		{
@@ -111,24 +107,24 @@ return header;
 
 VOID Database::ValidateHeader(Node* header)
 {
-if(header->m_Id==0)
+if(header->m_Id==ID_HEADER_0)
 	{
 	try
 		{
-		auto header1=Node::Create(this, 1);
+		auto header1=Node::Create(this, ID_HEADER_1);
 		if(header1->m_Size!=header->m_Size)
 			throw InvalidArgumentException();
 		}
 	catch(InvalidArgumentException)
 		{
-		header->WriteToBlock(1);
-		header->WriteToBlock(0);
+		header->WriteToBlock(ID_HEADER_1);
+		header->WriteToBlock(ID_HEADER_0);
 		}
 	}
 else
 	{
-	header->WriteToBlock(0);
-	header->WriteToBlock(1);
+	header->WriteToBlock(ID_HEADER_0);
+	header->WriteToBlock(ID_HEADER_1);
 	}
 m_Header=header;
 }

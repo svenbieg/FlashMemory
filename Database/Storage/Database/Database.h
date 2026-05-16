@@ -58,6 +58,11 @@ public:
 	inline Handle<Editor> Edit() { return Editor::Create(this); }
 
 private:
+	// Settings
+	static const UINT ID_REDIR=0;
+	static const UINT ID_HEADER_0=Redirect::REDIR_SIZE;
+	static const UINT ID_HEADER_1=Redirect::REDIR_SIZE+1;
+
 	// Con-/Destructors
 	Database(Volume* Volume, FileCreateMode Create);
 

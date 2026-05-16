@@ -26,28 +26,20 @@ namespace Storage {
 
 Redirect::Redirect(Database* database):
 m_Database(database),
-m_Id(database->m_Used),
 m_Size(0)
 {
 auto volume=m_Database->m_Volume;
-UINT block=m_Id;
-UINT count=REDIR_COUNT+1;
-for(UINT u=0; u<count; u++)
-	{
-	volume->Erase(block);
-	block++;
-	}
-m_Database->m_Used+=count;
+volume->Erase(Database::ID_REDIR);
+m_Database->m_Used+=REDIR_SIZE;
 }
 
 Redirect::Redirect(Database* database, UINT id):
 m_Database(database),
-m_Id(id),
 m_Size(0)
 {
 auto volume=m_Database->m_Volume;
 auto page=Page::Create(volume);
-volume->ReadPage(m_Id, 0, page);
+volume->ReadPage(Database::ID_REDIR, 0, page);
 m_Size=ReadFromStream(page);
 }
 

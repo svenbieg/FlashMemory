@@ -45,12 +45,9 @@ public:
 	friend Database;
 	friend Object;
 
-	// Common
-	UINT GetId()const { return m_Id; }
-
 private:
 	// Settings
-	static const UINT REDIR_COUNT=4;
+	static const UINT REDIR_SIZE=6;
 	static const UINT REDIR_TYPE=ENTRY_TYPE('RDIR');
 
 	// Con-/Destructors
@@ -69,7 +66,6 @@ private:
 	WORD ReadFromStream(InputStream* Stream);
 	Collections::index<UINT, BYTE, 8> m_Blocks;
 	Database* m_Database;
-	UINT m_Id;
 	UINT m_Size;
 };
 
