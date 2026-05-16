@@ -45,8 +45,7 @@ public:
 	UINT GetBlockSize()override;
 	WORD GetPageSize(WORD* Spare=nullptr)override;
 	UINT64 GetSize()override;
-	VOID ReadPage(UINT Block, WORD Id, Page* Page)override;
-	BOOL SetSize(UINT64 Size)override;
+	VOID Read(UINT Block, WORD Page, Storage::Page* Buffer)override;
 	VOID Write(UINT Block, WORD Page, WORD Position, VOID const* Buffer, WORD Size)override;
 
 protected:
@@ -60,8 +59,10 @@ protected:
 	VOID SetFeatures(BYTE Feature, BYTE Value);
 	UINT m_BlockSize;
 	WORD m_Id;
+	WORD m_PageCount;
 	WORD m_PageSize;
 	WORD m_PageSpare;
+	WORD m_PageTotal;
 	UINT m_Size;
 	Handle<SpiHost> m_SpiHost;
 };

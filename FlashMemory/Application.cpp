@@ -58,9 +58,9 @@ namespace FlashMemory {
 
 Application::Application()
 {
-#ifdef _PICO2W
 auto task=Task::Create(this, [this]()
 	{
+	#ifdef _PICO2W
 	Console::Print("Initializing flash-chip...");
 	SpiConfiguration config;
 	config.Divisor=2;
@@ -70,19 +70,56 @@ auto task=Task::Create(this, [this]()
 	config.PinRx=GpioPin::Gpio16;
 	config.PinTx=GpioPin::Gpio19;
 	auto spi_host=SpiEmulator::Create(config);
-	auto spi_flash=SpiFlash::Create(spi_host);
+	m_Volume=SpiFlash::Create(spi_host);
 	Console::Print("OK\n");
+	#else
+	m_Volume=Storage::FlashMemory::Create("flash.bin");
+	#endif
+	Console::Print("Reading page 0...");
+	auto page=Page::Create(m_Volume);
+	m_Volume->Read(0, 0, page);
+	Console::Print("OK\n\n");
+	PrintPage(page);
 	}, "test");
 task->Then(this, [this]()
 	{
 	Console::Print("Done\n");
 	});
-#else
-auto volume=Storage::FlashMemory::Create("flash.bin");
-Console::Print("Creating database...\n");
-m_Database=Database::Create(volume, FileCreateMode::OpenAlways);
-auto editor=m_Database->Edit();
-#endif
+}
+
+
+//================
+// Common Private
+//================
+
+VOID Application::PrintBuffer(BYTE const* buf, UINT size)
+{
+CHAR hex[3];
+for(UINT pos=0; pos<size; pos++)
+	{
+	StringHelper::Print(hex, 3, "%x", buf[pos]);
+	Console::Print(hex);
+	}
+}
+
+VOID Application::PrintPage(Page* page)
+{
+auto buf=page->Begin();
+UINT pos=0;
+WORD page_spare=0;
+WORD page_size=m_Volume->GetPageSize(&page_spare);
+WORD page_total=page_size+page_spare;
+UINT line_len=32;
+UINT line_count=page_total/line_len;
+UINT line_spare=page_size/line_len;
+for(UINT line=0; line<line_count; line++)
+	{
+	if(line==line_spare)
+		Console::Print("\n");
+	PrintBuffer(&buf[pos], line_len);
+	pos+=line_len;
+	Console::Print("\n");
+	}
 }
 
 }

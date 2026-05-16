@@ -10,9 +10,11 @@
 //=======
 
 #include "Concurrency/Task.h"
+#include "Devices/Timers/SystemTimer.h"
 
 using namespace Concurrency;
 using namespace Devices::Spi;
+using namespace Devices::Timers;
 using namespace Storage;
 
 
@@ -106,15 +108,40 @@ UINT64 SpiFlash::GetSize()
 return m_Size;
 }
 
-VOID SpiFlash::ReadPage(UINT block, WORD id, Page* page)
+VOID SpiFlash::Read(UINT block, WORD page, Page* buf)
 {
-auto buf=page->Begin();
-throw NotImplementedException();
-}
-
-BOOL SpiFlash::SetSize(UINT64 size)
-{
-return size<=m_Size;
+UINT addr=block*m_PageCount+page;
+BYTE tx[4];
+tx[0]=CMD_READ_PAGE;
+tx[1]=(addr>>16)&0xFF;
+tx[2]=(addr>>8)&0xFF;
+tx[3]=addr&0xFF;
+m_SpiHost->SpiBegin(4, 0);
+m_SpiHost->SpiWrite(tx, 4);
+m_SpiHost->SpiEnd();
+UINT64 timeout=SystemTimer::Microseconds64()+100;
+while(1)
+	{
+	BYTE status=GetFeatures(FEAT_STATUS);
+	if(!BitHelper::Get(status, STATUS_OIP))
+		break;
+	if(SystemTimer::Microseconds64()>=timeout)
+		throw TimeoutException();
+	}
+auto dst=buf->Begin();
+tx[0]=CMD_READ_CACHE;
+tx[1]=0;
+tx[2]=0;
+tx[3]=0;
+m_SpiHost->SpiBegin(4, m_PageTotal);
+m_SpiHost->SpiWrite(tx, 4);
+m_SpiHost->SpiRead(dst, m_PageTotal);
+m_SpiHost->SpiEnd();
+if(page==0)
+	{
+	if(dst[m_PageSize]==0)
+		throw ErrorException();
+	}
 }
 
 VOID SpiFlash::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)
@@ -130,6 +157,7 @@ throw NotImplementedException();
 SpiFlash::SpiFlash(SpiHost* spi_host):
 m_BlockSize(0),
 m_Id(0),
+m_PageCount(0),
 m_PageSize(0),
 m_Size(0),
 m_SpiHost(spi_host)
@@ -144,8 +172,10 @@ switch(model)
 	case Model::M78A_1Gb:
 		{
 		m_BlockSize=64*2048;
+		m_PageCount=64;
 		m_PageSize=2048;
 		m_PageSpare=128;
+		m_PageTotal=2048+128;
 		m_Size=1024*64*2048;
 		break;
 		}

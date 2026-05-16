@@ -57,6 +57,31 @@ public:
 		assert(m_Then==nullptr);
 		m_Then=new DispatchedProcedure(Procedure);
 		}
+	template <class _owner_t> inline VOID Then(_owner_t* Owner, VOID (_owner_t::*Procedure)())
+		{
+		assert(m_Then==nullptr);
+		m_Then=new DispatchedMemberProcedure<_owner_t>(Owner, Procedure);
+		}
+	template <class _owner_t, class... _args_t> inline VOID Then(Handle<_owner_t> const& Owner, VOID (_owner_t::*Procedure)())
+		{
+		assert(m_Then==nullptr);
+		m_Then=new DispatchedMemberProcedure<_owner_t>(Owner, Procedure);
+		}
+	template <class _owner_t, class _lambda_t> inline VOID Then(_owner_t* Owner, _lambda_t&& Lambda)
+		{
+		assert(m_Then==nullptr);
+		m_Then=new DispatchedLambda<_owner_t, _lambda_t>(Owner, std::forward<_lambda_t>(Lambda));
+		}
+	template <class _owner_t, class _lambda_t> inline VOID Then(Handle<_owner_t> const& Owner, _lambda_t&& Lambda)
+		{
+		assert(m_Then==nullptr);
+		m_Then=new DispatchedLambda<_owner_t, _lambda_t>(Owner, std::forward<_lambda_t>(Lambda));
+		}
+	template <class _lambda_t> inline VOID Then(nullptr_t Owner, _lambda_t&& Lambda)
+		{
+		assert(m_Then==nullptr);
+		m_Then=new DispatchedLambda<nullptr_t, _lambda_t>(std::forward<_lambda_t>(Lambda));
+		}
 	static inline VOID ThrowIfMain()
 		{
 		if(!Get())

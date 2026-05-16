@@ -54,31 +54,20 @@ UINT64 FlashMemory::GetSize()
 return 0;
 }
 
-VOID FlashMemory::ReadPage(UINT block, WORD id, Page* page)
+VOID FlashMemory::Read(UINT block, WORD page, Page* buf)
 {
 UINT64 offset=block*BLOCK_SIZE;
-offset+=id*PAGE_SIZE;
+offset+=page*PAGE_SIZE;
 OVERLAPPED it={ 0 };
 it.Offset=TypeHelper::LowLong(offset);
 it.OffsetHigh=TypeHelper::HighLong(offset);
-auto buf=page->Begin();
+auto dst=buf->Begin();
 UINT copy=PAGE_SIZE;
 DWORD read=0;
 if(!ReadFile(m_File, buf, copy, &read, &it))
 	throw ErrorException();
 if(read!=copy)
 	throw ErrorException();
-}
-
-BOOL FlashMemory::SetSize(UINT64 size)
-{
-LARGE_INTEGER pos;
-pos.QuadPart=size;
-if(!SetFilePointerEx(m_File, pos, nullptr, FILE_BEGIN))
-	return false;
-if(!SetEndOfFile(m_File))
-	return false;
-return true;
 }
 
 VOID FlashMemory::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)

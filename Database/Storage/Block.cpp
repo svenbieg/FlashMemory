@@ -52,7 +52,7 @@ WORD page_id=m_SkipBlock.m_SkipCount;
 if(m_PageId!=page_id)
 	{
 	m_Page=Page::Create(m_Volume);
-	m_Volume->ReadPage(m_Id, page_id, m_Page);
+	m_Volume->Read(m_Id, page_id, m_Page);
 	m_PageId=page_id;
 	m_SkipPage.ReadFromPage(m_Page);
 	m_Available=0;
@@ -91,7 +91,7 @@ while(read<size)
 		if(m_PageId!=page_id)
 			{
 			m_Page=Page::Create(m_Volume);
-			m_Volume->ReadPage(m_Id, page_id, m_Page);
+			m_Volume->Read(m_Id, page_id, m_Page);
 			m_PageId=page_id;
 			}
 		if(FlagHelper::Get(m_Flags, BlockFlags::SkipBits))

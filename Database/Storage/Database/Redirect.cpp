@@ -39,7 +39,7 @@ m_Size(0)
 {
 auto volume=m_Database->m_Volume;
 auto page=Page::Create(volume);
-volume->ReadPage(Database::ID_REDIR, 0, page);
+volume->Read(Database::ID_REDIR, 0, page);
 m_Size=ReadFromStream(page);
 }
 

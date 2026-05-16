@@ -31,6 +31,8 @@ public:
 
 	// Using
 	using Database=Storage::Database::Database;
+	using Page=Storage::Page;
+	using Volume=Storage::Volume;
 
 	// Con-/Destructors
 	static inline Handle<Application> Create() { return Object::Create<Application>(); }
@@ -40,7 +42,10 @@ private:
 	Application();
 
 	// Common
+	VOID PrintBuffer(BYTE const* Buffer, UINT Size);
+	VOID PrintPage(Page* Page);
 	Handle<Database> m_Database;
+	Handle<Volume> m_Volume;
 };
 
 }
