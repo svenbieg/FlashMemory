@@ -10,6 +10,7 @@
 //=======
 
 #include "Storage/Volume.h"
+#include "FlagHelper.h"
 
 
 //===========
@@ -23,9 +24,9 @@ namespace Storage {
 // Con-/Destructors
 //==================
 
-Handle<Block> Block::Create(Volume* volume, UINT id)
+Handle<Block> Block::Create(Volume* volume, UINT id, BlockMode mode)
 {
-return Object::Create<Block>(volume, id);
+return Object::Create<Block>(volume, id, mode);
 }
 
 
@@ -36,18 +37,31 @@ return Object::Create<Block>(volume, id);
 VOID Block::Erase()
 {
 m_Volume->Erase(m_Id);
-}
-
-UINT Block::GetPosition()const
-{
-UINT pos=m_PageId*m_PageSize;
-pos+=m_Page->GetPosition();
-return pos;
+m_Available=0;
+m_PageId=-1;
+m_Position=0;
 }
 
 VOID Block::Skip()
 {
-throw NotImplementedException();
+assert(FlagHelper::Get(m_Flags, BlockFlags::SkipBits));
+FlagHelper::Set(m_Flags, BlockFlags::SkipPage);
+WORD page_id=m_SkipBlock.m_SkipCount;
+if(m_PageId!=page_id)
+	{
+	m_Volume->ReadPage(m_Id, page_id, m_Page);
+	m_Page->m_Position=0;
+	m_PageId=page_id;
+	m_SkipPage.ReadFromPage(m_Page);
+	m_Available=0;
+	}
+WORD page_pos=m_SkipPage.m_SkipCount*ErrorCorrection::BLOCK_SIZE;
+if(m_Page->m_Position!=page_pos)
+	{
+	m_Page->m_Position=page_pos;
+	m_Available=0;
+	}
+m_Position=m_PageId*m_PageSize+page_pos;
 }
 
 
@@ -57,27 +71,64 @@ throw NotImplementedException();
 
 SIZE_T Block::Available()
 {
-return m_Page->Available();
+return m_Size-m_Position;
 }
 
 SIZE_T Block::Read(VOID* buf, SIZE_T size)
 {
-BYTE* dst=(BYTE*)buf;
+auto dst=(BYTE*)buf;
 SIZE_T read=0;
 while(read<size)
 	{
-	SIZE_T available=m_Page->Available();
-	if(!available)
+	WORD page_pos=m_Position%m_PageSize;
+	if(page_pos==0)
 		{
-		if(++m_PageId>=m_PageCount)
+		WORD page_id=m_Position/m_PageSize;
+		if(page_id>=m_PageCount)
 			throw OutOfRangeException();
-		m_Volume->ReadPage(m_Id, m_PageId, m_Page);
-		available=m_Page->Available();
-		if(!available)
-			throw OutOfRangeException();
+		if(m_PageId!=page_id)
+			{
+			m_Volume->ReadPage(m_Id, page_id, m_Page);
+			m_Page->m_Position=0;
+			m_PageId=page_id;
+			}
+		if(FlagHelper::Get(m_Flags, BlockFlags::SkipBits))
+			{
+			WORD skip_min=0;
+			if(m_PageId==0)
+				skip_min+=m_SkipBlock.ReadFromPage(m_Page);
+			skip_min+=m_SkipPage.ReadFromPage(m_Page);
+			if(m_SkipPage.m_SkipCount==0)
+				m_SkipPage.m_SkipCount=skip_min/ErrorCorrection::BLOCK_SIZE;
+			if(FlagHelper::Get(m_Flags, BlockFlags::SkipPage))
+				{
+				page_pos=m_SkipPage.m_SkipCount*ErrorCorrection::BLOCK_SIZE;
+				m_Page->m_Position=page_pos;
+				}
+			m_Position+=page_pos;
+			}
 		}
-	SIZE_T copy=TypeHelper::Min(size-read, available);
-	read+=m_Page->Read(&dst[read], copy);
+	if(FlagHelper::Get(m_Flags, BlockFlags::ErrorCorrection))
+		{
+		if(!m_Available)
+			{
+			m_Available=m_ErrorCorrection.Available(m_Page);
+			if(!m_Available)
+				{
+				m_Position=(m_PageId+1)*m_PageSize;
+				continue;
+				}
+			}
+		WORD copy=TypeHelper::Min(m_Available, size-read);
+		read+=m_Page->Read(&dst[read], copy);
+		m_Available-=copy;
+		}
+	else
+		{
+		WORD available=m_Page->Available();
+		WORD copy=TypeHelper::Min(available, size-read);
+		read+=m_Page->Read(&dst[read], copy);
+		}
 	}
 return read;
 }
@@ -89,13 +140,77 @@ return read;
 
 VOID Block::Flush()
 {
-throw NotImplementedException();
+if(FlagHelper::Get(m_Flags, BlockFlags::ErrorCorrection))
+	{
+	m_ErrorCorrection.Flush(m_Page);
+	m_Writable=0;
+	}
+if(m_PageId!=-1)
+	{
+	auto buf=m_Page->Begin();
+	m_Volume->Write(m_Id, m_PageId, 0, buf, m_PageSize);
+	}
 }
 
 SIZE_T Block::Write(VOID const* buf, SIZE_T size)
 {
-throw NotImplementedException();
-return 0;
+auto src=(BYTE const*)buf;
+SIZE_T written=0;
+while(written<size)
+	{
+	WORD page_pos=m_Position%m_PageSize;
+	if(page_pos==0)
+		{
+		if(m_PageId!=-1)
+			Flush();
+		WORD page_id=m_Position/m_PageSize;
+		if(page_id>=m_PageCount)
+			throw OutOfRangeException();
+		if(!m_Page)
+			m_Page=Page::Create(m_Volume);
+		m_Page->m_Position=0;
+		m_PageId=page_id;
+		if(FlagHelper::Get(m_Flags, BlockFlags::SkipBits))
+			{
+			WORD skip_min=0;
+			if(m_PageId==0)
+				{
+				m_SkipBlock.m_SkipCount=0;
+				skip_min+=m_SkipBlock.WriteToStream(m_Page);
+				}
+			skip_min+=m_SkipPage.GetSize();
+			m_SkipPage.m_SkipCount=skip_min/ErrorCorrection::BLOCK_SIZE;
+			m_SkipPage.WriteToStream(m_Page);
+			page_pos=skip_min;
+			m_Position+=page_pos;
+			}
+		m_Writable=0;
+		}
+	if(FlagHelper::Get(m_Flags, BlockFlags::ErrorCorrection))
+		{
+		if(!m_Writable)
+			{
+			m_Writable=m_ErrorCorrection.Writable(m_Page);
+			if(!m_Writable)
+				{
+				m_Position=(m_PageId+1)*m_PageSize;
+				continue;
+				}
+			}
+		WORD copy=TypeHelper::Min(m_Writable, size-written);
+		written+=m_Page->Write(&src[written], copy);
+		m_Writable-=copy;
+		if(m_Writable==0)
+			m_ErrorCorrection.Flush(m_Page);
+		}
+	else
+		{
+		WORD available=m_Page->Available();
+		WORD copy=TypeHelper::Min(available, size-written);
+		written+=m_Page->Write(&src[written], copy);
+		}
+	}
+return size;
 }
 
 
@@ -103,17 +218,19 @@ return 0;
 // Con-/Destructors Private
 //==========================
 
-Block::Block(Volume* volume, UINT id):
+Block::Block(Volume* volume, UINT id, BlockMode mode):
+m_Available(0),
+m_Flags((BlockFlags)mode),
 m_Id(id),
 m_PageCount(volume->GetBlockSize()/volume->GetPageSize()),
-m_PageId(0),
+m_PageId(-1),
 m_PageSize(volume->GetPageSize()),
+m_Position(0),
 m_Size(volume->GetBlockSize()),
+m_SkipBlock(m_PageCount),
+m_SkipPage(m_PageSize/ErrorCorrection::BLOCK_SIZE),
 m_Volume(volume),
-z_SkipBits(this)
-{
-m_Page=Page::Create(m_Volume);
-m_Volume->ReadPage(m_Id, 0, m_Page);
-}
+m_Writable(0)
+{}
 
 }

@@ -9,6 +9,7 @@
 // Using
 //=======
 
+#include "Storage/ErrorCorrection.h"
 #include "Storage/Page.h"
 #include "Storage/SkipBits.h"
 
@@ -27,6 +28,19 @@ namespace Storage {
 class Volume;
 
 
+//============
+// Block-Mode
+//============
+
+enum class BlockMode: UINT
+{
+None=0,
+ErrorCorrection=1,
+SkipBits=2,
+Entry=ErrorCorrection|SkipBits
+};
+
+
 //=======
 // Block
 //=======
@@ -38,12 +52,12 @@ public:
 	friend Object;
 
 	// Con-/Destructors
-	static Handle<Block> Create(Volume* Volume, UINT Id);
+	static Handle<Block> Create(Volume* Volume, UINT Id, BlockMode Mode=BlockMode::None);
 
 	// Common
 	VOID Erase();
 	inline WORD GetPageCount()const { return m_PageCount; }
-	UINT GetPosition()const;
+	inline UINT GetPosition()const { return m_Position; }
 	inline UINT GetSize()const { return m_Size; }
 	VOID Skip();
 
@@ -56,18 +70,33 @@ public:
 	SIZE_T Write(VOID const* Buffer, SIZE_T Size)override;
 
 private:
+	// Flags
+	enum class BlockFlags: UINT
+		{
+		None=0,
+		ErrorCorrection=1,
+		SkipBits=2,
+		SkipPage=4
+		};
+
 	// Con-/Destructors
-	Block(Volume* Volume, UINT Id);
+	Block(Volume* Volume, UINT Id, BlockMode Mode);
 
 	// Common
+	WORD m_Available;
+	ErrorCorrection m_ErrorCorrection;
+	BlockFlags m_Flags;
 	UINT m_Id;
 	Handle<Page> m_Page;
 	WORD m_PageCount;
 	WORD m_PageId;
 	WORD m_PageSize;
+	UINT m_Position;
 	UINT m_Size;
+	SkipBits m_SkipBlock;
+	SkipBits m_SkipPage;
 	Handle<Volume> m_Volume;
-	SkipBits z_SkipBits;
+	WORD m_Writable;
 };
 
 }

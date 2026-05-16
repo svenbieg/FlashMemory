@@ -20,11 +20,32 @@
 namespace Storage {
 
 
-//========
-// Common
-//========
+//==========================
+// Con-/Destructors Private
+//==========================
 
-SIZE_T SkipBits::ReadFromPage(Page* page)
+SkipBits::SkipBits(WORD bits_count):
+m_BitsCount(bits_count/32),
+m_SkipCount(0)
+{}
+
+
+//================
+// Common Private
+//================
+
+UINT SkipBits::GetBits(WORD pos, WORD skip)
+{
+if(pos>=skip)
+	return -1;
+UINT bits=-1;
+UINT shift=TypeHelper::Min(skip-pos, 32);
+bits>>=shift;
+bits<<=shift;
+return bits;
+}
+
+WORD SkipBits::ReadFromPage(Page* page)
 {
 m_SkipCount=0;
 WORD page_pos=page->m_Position;
@@ -45,48 +66,17 @@ page->m_Position=page_pos+size;
 return size;
 }
 
-SIZE_T SkipBits::WriteToStream(OutputStream* stream, WORD skip_count)
+WORD SkipBits::WriteToStream(OutputStream* stream)
 {
-SIZE_T size=m_BitsCount*sizeof(UINT);
+WORD size=m_BitsCount*sizeof(UINT);
 if(!stream)
 	return size;
-for(UINT u=0; u<m_BitsCount; u++)
+for(WORD u=0; u<m_BitsCount; u++)
 	{
-	UINT bits=GetBits(u*32, skip_count);
+	UINT bits=GetBits(u*32, m_SkipCount);
 	stream->Write(&bits, sizeof(UINT));
 	}
 return size;
-}
-
-
-//==========================
-// Con-/Destructors Private
-//==========================
-
-SkipBits::SkipBits(Block* block):
-m_BitsCount(block->GetPageCount()/32),
-m_SkipCount(0)
-{}
-
-SkipBits::SkipBits(Page* page):
-m_BitsCount(page->GetSize()/32),
-m_SkipCount(0)
-{}
-
-
-//================
-// Common Private
-//================
-
-UINT SkipBits::GetBits(UINT pos, UINT skip)
-{
-if(pos>=skip)
-	return -1;
-UINT bits=-1;
-UINT shift=TypeHelper::Min(skip-pos, 32);
-bits>>=shift;
-bits<<=shift;
-return bits;
 }
 
 }

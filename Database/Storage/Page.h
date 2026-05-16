@@ -52,14 +52,14 @@ public:
 	inline WORD GetSize()const { return m_Size; }
 
 	// Input-Stream
-	SIZE_T Available()override;
-	SIZE_T Read(VOID* Buffer, SIZE_T Size)override;
+	virtual SIZE_T Available()override;
+	virtual SIZE_T Read(VOID* Buffer, SIZE_T Size)override;
 
 	// Output-Stream
-	VOID Flush()override;
-	SIZE_T Write(VOID const* Buffer, SIZE_T Size)override;
+	virtual VOID Flush()override;
+	virtual SIZE_T Write(VOID const* Buffer, SIZE_T Size)override;
 
-private:
+protected:
 	// Con-/Destructors
 	Page(BYTE* Buffer, SIZE_T Size, Volume* Volume);
 

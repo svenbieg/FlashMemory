@@ -2,7 +2,7 @@
 // ErrorCorrection.h
 //===================
 
-// Checksum of variable sized blocks.
+// Checksum computation for variable sized blocks.
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // https://github.com/svenbieg/Database/wiki/Storage#Error-Correction
@@ -14,7 +14,7 @@
 // Using
 //=======
 
-#include "TypeHelper.h"
+#include "Storage/Page.h"
 
 
 //===========
@@ -22,13 +22,6 @@
 //===========
 
 namespace Storage {
-
-
-//======================
-// Forward-Declarations
-//======================
-
-class Page;
 
 
 //==================
@@ -39,9 +32,12 @@ class ErrorCorrection
 {
 public:
 	// Friends
-	friend Page;
+	friend Block;
 
 private:
+	// Settings
+	static const UINT BLOCK_SIZE=8;
+
 	// Con-/Destructors
 	ErrorCorrection()=default;
 
@@ -54,9 +50,12 @@ private:
 	VOID CorrectY(BYTE const* ErrorX, BYTE X, WORD Size, BYTE* Buffer);
 	BYTE ErrorX(BYTE* Error, WORD Size, BYTE const* Buffer, BYTE* Y);
 	BYTE ErrorY(BYTE* Error, WORD Size, BYTE const* Buffer, BYTE* X);
+	VOID Flush(Page* Page);
 	WORD GetSize(Page*, WORD Bits);
 	BOOL GetSize(BYTE Bits, WORD* Size);
-	WORD m_Next=0;
+	WORD Writable(Page* Page);
+	WORD m_Position=0;
+	WORD m_Size=0;
 };
 
 }

@@ -41,19 +41,16 @@ public:
 
 	// Friends
 	friend Block;
-	friend Page;
-
-	// Common
-	SIZE_T ReadFromPage(Page* Page);
-	SIZE_T WriteToStream(OutputStream* Stream, WORD SkipCount);
 
 private:
 	// Con-/Destructors
-	SkipBits(Block* Block);
-	SkipBits(Page* Page);
+	SkipBits(WORD BitsCount);
 
 	// Common
-	static UINT GetBits(UINT Position, UINT Skip);
+	static UINT GetBits(WORD Position, WORD Skip);
+	inline WORD GetSize()const { return m_BitsCount*sizeof(UINT); }
+	WORD ReadFromPage(Page* Page);
+	WORD WriteToStream(OutputStream* Stream);
 	WORD m_BitsCount;
 	WORD m_SkipCount;
 };

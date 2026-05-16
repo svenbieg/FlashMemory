@@ -2,7 +2,7 @@
 // ErrorCorrection.cpp
 //=====================
 
-// Checksum of variable sized blocks.
+// Checksum computation for variable sized blocks.
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // https://github.com/svenbieg/Database/wiki/Storage#Error-Correction
@@ -30,9 +30,10 @@ namespace Storage {
 // Settings
 //==========
 
-const BYTE ECC_SQUARE[]		={ 2,  4,  6,  8,  10,  12,  14,  16 };
-const WORD ECC_PAYLOAD[]	={ 4, 16, 36, 64, 100, 144, 196, 256 };
-const WORD ECC_SIZE[]		={ 8, 24, 48, 80, 120, 168, 224, 288 };
+constexpr BYTE ECC_SQUARE[]		={  4,  6,  8,  10,  12,  14,  16,  18 };
+constexpr WORD ECC_PAYLOAD[]	={ 16, 36, 64, 100, 144, 196, 256, 324 };
+constexpr WORD ECC_SIZE[]		={ 24, 48, 80, 120, 168, 224, 288, 360 };
+constexpr BYTE ECC_BUFFER		=ECC_SQUARE[TypeHelper::ArraySize(ECC_SQUARE)-1];
 
 
 //================
@@ -41,23 +42,23 @@ const WORD ECC_SIZE[]		={ 8, 24, 48, 80, 120, 168, 224, 288 };
 
 WORD ErrorCorrection::Available(Page* page)
 {
-WORD page_pos=m_Next;
-if(page_pos==0)
-	page_pos=page->m_Position;
+if(m_Size==0)
+	m_Position=page->m_Position;
+m_Position+=m_Size;
+m_Size=0;
 WORD page_size=page->m_Size;
-if(page_size-page_pos<10)
+if(page_size-m_Position<ECC_SIZE[0])
 	return 0;
 auto buf=page->Begin();
 WORD size_bits=0;
-MemoryHelper::Copy(&size_bits, &buf[page_pos], sizeof(WORD));
+MemoryHelper::Copy(&size_bits, &buf[m_Position], sizeof(WORD));
 if(size_bits==0||size_bits==0xFFFF)
 	return 0;
 UINT size=GetSize(page, size_bits);
-page_pos+=sizeof(WORD);
-Correct(&buf[page_pos], size);
-page->m_Position=page_pos;
-m_Next=page_pos+ECC_SIZE[size];
-return ECC_PAYLOAD[size];
+Correct(&buf[m_Position], size);
+m_Size=ECC_SIZE[size];
+page->m_Position+=sizeof(WORD);
+return ECC_PAYLOAD[size]-sizeof(WORD);
 }
 
 VOID ErrorCorrection::ChecksumX(BYTE* sum_x, WORD size, BYTE const* buf)
@@ -92,12 +93,12 @@ for(BYTE x=0; x<square; x++)
 
 VOID ErrorCorrection::Correct(BYTE* buf, WORD size)
 {
-BYTE err_x[16];
+BYTE err_x[ECC_BUFFER];
 BYTE y=0;
 BYTE errc_x=ErrorX(err_x, size, buf, &y);
 if(errc_x==0)
 	return;
-BYTE err_y[16];
+BYTE err_y[ECC_BUFFER];
 BYTE x=0;
 BYTE errc_y=ErrorY(err_y, size, buf, &x);
 if(errc_y==0)
@@ -138,7 +139,7 @@ for(BYTE x=0; x<square; x++)
 	chk+=buf[pos];
 	pos++;
 	}
-BYTE payload=ECC_PAYLOAD[size];
+WORD payload=ECC_PAYLOAD[size];
 auto sum_x=&buf[payload];
 if(sum_x[y]!=chk)
 	throw ChecksumException();
@@ -155,7 +156,7 @@ for(BYTE y=0; y<square; y++)
 	chk+=buf[pos];
 	pos+=square;
 	}
-BYTE payload=ECC_PAYLOAD[size];
+WORD payload=ECC_PAYLOAD[size];
 auto sum_y=&buf[payload+square];
 if(sum_y[x]!=chk)
 	throw ChecksumException();
@@ -213,6 +214,39 @@ for(BYTE x=0; x<square; x++)
 return count;
 }
 
+VOID ErrorCorrection::Flush(Page* page)
+{
+WORD page_pos=page->m_Position;
+WORD written=page_pos-m_Position;
+if(written==sizeof(WORD))
+	{
+	page->m_Position=m_Position;
+	return;
+	}
+WORD count=TypeHelper::ArraySize(ECC_SIZE);
+for(WORD size=0; size<count; size++)
+	{
+	WORD payload=ECC_PAYLOAD[size];
+	if(payload>=written)
+		{
+		auto page_buf=page->Begin();
+		auto buf=&page_buf[m_Position];
+		WORD mask=(1U<<(size+8))|(1U<<size);
+		MemoryHelper::Copy(buf, &mask, sizeof(WORD));
+		MemoryHelper::Zero(&buf[written], payload-written);
+		BYTE square=ECC_SQUARE[size];
+		auto sum_x=&buf[payload];
+		auto sum_y=&buf[payload+square];
+		ChecksumX(sum_x, size, buf);
+		ChecksumY(sum_y, size, buf);
+		m_Position+=ECC_SIZE[size];
+		page->m_Position=m_Position;
+		return;
+		}
+	}
+throw OutOfRangeException();
+}
+
 WORD ErrorCorrection::GetSize(Page* page, WORD bits)
 {
 auto buf=(BYTE const*)&bits;
@@ -232,6 +266,23 @@ if(bits!=mask)
 	return false;
 *size_ptr=lsb;
 return true;
+}
+
+WORD ErrorCorrection::Writable(Page* page)
+{
+WORD available=page->Available();
+WORD count=TypeHelper::ArraySize(ECC_SIZE);
+for(WORD pos=0; pos<count; pos++)
+	{
+	WORD id=count-pos-1;
+	if(ECC_SIZE[id]<available)
+		{
+		m_Position=page->m_Position;
+		page->m_Position+=sizeof(WORD);
+		return ECC_PAYLOAD[id]-sizeof(WORD);
+		}
+	}
+return 0;
 }
 
 }
