@@ -10,10 +10,12 @@
 //=======
 
 #include "Concurrency/Scheduler.h"
+#include "Devices/Timers/SystemTimer.h"
 #include "UI/Console.h"
 #include "StatusHelper.h"
 
 using namespace Concurrency;
+using namespace Devices::Timers;
 using namespace FlashMemory;
 using namespace Storage;
 using namespace UI;
@@ -78,8 +80,10 @@ auto task=Task::Create(this, [this]()
 	#endif
 	Console::Print("Reading page 0...");
 	auto page=Page::Create(m_Volume);
+	UINT64 time=SystemTimer::Microseconds();
 	m_Volume->Read(0, 0, page);
-	Console::Print("OK\n\n");
+	UINT64 time_read=SystemTimer::Microseconds()-time;
+	Console::Print("OK (%u µs)\n\n", time_read);
 	PrintPage(page);
 	}, "test");
 task->Then(this, [this, task]()

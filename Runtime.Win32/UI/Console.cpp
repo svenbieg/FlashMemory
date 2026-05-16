@@ -75,7 +75,6 @@ Console::Console():
 m_This(this)
 {
 SetConsoleCtrlHandler(ConsoleCallback, true);
-m_SerialPort=SerialPort::Create();
 }
 
 }

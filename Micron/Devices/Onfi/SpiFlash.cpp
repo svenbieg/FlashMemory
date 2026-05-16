@@ -119,13 +119,13 @@ tx[3]=addr&0xFF;
 m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
-UINT64 timeout=SystemTimer::Microseconds64()+100;
+UINT64 timeout=SystemTimer::GetTickCount64()+2;
 while(1)
 	{
 	BYTE status=GetFeatures(FEAT_STATUS);
 	if(!BitHelper::Get(status, STATUS_OIP))
 		break;
-	if(SystemTimer::Microseconds64()>=timeout)
+	if(SystemTimer::GetTickCount64()>=timeout)
 		throw TimeoutException();
 	}
 auto dst=buf->Begin();

@@ -16,9 +16,6 @@
     <Filter Include="Devices\Timers">
       <UniqueIdentifier>{42e0c42b-9f7a-41eb-9878-1aa612d2a542}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Devices\Serial">
-      <UniqueIdentifier>{b837f4e0-9e81-464a-9113-827ebabebabc}</UniqueIdentifier>
-    </Filter>
     <Filter Include="UI">
       <UniqueIdentifier>{fd1d1f58-ff6a-4be3-85a8-37f3843939b2}</UniqueIdentifier>
     </Filter>
@@ -69,9 +66,6 @@
     <ClInclude Include="$(MSBuildThisFileDirectory)Devices\System\Cpu.h">
       <Filter>Devices\System</Filter>
     </ClInclude>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Serial\SerialPort.h">
-      <Filter>Devices\Serial</Filter>
-    </ClInclude>
     <ClInclude Include="$(MSBuildThisFileDirectory)Concurrency\CriticalSection.h">
       <Filter>Concurrency</Filter>
     </ClInclude>
@@ -111,9 +105,6 @@
     <ClCompile Include="$(MSBuildThisFileDirectory)MemoryHelper.cpp" />
     <ClCompile Include="$(MSBuildThisFileDirectory)UI\Console.cpp">
       <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Serial\SerialPort.cpp">
-      <Filter>Devices\Serial</Filter>
     </ClCompile>
     <ClCompile Include="$(MSBuildThisFileDirectory)Storage\FlashMemory.cpp">
       <Filter>Storage</Filter>

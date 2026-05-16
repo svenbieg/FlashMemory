@@ -20,7 +20,7 @@ extern VOID Main();
 // Entry-Point
 //=============
 
-INT main(LPCSTR cmd)
+INT wmain(LPCWSTR cmd)
 {
 SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 Main();
