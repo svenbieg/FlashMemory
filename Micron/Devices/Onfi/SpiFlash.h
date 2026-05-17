@@ -53,10 +53,12 @@ protected:
 	SpiFlash(SpiHost* Host);
 
 	// Common
-	BYTE GetFeatures(BYTE Feature);
+	BYTE GetFeature(BYTE Feature);
 	WORD ReadId();
 	VOID Reset();
-	VOID SetFeatures(BYTE Feature, BYTE Value);
+	VOID SetFeature(BYTE Feature, BYTE Value);
+	VOID Wait(BYTE Mask, BYTE Value, UINT Timeout=5);
+	VOID WriteEnable();
 	UINT m_BlockSize;
 	WORD m_Id;
 	WORD m_PageCount;

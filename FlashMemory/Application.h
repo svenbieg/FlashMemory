@@ -44,6 +44,7 @@ private:
 	// Common
 	VOID PrintBuffer(BYTE const* Buffer, UINT Size);
 	VOID PrintPage(Page* Page);
+	Handle<Page> ReadPage(UINT Block, WORD Page);
 	Handle<Database> m_Database;
 	Handle<Volume> m_Volume;
 };

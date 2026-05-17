@@ -1,4 +1,4 @@
-//=================
+﻿//=================
 // Application.cpp
 //=================
 
@@ -73,17 +73,13 @@ auto task=Task::Create(this, [this]()
 	config.PinRx=GpioPin::Gpio16;
 	config.PinTx=GpioPin::Gpio19;
 	auto spi_host=SpiEmulator::Create(config);
-	m_Volume=SpiFlash::Create(spi_host);
+	auto spi_flash=SpiFlash::Create(spi_host);
+	m_Volume=spi_flash;
 	Console::Print("OK\n");
 	#else
 	m_Volume=Storage::FlashMemory::Create("flash.bin");
 	#endif
-	Console::Print("Reading page 0...");
-	auto page=Page::Create(m_Volume);
-	UINT64 time=SystemTimer::Microseconds();
-	m_Volume->Read(0, 0, page);
-	UINT64 time_read=SystemTimer::Microseconds()-time;
-	Console::Print("OK (%u µs)\n\n", time_read);
+	auto page=ReadPage(0, 0);
 	PrintPage(page);
 	}, "test");
 task->Then(this, [this, task]()
@@ -91,11 +87,11 @@ task->Then(this, [this, task]()
 	auto status=task->GetStatus();
 	if(StatusHelper::Failed(status))
 		{
-		Console::Print("\nFailed (%u)\n", (UINT)status);
+		Console::Print("Failed (%u)\n", (UINT)status);
 		}
 	else
 		{
-		Console::Print("\nSuccess\n");
+		Console::Print("Success\n");
 		}
 	});
 }
@@ -133,6 +129,21 @@ for(UINT line=0; line<line_count; line++)
 	pos+=line_len;
 	Console::Print("\n");
 	}
+Console::Print("\n");
+}
+
+Handle<Page> Application::ReadPage(UINT block, WORD page_id)
+{
+UINT block_size=m_Volume->GetBlockSize();
+WORD page_size=m_Volume->GetPageSize();
+WORD page_count=block_size/page_size;
+Console::Print("Reading page %u...", block*page_count+page_id);
+auto page=Page::Create(m_Volume);
+UINT64 time=SystemTimer::Microseconds();
+m_Volume->Read(block, page_id, page);
+UINT64 time_read=SystemTimer::Microseconds()-time;
+Console::Print("OK (%u µs)\n\n", time_read);
+return page;
 }
 
 }
