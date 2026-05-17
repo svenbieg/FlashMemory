@@ -10,11 +10,13 @@
 //=======
 
 #include "Concurrency/Scheduler.h"
+#include "Devices/System/StatusLed.h"
 #include "Devices/Timers/SystemTimer.h"
 #include "UI/Console.h"
 #include "StatusHelper.h"
 
 using namespace Concurrency;
+using namespace Devices::System;
 using namespace Devices::Timers;
 using namespace FlashMemory;
 using namespace Storage;
@@ -61,6 +63,8 @@ namespace FlashMemory {
 
 Application::Application()
 {
+auto led=StatusLed::Create();
+led->Blink(500);
 auto task=Task::Create(this, [this]()
 	{
 	#ifdef _PICO2W
