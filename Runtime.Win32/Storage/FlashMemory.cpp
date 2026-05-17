@@ -110,11 +110,7 @@ m_BlockSize(BLOCK_SIZE),
 m_File(NULL)
 {
 SetLastError(0);
-#ifdef _UNICODE
-m_File=CreateFileW(path->Begin(), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 0, NULL);
-#else
 m_File=CreateFileA(path->Begin(), GENERIC_READ|GENERIC_WRITE, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 0, NULL);
-#endif
 if(m_File==INVALID_HANDLE_VALUE)
 	m_File=NULL;
 if(!m_File)

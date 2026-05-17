@@ -55,8 +55,13 @@ ReadConsoleA(input, buf, 1, &read, nullptr);
 VOID Console::Print(LPCSTR text)
 {
 HANDLE output=GetStdHandle(STD_OUTPUT_HANDLE);
-UINT len=StringHelper::Length(text);
-WriteConsoleA(output, text, len, nullptr, nullptr);
+UINT pos=0;
+while(text[pos])
+	{
+	WCHAR wc=0;
+	pos+=CharHelper::Read(&text[pos], &wc);
+	WriteConsoleW(output, &wc, 1, nullptr, nullptr);
+	}
 }
 
 VOID Console::Print(LPCWSTR text)
