@@ -14,3 +14,13 @@ My 128MB unmanaged NAND flash memory from <a href="https://www.micron.com/produc
 </p>
 
 <img src="https://github.com/user-attachments/assets/e2f0fe1a-c010-4323-8439-c71e08f373a9" width="500" /><br />
+<br />
+
+<h2>17. May 2026</h2>
+
+<p>
+The chip is responding. Reading a page takes about 1ms.
+</p>
+
+<img src="https://github.com/user-attachments/assets/fed2cd32-67d2-41df-bbb5-b57ed9258a3f" width="600" />
+<br />
