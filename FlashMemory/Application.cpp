@@ -11,12 +11,14 @@
 
 #include "Collections/map.hpp"
 #include "Concurrency/Scheduler.h"
+#include "Devices/System/StatusLed.h"
 #include "Devices/Timers/SystemTimer.h"
 #include "UI/Console.h"
 #include "StatusHelper.h"
 
 using namespace Collections;
 using namespace Concurrency;
+using namespace Devices::System;
 using namespace Devices::Timers;
 using namespace FlashMemory;
 using namespace Storage;
@@ -47,7 +49,7 @@ using namespace Devices::Spi;
 VOID Main()
 {
 auto app=Application::Create();
-auto task=Task::Create(app, [app](){ app->Run(); });
+auto task=Task::Create(app, [app](){ app->Run(); }, "app");
 task->Then(nullptr, [task]()
 	{
 	auto status=task->GetStatus();
@@ -77,6 +79,7 @@ namespace FlashMemory {
 
 VOID Application::Run()
 {
+auto task_monitor=TaskMonitor::Create();
 #ifdef _PICO2W
 Console::Print("Initializing flash-chip...");
 SpiConfiguration config;
@@ -94,7 +97,7 @@ Console::Print("OK\n");
 m_Volume=Storage::FlashMemory::Create("flash.bin");
 #endif
 auto page=ReadPage(0, 0);
-TaskInfo();
+TaskInfo(task_monitor);
 m_StatusLed->Blink(500);
 }
 
@@ -106,8 +109,6 @@ m_StatusLed->Blink(500);
 Application::Application()
 {
 m_StatusLed=StatusLed::Create();
-m_SystemTimer=SystemTimer::Create();
-m_TaskMonitor=TaskMonitor::Create();
 }
 
 
@@ -153,17 +154,17 @@ WORD page_size=m_Volume->GetPageSize();
 WORD page_count=block_size/page_size;
 Console::Print("Reading page %u...", block*page_count+page_id);
 auto page=Page::Create(m_Volume);
-UINT64 time=m_SystemTimer->Microseconds();
+UINT64 time=SystemTimer::Microseconds64();
 m_Volume->Read(block, page_id, page);
-UINT64 time_read=m_SystemTimer->Microseconds()-time;
+UINT64 time_read=SystemTimer::Microseconds64()-time;
 Console::Print("OK (%u µs)\n\n", time_read);
 return page;
 }
 
-VOID Application::TaskInfo()
+VOID Application::TaskInfo(TaskMonitor* monitor)
 {
 TASK_INFO info[10];
-UINT count=m_TaskMonitor->GetTaskInfo(info, 10);
+UINT count=monitor->GetTaskInfo(info, 10);
 map<Handle<String>, TASK_INFO*> info_map;
 UINT64 total_time=0;
 for(UINT u=0; u<count; u++)
