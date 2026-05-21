@@ -24,5 +24,6 @@ The chip is responding. Reading a page takes about 1ms (2MB/s).<br />
 64 pages per block, 64 skip-bits.
 </p>
 
-<img src="https://github.com/user-attachments/assets/fed2cd32-67d2-41df-bbb5-b57ed9258a3f" width="600" />
+<img src="https://github.com/user-attachments/assets/f7b62699-5107-4fb6-a828-fe60480f7f1a" width="400" />
+
 <br />
