@@ -1,7 +1,6 @@
 <Solution>
   <Configurations>
     <Platform Name="RPico2w" />
-    <Platform Name="Win32" />
   </Configurations>
   <Project Path="Database/Database.vcxitems" Id="a97c200e-f7b7-4d50-bc65-d6cc1aaf00af" />
   <Project Path="Default/Default.vcxitems" Id="e356bd3b-d09b-4fda-acd2-403372fceac1" />
@@ -10,7 +9,6 @@
   <Project Path="Raspberry.Pico2w/Raspberry.Pico2w.vcxitems" Id="b47adf70-fa81-477b-9303-07a562d01dce" />
   <Project Path="Raspberry/Raspberry.vcxitems" Id="16f1b63b-8bbc-4d53-99d7-24b4fbb298f4" />
   <Project Path="Runtime.Arm/Runtime.Arm.vcxitems" Id="d02b9e2e-72cc-4764-bffc-8aa0889b0162" />
-  <Project Path="Runtime.Win32/Runtime.Win32.vcxitems" Id="9a914bbe-2ea2-4248-83fd-3445326aa2d0" />
   <Project Path="Runtime/Runtime.vcxitems" Id="9c2293c3-7566-4d7c-b287-8760ed2e059e" />
   <Project Path="Scheduler/Scheduler.vcxitems" Id="0e85c039-c7cd-4ec1-847b-f775f0345dfd" />
 </Solution>

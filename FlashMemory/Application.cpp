@@ -11,6 +11,8 @@
 
 #include "Collections/map.hpp"
 #include "Concurrency/Scheduler.h"
+#include "Devices/Onfi/SpiFlash.h"
+#include "Devices/Pio/SpiEmulator.h"
 #include "Devices/System/StatusLed.h"
 #include "Devices/Timers/SystemTimer.h"
 #include "UI/Console.h"
@@ -18,28 +20,15 @@
 
 using namespace Collections;
 using namespace Concurrency;
+using namespace Devices::Gpio;
+using namespace Devices::Onfi;
+using namespace Devices::Pio;
 using namespace Devices::System;
 using namespace Devices::Timers;
 using namespace FlashMemory;
 using namespace Storage;
 using namespace Storage::Streams;
 using namespace UI;
-
-#ifdef _PICO2W
-
-#include "Devices/Onfi/SpiFlash.h"
-#include "Devices/Pio/SpiEmulator.h"
-
-using namespace Devices::Gpio;
-using namespace Devices::Onfi;
-using namespace Devices::Pio;
-using namespace Devices::Spi;
-
-#else
-
-#include "Storage/FlashMemory.h"
-
-#endif
 
 
 //=============
@@ -80,9 +69,8 @@ namespace FlashMemory {
 VOID Application::Run()
 {
 auto task_monitor=TaskMonitor::Create();
-#ifdef _PICO2W
 Console::Print("Initializing flash-chip...");
-SpiConfiguration config;
+SPI_CONFIG config;
 config.Divisor=2;
 config.Mode=SpiMode::Bits8;
 config.PinChipSelect=GpioPin::Gpio17;
@@ -93,12 +81,8 @@ auto spi_host=SpiEmulator::Create(config);
 auto spi_flash=SpiFlash::Create(spi_host);
 m_Volume=spi_flash;
 Console::Print("OK\n");
-#else
-m_Volume=Storage::FlashMemory::Create("flash.bin");
-#endif
 auto page=ReadPage(0, 0);
 TaskInfo(task_monitor);
-m_StatusLed->Blink(500);
 }
 
 
@@ -109,6 +93,7 @@ m_StatusLed->Blink(500);
 Application::Application()
 {
 m_StatusLed=StatusLed::Create();
+m_StatusLed->Blink(500);
 }
 
 
