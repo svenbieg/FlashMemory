@@ -2,6 +2,11 @@
 // Block.h
 //=========
 
+// Smallest erasable unit in flash-memory.
+
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Database/wiki/Storage#Block
+
 #pragma once
 
 

@@ -72,7 +72,7 @@ switch(create)
 		break;
 		}
 	}
-m_Redirection=Redirect::Create(this, ID_REDIR);
+m_Redirection=Redirection::Create(m_Volume, 0);
 }
 
 
@@ -82,7 +82,8 @@ m_Redirection=Redirect::Create(this, ID_REDIR);
 
 VOID Database::Initialize()
 {
-m_Redirection=Redirect::Create(this);
+m_Redirection=Redirection::Create(m_Volume);
+m_Used+=Redirection::REDIR_SIZE;
 m_Header=Node::Create(this, "Header");
 m_Header->SetAttribute("Update", "0");
 m_Header->WriteToBlock(ID_HEADER_0);

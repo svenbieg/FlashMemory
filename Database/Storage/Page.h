@@ -2,6 +2,11 @@
 // Page.h
 //========
 
+// Smallest readable unit in flash-memory.
+
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Database/wiki/Storage#Page
+
 #pragma once
 
 

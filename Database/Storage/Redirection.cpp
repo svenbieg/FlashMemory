@@ -1,15 +1,13 @@
-//==============
-// Redirect.cpp
-//==============
+//=================
+// Redirection.cpp
+//=================
 
-#include "Redirect.h"
+// Bad blocks are redirected on backup-failure.
 
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Database/wiki/Storage#Redirection
 
-//=======
-// Using
-//=======
-
-#include "Storage/Database/Database.h"
+#include "Redirection.h"
 
 
 //===========
@@ -17,29 +15,25 @@
 //===========
 
 namespace Storage {
-	namespace Database {
 
 
 //==========================
 // Con-/Destructors Private
 //==========================
 
-Redirect::Redirect(Database* database):
-m_Database(database),
-m_Size(0)
+Redirection::Redirection(Volume* volume):
+m_Size(0),
+m_Volume(volume)
 {
-auto volume=m_Database->m_Volume;
-volume->Erase(Database::ID_REDIR);
-m_Database->m_Used+=REDIR_SIZE;
+volume->Erase(0);
 }
 
-Redirect::Redirect(Database* database, UINT id):
-m_Database(database),
-m_Size(0)
+Redirection::Redirection(Volume* volume, UINT block):
+m_Size(0),
+m_Volume(volume)
 {
-auto volume=m_Database->m_Volume;
 auto page=Page::Create(volume);
-volume->Read(Database::ID_REDIR, 0, page);
+volume->Read(block, 0, page);
 m_Size=ReadFromStream(page);
 }
 
@@ -48,7 +42,7 @@ m_Size=ReadFromStream(page);
 // Common Protected
 //==================
 
-WORD Redirect::ReadFromStream(InputStream* stream)
+WORD Redirection::ReadFromStream(InputStream* stream)
 {
 WORD size=0;
 while(stream->Available())
@@ -58,7 +52,7 @@ while(stream->Available())
 	if(id==-1)
 		break;
 	size+=sizeof(UINT);
-	if(id!=REDIR_TYPE)
+	if(id!='RIDR')
 		continue;
 	UINT block[2];
 	size+=stream->Read(&block[0], sizeof(UINT));
@@ -72,4 +66,4 @@ while(stream->Available())
 return size;
 }
 
-}}
+}

@@ -2,6 +2,11 @@
 // Entry.cpp
 //===========
 
+// User-defined entry with error-correction and skip-bits.
+
+// Copyright 2026, Sven Bieg (svenbieg@outlook.de)
+// https://github.com/svenbieg/Database/wiki/Storage#Entry
+
 #include "Entry.h"
 
 
