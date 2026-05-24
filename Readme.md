@@ -22,7 +22,7 @@ My 128MB unmanaged NAND flash memory from <a href="https://www.micron.com/produc
 The chip is responding. Reading a page takes about 1ms (2MB/s).<br />
 I've disabled
 <a href="https://github.com/svenbieg/Database/wiki/Storage#Error-Correction">error-correction</a>,
-allowing me to skip whole pages and smaller chunks out of date.
+allowing me to store smaller chunks and skip whole pages out of date.
 </p>
 
 <img src="https://github.com/user-attachments/assets/f7b62699-5107-4fb6-a828-fe60480f7f1a" width="400" />
