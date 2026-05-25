@@ -13,6 +13,7 @@
 #include "Concurrency/Scheduler.h"
 #include "Devices/Onfi/SpiFlash.h"
 #include "Devices/Pio/SpiEmulator.h"
+#include "Devices/System/Memory.h"
 #include "Devices/System/StatusLed.h"
 #include "Devices/Timers/SystemTimer.h"
 #include "UI/Console.h"
@@ -161,13 +162,18 @@ for(auto const& it: info_map)
 	{
 	auto name=it.get_key();
 	auto info=it.get_value();
+	UINT alloc_size=info->AllocSize;
 	SIZE_T stack_size=info->StackSize;
 	SIZE_T stack_used=info->StackUsed;
 	UINT64 time=info->TotalTime;
 	UINT percent=time*100/total_time;
-	Console::Print("%3u%% %-12s %4u/%-4u bytes\n", percent, name, stack_used, stack_size);
+	Console::Print("%3u%% %-12s\t%4u/%-4u + %5u bytes\n", percent, name, stack_used, stack_size, alloc_size);
 	}
 Console::Print("\n");
+MEMORY_INFO memory;
+Memory::GetInfo(&memory);
+SIZE_T used=memory.Total-memory.Available;
+Console::Print("%u/%u (%u available)\n", used, memory.Total, memory.Available);
 }
 
 }
