@@ -9,7 +9,6 @@
 // Using
 //=======
 
-#include "Concurrency/TaskMonitor.h"
 #include "Devices/System/StatusLed.h"
 #include "Storage/Database/Database.h"
 
@@ -35,7 +34,6 @@ public:
 	using Database=Storage::Database::Database;
 	using Page=Storage::Page;
 	using StatusLed=Devices::System::StatusLed;
-	using TaskMonitor=Concurrency::TaskMonitor;
 	using Volume=Storage::Volume;
 
 	// Con-/Destructors
@@ -52,7 +50,7 @@ private:
 	VOID PrintBuffer(BYTE const* Buffer, UINT Size);
 	VOID PrintPage(Page* Page);
 	Handle<Page> ReadPage(UINT Block, WORD Page);
-	VOID TaskInfo(TaskMonitor* Monitor);
+	VOID TaskInfo();
 	Handle<Database> m_Database;
 	Handle<StatusLed> m_StatusLed;
 	Handle<Volume> m_Volume;

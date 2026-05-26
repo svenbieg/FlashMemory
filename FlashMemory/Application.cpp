@@ -11,6 +11,7 @@
 
 #include "Collections/map.hpp"
 #include "Concurrency/Scheduler.h"
+#include "Concurrency/TaskMonitor.h"
 #include "Devices/Onfi/SpiFlash.h"
 #include "Devices/Pio/SpiEmulator.h"
 #include "Devices/System/Memory.h"
@@ -69,7 +70,6 @@ namespace FlashMemory {
 
 VOID Application::Run()
 {
-auto task_monitor=TaskMonitor::Create();
 Console::Print("Initializing flash-chip...");
 SPI_CONFIG config;
 config.Divisor=2;
@@ -83,7 +83,7 @@ auto spi_flash=SpiFlash::Create(spi_host);
 m_Volume=spi_flash;
 Console::Print("OK\n");
 auto page=ReadPage(0, 0);
-TaskInfo(task_monitor);
+TaskInfo();
 }
 
 
@@ -147,10 +147,10 @@ Console::Print("OK (%u µs)\n\n", time_read);
 return page;
 }
 
-VOID Application::TaskInfo(TaskMonitor* monitor)
+VOID Application::TaskInfo()
 {
 TASK_INFO info[10];
-UINT count=monitor->GetTaskInfo(info, 10);
+UINT count=TaskMonitor::GetTaskInfo(info, 10);
 map<Handle<String>, TASK_INFO*> info_map;
 UINT64 total_time=0;
 for(UINT u=0; u<count; u++)
@@ -167,13 +167,13 @@ for(auto const& it: info_map)
 	SIZE_T stack_used=info->StackUsed;
 	UINT64 time=info->TotalTime;
 	UINT percent=time*100/total_time;
-	Console::Print("%3u%% %-12s\t%4u/%-4u + %5u bytes\n", percent, name, stack_used, stack_size, alloc_size);
+	Console::Print("%3u%% | %-12s | %4u/%-4u | %5u bytes\n", percent, name, stack_used, stack_size, alloc_size);
 	}
 Console::Print("\n");
 MEMORY_INFO memory;
 Memory::GetInfo(&memory);
 SIZE_T used=memory.Total-memory.Available;
-Console::Print("%u/%u (%u available)\n", used, memory.Total, memory.Available);
+Console::Print("%u/%u | %u bytes available\n\n", used, memory.Total, memory.Available);
 }
 
 }
