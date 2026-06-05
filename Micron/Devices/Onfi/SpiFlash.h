@@ -58,6 +58,7 @@ protected:
 	VOID Reset();
 	VOID SetFeature(BYTE Feature, BYTE Value);
 	VOID Wait(BYTE Mask, BYTE Value, UINT Timeout=5);
+	VOID WriteDisable();
 	VOID WriteEnable();
 	UINT m_BlockSize;
 	WORD m_Id;

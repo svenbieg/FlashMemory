@@ -54,6 +54,7 @@ const BYTE CMD_READ_ID				=0x9F;
 const BYTE CMD_READ_PAGE			=0x13;
 const BYTE CMD_RESET				=0xFF;
 const BYTE CMD_SET_FEATURE			=0x1F;
+const BYTE CMD_WRITE_DISABLE		=0x04;
 const BYTE CMD_WRITE_ENABLE			=0x06;
 
 
@@ -83,7 +84,17 @@ const BYTE STATUS_OIP		=(1<<0);
 
 VOID SpiFlash::Erase(UINT block)
 {
-throw NotImplementedException();
+WriteEnable();
+BYTE tx[4];
+tx[0]=CMD_ERASE_BLOCK;
+tx[1]=(block>>16)&0xFF;
+tx[2]=(block>>8)&0xFF;
+tx[3]=block&0xFF;
+m_SpiHost->SpiBegin(4, 0);
+m_SpiHost->SpiWrite(tx, 4);
+m_SpiHost->SpiEnd();
+Wait(STATUS_OIP, 0);
+WriteDisable();
 }
 
 UINT SpiFlash::GetBlockSize()
@@ -133,7 +144,26 @@ if(page==0)
 
 VOID SpiFlash::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)
 {
-throw NotImplementedException();
+WriteEnable();
+BYTE tx[4];
+tx[0]=CMD_PROGRAM_LOAD;
+tx[1]=(pos>>8)&0xFF;
+tx[2]=pos&0xFF;
+m_SpiHost->SpiBegin(3+size, 0);
+m_SpiHost->SpiWrite(tx, 3);
+m_SpiHost->SpiWrite(buf, size);
+m_SpiHost->SpiEnd();
+Wait(STATUS_OIP, 0);
+UINT addr=block*m_PageCount+page;
+tx[0]=CMD_PROGRAM_EXEC;
+tx[1]=(addr>>16)&0xFF;
+tx[2]=(addr>>8)&0xFF;
+tx[3]=addr&0xFF;
+m_SpiHost->SpiBegin(4, 0);
+m_SpiHost->SpiWrite(tx, 4);
+m_SpiHost->SpiEnd();
+Wait(STATUS_OIP, 0);
+WriteDisable();
 }
 
 
@@ -149,8 +179,6 @@ m_PageSize(0),
 m_Size(0),
 m_SpiHost(spi_host)
 {
-Reset();
-Task::Sleep(10);
 m_Id=ReadId();
 BYTE micron=TypeHelper::LowByte(m_Id);
 if(micron!=MICRON_ID)
@@ -221,6 +249,14 @@ m_SpiHost->SpiWrite(tx, 3);
 m_SpiHost->SpiEnd();
 }
 
+VOID SpiFlash::WriteDisable()
+{
+BYTE tx[1]={ CMD_WRITE_DISABLE };
+m_SpiHost->SpiBegin(1, 0);
+m_SpiHost->SpiWrite(tx, 1);
+m_SpiHost->SpiEnd();
+}
+
 VOID SpiFlash::WriteEnable()
 {
 BYTE tx[1]={ CMD_WRITE_ENABLE };
@@ -231,13 +267,13 @@ m_SpiHost->SpiEnd();
 
 VOID SpiFlash::Wait(BYTE mask, BYTE value, UINT ms)
 {
-UINT64 timeout=SystemTimer::GetTickCount64()+ms;
+UINT64 timeout=SystemTimer::GetTickCount()+ms;
 while(1)
 	{
 	BYTE status=GetFeature(FEAT_STATUS);
 	if(BitHelper::Get(status, mask)==value)
 		break;
-	if(SystemTimer::GetTickCount64()>=timeout)
+	if(SystemTimer::GetTickCount()>=timeout)
 		throw TimeoutException();
 	}
 }
