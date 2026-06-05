@@ -26,6 +26,6 @@ allowing me to store smaller chunks and
 <a href="https://github.com/svenbieg/Database/wiki/Storage#Skip-Bits">skip-bits</a>.
 </p>
 
-<img src="https://github.com/user-attachments/assets/58a09337-bf1c-469e-9408-d2a8388258c5" width="400" />
+<img src="https://github.com/user-attachments/assets/83a28606-1e91-4fae-89d3-232ed7bc4bf5" width="400" />
 
 <br />
