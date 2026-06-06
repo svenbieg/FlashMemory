@@ -163,6 +163,9 @@ m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
 Wait(STATUS_OIP, 0);
+BYTE status=GetFeature(FEAT_STATUS);
+if(BitHelper::Get(status, STATUS_EFAIL|STATUS_PFAIL))
+	throw DeviceNotReadyException();
 WriteDisable();
 }
 
@@ -179,6 +182,9 @@ m_PageSize(0),
 m_Size(0),
 m_SpiHost(spi_host)
 {
+Reset();
+Task::Sleep(10);
+Wait(STATUS_OIP, 0);
 m_Id=ReadId();
 BYTE micron=TypeHelper::LowByte(m_Id);
 if(micron!=MICRON_ID)
@@ -201,7 +207,6 @@ switch(model)
 		throw NotImplementedException();
 		}
 	}
-Wait(STATUS_OIP, 0);
 SetFeature(FEAT_LOCK, 0);
 SetFeature(FEAT_CONFIG, 0);
 }
