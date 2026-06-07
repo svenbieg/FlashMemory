@@ -93,8 +93,10 @@ tx[3]=block&0xFF;
 m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
-Wait(STATUS_OIP, 0);
+BYTE status=Wait(STATUS_OIP, 0);
 WriteDisable();
+if(BitHelper::Get(status, STATUS_EFAIL))
+	throw ErrorException();
 }
 
 UINT SpiFlash::GetBlockSize()
@@ -162,11 +164,10 @@ tx[3]=addr&0xFF;
 m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
-Wait(STATUS_OIP, 0);
-BYTE status=GetFeature(FEAT_STATUS);
-if(BitHelper::Get(status, STATUS_EFAIL|STATUS_PFAIL))
-	throw DeviceNotReadyException();
+BYTE status=Wait(STATUS_OIP, 0);
 WriteDisable();
+if(BitHelper::Get(status, STATUS_PFAIL))
+	throw ErrorException();
 }
 
 
@@ -182,9 +183,6 @@ m_PageSize(0),
 m_Size(0),
 m_SpiHost(spi_host)
 {
-Reset();
-Task::Sleep(10);
-Wait(STATUS_OIP, 0);
 m_Id=ReadId();
 BYTE micron=TypeHelper::LowByte(m_Id);
 if(micron!=MICRON_ID)
@@ -244,6 +242,8 @@ BYTE tx[1]={ CMD_RESET };
 m_SpiHost->SpiBegin(1, 0);
 m_SpiHost->SpiWrite(tx, 1);
 m_SpiHost->SpiEnd();
+Task::Sleep(2);
+Wait(STATUS_OIP, 0);
 }
 
 VOID SpiFlash::SetFeature(BYTE feature, BYTE value)
@@ -270,17 +270,19 @@ m_SpiHost->SpiWrite(tx, 1);
 m_SpiHost->SpiEnd();
 }
 
-VOID SpiFlash::Wait(BYTE mask, BYTE value, UINT ms)
+BYTE SpiFlash::Wait(BYTE mask, BYTE value, UINT ms)
 {
 UINT64 timeout=SystemTimer::GetTickCount()+ms;
+BYTE status=0;
 while(1)
 	{
-	BYTE status=GetFeature(FEAT_STATUS);
+	status=GetFeature(FEAT_STATUS);
 	if(BitHelper::Get(status, mask)==value)
 		break;
 	if(SystemTimer::GetTickCount()>=timeout)
 		throw TimeoutException();
 	}
+return status;
 }
 
 }}
