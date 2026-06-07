@@ -82,7 +82,23 @@ auto spi_host=SpiEmulator::Create(config);
 auto spi_flash=SpiFlash::Create(spi_host);
 m_Volume=spi_flash;
 Console::Print("OK\n");
-auto page=ReadPage(0, 0);
+UINT block_id=64;
+auto page=ReadPage(block_id, 0);
+PrintPage(page, 1);
+//EraseBlock(block_id);
+Console::Print("Writing 0xFE...");
+auto buf=page->Begin();
+buf[0]=0xFE;
+m_Volume->Write(block_id, 0, 0, buf, 2048);
+Console::Print("OK\n");
+page=ReadPage(block_id, 0);
+PrintPage(page, 1);
+Console::Print("Writing 0xFC...");
+buf[0]=0xFC;
+m_Volume->Write(block_id, 0, 0, buf, 2048);
+Console::Print("OK\n");
+page=ReadPage(block_id, 0);
+PrintPage(page, 1);
 TaskInfo();
 }
 
@@ -102,6 +118,15 @@ m_StatusLed->Blink(500);
 // Common Private
 //================
 
+VOID Application::EraseBlock(UINT block)
+{
+Console::Print("Erasing block...");
+UINT64 time=SystemTimer::Microseconds();
+m_Volume->Erase(block);
+UINT64 time_erase=SystemTimer::Microseconds()-time;
+Console::Print("OK (%u µs)\n\n", time_erase);
+}
+
 VOID Application::PrintBuffer(BYTE const* buf, UINT size)
 {
 CHAR hex[3];
@@ -112,7 +137,7 @@ for(UINT pos=0; pos<size; pos++)
 	}
 }
 
-VOID Application::PrintPage(Page* page)
+VOID Application::PrintPage(Page* page, UINT lines)
 {
 auto buf=page->Begin();
 UINT pos=0;
@@ -122,6 +147,8 @@ WORD page_total=page_size+page_spare;
 UINT line_len=32;
 UINT line_count=page_total/line_len;
 UINT line_spare=page_size/line_len;
+if(lines)
+	line_count=TypeHelper::Min(line_count, lines);
 for(UINT line=0; line<line_count; line++)
 	{
 	if(line==line_spare)
@@ -140,9 +167,9 @@ WORD page_size=m_Volume->GetPageSize();
 WORD page_count=block_size/page_size;
 Console::Print("Reading page %u...", block*page_count+page_id);
 auto page=Page::Create(m_Volume);
-UINT64 time=SystemTimer::Microseconds64();
+UINT64 time=SystemTimer::Microseconds();
 m_Volume->Read(block, page_id, page);
-UINT64 time_read=SystemTimer::Microseconds64()-time;
+UINT64 time_read=SystemTimer::Microseconds()-time;
 Console::Print("OK (%u µs)\n\n", time_read);
 return page;
 }

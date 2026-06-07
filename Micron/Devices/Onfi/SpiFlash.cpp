@@ -93,6 +93,7 @@ tx[3]=block&0xFF;
 m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
+assert(BitHelper::Get(GetFeature(FEAT_STATUS), STATUS_OIP));
 BYTE status=Wait(STATUS_OIP, 0);
 WriteDisable();
 if(BitHelper::Get(status, STATUS_EFAIL))
@@ -155,7 +156,6 @@ m_SpiHost->SpiBegin(3+size, 0);
 m_SpiHost->SpiWrite(tx, 3);
 m_SpiHost->SpiWrite(buf, size);
 m_SpiHost->SpiEnd();
-Wait(STATUS_OIP, 0);
 UINT addr=block*m_PageCount+page;
 tx[0]=CMD_PROGRAM_EXEC;
 tx[1]=(addr>>16)&0xFF;
@@ -164,6 +164,7 @@ tx[3]=addr&0xFF;
 m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
+assert(BitHelper::Get(GetFeature(FEAT_STATUS), STATUS_OIP));
 BYTE status=Wait(STATUS_OIP, 0);
 WriteDisable();
 if(BitHelper::Get(status, STATUS_PFAIL))
@@ -242,8 +243,6 @@ BYTE tx[1]={ CMD_RESET };
 m_SpiHost->SpiBegin(1, 0);
 m_SpiHost->SpiWrite(tx, 1);
 m_SpiHost->SpiEnd();
-Task::Sleep(2);
-Wait(STATUS_OIP, 0);
 }
 
 VOID SpiFlash::SetFeature(BYTE feature, BYTE value)

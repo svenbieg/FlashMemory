@@ -47,8 +47,9 @@ private:
 	Application();
 
 	// Common
+	VOID EraseBlock(UINT Block);
 	VOID PrintBuffer(BYTE const* Buffer, UINT Size);
-	VOID PrintPage(Page* Page);
+	VOID PrintPage(Page* Page, UINT Lines=0);
 	Handle<Page> ReadPage(UINT Block, WORD Page);
 	VOID TaskInfo();
 	Handle<Database> m_Database;
