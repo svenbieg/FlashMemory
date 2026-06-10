@@ -19,13 +19,22 @@ My 128MB unmanaged NAND flash memory from <a href="https://www.micron.com/produc
 <h2>17. May 2026</h2>
 
 <p>
-The chip is responding. Reading a page takes about 1ms (2MB/s).<br />
+The chip is responding. Reading a page takes about 2ms (1MB/s).<br />
 I've disabled
 <a href="https://github.com/svenbieg/Database/wiki/Storage#Error-Correction">error-correction</a>,
 allowing me to store smaller chunks and
 <a href="https://github.com/svenbieg/Database/wiki/Storage#Skip-Bits">skip-bits</a>.
 </p>
 
-<img src="https://github.com/user-attachments/assets/83a28606-1e91-4fae-89d3-232ed7bc4bf5" width="400" />
+<img src="https://github.com/user-attachments/assets/01717764-5f43-4d6a-9117-b996bc0f2890" width="400" />
+<br /><br />
 
+<h2>10. June 2026</h2>
+
+<p>
+I'm still not able to unlock my memory. I've tried to pull WP and HOLD high, but the pins are too small.<br />
+It's my fault, i should have connected all pins. The only way is to place a new order.
+</p>
+
+<img src="https://github.com/user-attachments/assets/2a20c6c8-3f00-45c5-a3ba-7f3f767e7bb8" width="300" />
 <br />
