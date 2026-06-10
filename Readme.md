@@ -27,5 +27,14 @@ allowing me to store smaller chunks and
 </p>
 
 <img src="https://github.com/user-attachments/assets/83a28606-1e91-4fae-89d3-232ed7bc4bf5" width="400" />
+<br /><br />
 
+<h2>10. June 2026</h2>
+
+<p>
+I'm still not able to unlock my memory. I've tried to pull WP and HOLD high, but the pins are too small.<br />
+It's my fault, i should have connected all pins. The only way is to place a new order.
+</p>
+
+<img src="https://github.com/user-attachments/assets/2a20c6c8-3f00-45c5-a3ba-7f3f767e7bb8" width="300" />
 <br />
