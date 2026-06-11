@@ -72,7 +72,7 @@ switch(create)
 		break;
 		}
 	}
-m_Redirection=Redirection::Create(m_Volume, 0);
+m_Redirection=Redirection::Create(m_Volume);
 }
 
 
@@ -82,7 +82,7 @@ m_Redirection=Redirection::Create(m_Volume, 0);
 
 VOID Database::Initialize()
 {
-m_Redirection=Redirection::Create(m_Volume);
+m_Redirection=Redirection::Create(m_Volume, FileCreateMode::CreateAlways);
 m_Used+=Redirection::REDIR_SIZE;
 m_Header=Node::Create(this, "Header");
 m_Header->SetAttribute("Update", "0");

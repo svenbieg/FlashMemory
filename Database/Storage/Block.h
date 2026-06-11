@@ -17,6 +17,7 @@
 #include "Storage/ErrorCorrection.h"
 #include "Storage/Page.h"
 #include "Storage/SkipBits.h"
+#include "Storage/Volume.h"
 
 
 //===========
@@ -24,13 +25,6 @@
 //===========
 
 namespace Storage {
-
-
-//======================
-// Forward-Declarations
-//======================
-
-class Volume;
 
 
 //============
@@ -55,7 +49,10 @@ public:
 	friend Object;
 
 	// Con-/Destructors
-	static Handle<Block> Create(Volume* Volume, UINT Id, BlockMode Mode=BlockMode::Entry);
+	static inline Handle<Block> Create(Volume* Volume, UINT Id, BlockMode Mode=BlockMode::Entry)
+		{
+		return Object::Create<Block>(Volume, Id, Mode);
+		}
 
 	// Common
 	VOID Erase();

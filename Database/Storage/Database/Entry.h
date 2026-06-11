@@ -2,7 +2,7 @@
 // Entry.h
 //=========
 
-// User-defined entry with error-correction and skip-bits.
+// Variable entry with error-correction and skip-bits.
 
 // Copyright 2026, Sven Bieg (svenbieg@outlook.de)
 // https://github.com/svenbieg/Database/wiki/Storage#Entry
@@ -34,7 +34,7 @@ namespace Storage {
 constexpr UINT ENTRY_TYPE(UINT Value)
 {
 UINT value=TypeHelper::BigEndian(Value);
-while(value&0xFF==0)
+while((value&0xFF)==0)
 	value>>=8;
 return value;
 }
@@ -52,7 +52,7 @@ class Editor;
 // Entry
 //=======
 
-class Entry: public Object
+class Entry: public virtual Object
 {
 public:
 	// Using

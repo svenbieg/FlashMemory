@@ -24,6 +24,7 @@ using namespace Devices::System;
 using namespace Storage::Database::Updates;
 using namespace Storage::Encoding;
 using namespace Storage::Streams;
+using namespace Storage::Xml;
 
 
 //===========
@@ -77,6 +78,17 @@ ReadLock lock(m_Mutex);
 return m_Attributes.get(key);
 }
 
+BOOL Node::GetAttribute(Handle<String> key, Handle<String>* value_ptr)
+{
+ReadLock lock(m_Mutex);
+return m_Attributes.try_get(key, value_ptr);
+}
+
+Handle<XmlAttributeIterator> Node::GetAttributes()
+{
+return new NodeAttributeIterator(this);
+}
+
 Handle<Node> Node::GetChild(Handle<String> tag)
 {
 ReadLock lock(m_Mutex);
@@ -95,10 +107,27 @@ UINT block_id=m_Children.get_at(pos);
 return Node::Create(m_Database, block_id);
 }
 
+Handle<XmlChildIterator> Node::GetChildren()
+{
+return new NodeChildIterator(this);
+}
+
 Handle<String> Node::GetTag()
 {
 ReadLock lock(m_Mutex);
 return m_Tag;
+}
+
+Handle<String> Node::GetValue()
+{
+ReadLock lock(m_Mutex);
+return m_Value;
+}
+
+BOOL Node::HasAttribute(Handle<String> key)
+{
+ReadLock lock(m_Mutex);
+return m_Attributes.contains(key);
 }
 
 SIZE_T Node::ReadFromStream(InputStream* stream)

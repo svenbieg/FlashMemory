@@ -25,16 +25,6 @@
 namespace Storage {
 
 
-//==================
-// Con-/Destructors
-//==================
-
-Handle<Block> Block::Create(Volume* volume, UINT id, BlockMode mode)
-{
-return Object::Create<Block>(volume, id, mode);
-}
-
-
 //========
 // Common
 //========
@@ -53,6 +43,17 @@ VOID Block::Skip()
 {
 assert(FlagHelper::Get(m_Flags, BlockFlags::SkipBits));
 FlagHelper::Set(m_Flags, BlockFlags::SkipPage);
+if(m_PageId==-1)
+	{
+	m_Page=Page::Create(m_Volume);
+	m_Volume->Read(m_Id, 0, m_Page);
+	m_PageId=0;
+	WORD skip_min=0;
+	skip_min+=m_SkipBlock.ReadFromPage(m_Page);
+	skip_min+=m_SkipPage.ReadFromPage(m_Page);
+	if(m_SkipPage.m_SkipCount==0)
+		m_SkipPage.m_SkipCount=skip_min/ErrorCorrection::BLOCK_SIZE;
+	}
 WORD page_id=m_SkipBlock.m_SkipCount;
 if(m_PageId!=page_id)
 	{
@@ -129,12 +130,14 @@ while(read<size)
 		WORD copy=TypeHelper::Min(m_Available, size-read);
 		read+=m_Page->Read(&dst[read], copy);
 		m_Available-=copy;
+		m_Position=m_PageId*m_PageSize+m_Page->m_Position;
 		}
 	else
 		{
 		WORD available=m_Page->Available();
 		WORD copy=TypeHelper::Min(available, size-read);
 		read+=m_Page->Read(&dst[read], copy);
+		m_Position+=read;
 		}
 	}
 return read;
@@ -206,12 +209,14 @@ while(written<size)
 		m_Writable-=copy;
 		if(m_Writable==0)
 			m_ErrorCorrection.Flush(m_Page);
+		m_Position=m_PageId*m_PageSize+m_Page->m_Position;
 		}
 	else
 		{
 		WORD available=m_Page->Available();
 		WORD copy=TypeHelper::Min(available, size-written);
 		written+=m_Page->Write(&src[written], copy);
+		m_Position+=written;
 		}
 	}
 return size;

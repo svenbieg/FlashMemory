@@ -14,7 +14,7 @@
 // Using
 //=======
 
-#include "Storage/Block.h"
+#include "Storage/Page.h"
 
 
 //===========
@@ -32,7 +32,6 @@ class Volume: public Object
 {
 public:
 	// Using
-	using Block=Storage::Block;
 	using Page=Storage::Page;
 
 	// Common

@@ -287,4 +287,14 @@ for(WORD pos=0; pos<count; pos++)
 return 0;
 }
 
+
+//==========================
+// Con-/Destructors Private
+//==========================
+
+ErrorCorrection::ErrorCorrection():
+m_Position(0),
+m_Size(0)
+{}
+
 }

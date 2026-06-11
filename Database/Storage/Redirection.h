@@ -17,6 +17,7 @@
 #include "Collections/index.hpp"
 #include "Storage/Streams/InputStream.h"
 #include "Storage/Streams/OutputStream.h"
+#include "Storage/File.h"
 #include "Storage/Volume.h"
 
 
@@ -45,19 +46,14 @@ public:
 	friend Object;
 
 	// Con-/Destructors
-	static inline Handle<Redirection> Create(Volume* Volume)
+	static inline Handle<Redirection> Create(Volume* Volume, FileCreateMode Create=FileCreateMode::OpenExisting)
 		{
-		return Object::Create<Redirection>(Volume);
-		}
-	static inline Handle<Redirection> Create(Volume* Volume, UINT Block)
-		{
-		return Object::Create<Redirection>(Volume, Block);
+		return Object::Create<Redirection>(Volume, Create);
 		}
 
 private:
 	// Con-/Destructors
-	Redirection(Volume* Volume);
-	Redirection(Volume* Volume, UINT Block);
+	Redirection(Volume* Volume, FileCreateMode Create);
 
 	// Common
 	WORD ReadFromStream(InputStream* Stream);

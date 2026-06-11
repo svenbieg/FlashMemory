@@ -39,7 +39,7 @@ private:
 	static const UINT BLOCK_SIZE=8;
 
 	// Con-/Destructors
-	ErrorCorrection()=default;
+	ErrorCorrection();
 
 	// Common
 	WORD Available(Page* Page);
@@ -54,8 +54,8 @@ private:
 	WORD GetSize(Page*, WORD Bits);
 	BOOL GetSize(BYTE Bits, WORD* Size);
 	WORD Writable(Page* Page);
-	WORD m_Position=0;
-	WORD m_Size=0;
+	WORD m_Position;
+	WORD m_Size;
 };
 
 }

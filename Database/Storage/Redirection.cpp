@@ -21,20 +21,27 @@ namespace Storage {
 // Con-/Destructors Private
 //==========================
 
-Redirection::Redirection(Volume* volume):
+Redirection::Redirection(Volume* volume, FileCreateMode create):
 m_Size(0),
 m_Volume(volume)
 {
-volume->Erase(0);
-}
-
-Redirection::Redirection(Volume* volume, UINT block):
-m_Size(0),
-m_Volume(volume)
-{
-auto page=Page::Create(volume);
-volume->Read(block, 0, page);
-m_Size=ReadFromStream(page);
+switch(create)
+	{
+	case FileCreateMode::OpenExisting:
+		{
+		auto page=Page::Create(volume);
+		volume->Read(0, 0, page);
+		m_Size=ReadFromStream(page);
+		break;
+		}
+	case FileCreateMode::CreateAlways:
+		{
+		volume->Erase(0);
+		break;
+		}
+	default:
+		throw InvalidArgumentException();
+	}
 }
 
 

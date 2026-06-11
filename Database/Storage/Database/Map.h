@@ -14,6 +14,7 @@
 
 #include "Storage/Database/Updates/MapUpdate.h"
 #include "Storage/Database/Entry.h"
+#include "Storage/Block.h"
 
 
 //===========
