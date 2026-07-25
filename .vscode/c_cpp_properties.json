@@ -1,0 +1,28 @@
+{
+"configurations": [
+	{
+	"name": "RPico2w",
+	"includePath": [
+		"${workspaceFolder}/Runtime",
+		"${workspaceFolder}/Runtime/",
+		"${workspaceFolder}/Runtime.Arm/",
+		"${workspaceFolder}/Raspberry/",
+		"${workspaceFolder}/Raspberry.Pico2w/",
+		"${workspaceFolder}/Default/",
+		"${workspaceFolder}/Scheduler/",
+		"${workspaceFolder}/Database/",
+		"${workspaceFolder}/Micron/",
+		"${workspaceFolder}/",
+		"${workspaceFolder}/FlashMemory/"
+		],
+	"defines": [
+		"_PICO2W",
+		"_DEBUG"
+		],
+	"cStandard": "c23",
+	"cppStandard": "c++26",
+	"forcedInclude": [ "${workspaceFolder}/Runtime.Arm/IntelliSense.h" ],
+	"configurationProvider": "ms-vscode.cmake-tools",
+	"intelliSenseMode": "gcc-arm64"
+	}]
+}

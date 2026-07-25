@@ -82,23 +82,23 @@ auto spi_host=SpiEmulator::Create(config);
 auto spi_flash=SpiFlash::Create(spi_host);
 m_Volume=spi_flash;
 Console::Print("OK\n");
-UINT block_id=64;
+UINT block_id=0;
 auto page=ReadPage(block_id, 0);
-PrintPage(page, 1);
+//PrintPage(page, 1);
 //EraseBlock(block_id);
-Console::Print("Writing 0xFE...");
-auto buf=page->Begin();
-buf[0]=0xFE;
-m_Volume->Write(block_id, 0, 0, buf, 2048);
-Console::Print("OK\n");
-page=ReadPage(block_id, 0);
-PrintPage(page, 1);
-Console::Print("Writing 0xFC...");
-buf[0]=0xFC;
-m_Volume->Write(block_id, 0, 0, buf, 2048);
-Console::Print("OK\n");
-page=ReadPage(block_id, 0);
-PrintPage(page, 1);
+//Console::Print("Writing 0xFE...");
+//auto buf=page->Begin();
+//buf[0]=0xFE;
+//m_Volume->Write(block_id, 0, 0, buf, 2048);
+//Console::Print("OK\n");
+//page=ReadPage(block_id, 0);
+//PrintPage(page, 1);
+//Console::Print("Writing 0xFC...");
+//buf[0]=0xFC;
+//m_Volume->Write(block_id, 0, 0, buf, 2048);
+//Console::Print("OK\n");
+//page=ReadPage(block_id, 0);
+//PrintPage(page, 1);
 TaskInfo();
 }
 
@@ -189,12 +189,11 @@ for(auto const& it: info_map)
 	{
 	auto name=it.get_key();
 	auto info=it.get_value();
-	UINT alloc_size=info->AllocSize;
 	SIZE_T stack_size=info->StackSize;
 	SIZE_T stack_used=info->StackUsed;
 	UINT64 time=info->TotalTime;
 	UINT percent=time*100/total_time;
-	Console::Print("%3u%% | %-12s | %4u/%-4u | %5u bytes\n", percent, name, stack_used, stack_size, alloc_size);
+	Console::Print("%3u%% %-16s %4u/%-4u bytes\n", percent, name, stack_used, stack_size);
 	}
 Console::Print("\n");
 MEMORY_INFO memory;
