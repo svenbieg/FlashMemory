@@ -37,4 +37,16 @@ It's my fault, i should have connected all pins. The only way is to place a new 
 </p>
 
 <img src="https://github.com/user-attachments/assets/2a20c6c8-3f00-45c5-a3ba-7f3f767e7bb8" width="300" />
-<br />
+<br /><br />
+
+<h2>19. July 2026</h2>
+
+<p>
+I've got some new chips with all pins connected. The main-menu in my Windows desktop database editor<br />
+is still making problems, i just don't have time to test it at the moment.
+</p>
+
+<img src="https://github.com/user-attachments/assets/e8cd4ffd-92ad-40d9-8a80-1ca5597e716f" width="250" />
+
+<br /><br />
+
