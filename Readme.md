@@ -46,7 +46,7 @@ I've got some new chips with all pins connected. The main-menu in my Windows des
 is still making problems, i just don't have time to test it at the moment.
 </p>
 
-<img src="https://github.com/user-attachments/assets/e8cd4ffd-92ad-40d9-8a80-1ca5597e716f" width="250" />
+<img src="https://github.com/user-attachments/assets/04608685-a2d0-4659-9abb-c8d378931752" width="250" />
 
 <br /><br />
 
