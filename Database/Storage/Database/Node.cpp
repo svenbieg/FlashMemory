@@ -107,6 +107,12 @@ UINT block_id=m_Children.get_at(pos);
 return Node::Create(m_Database, block_id);
 }
 
+UINT Node::GetChildCount()
+{
+ReadLock lock(m_Mutex);
+return m_Children.get_count();
+}
+
 Handle<XmlChildIterator> Node::GetChildren()
 {
 return new NodeChildIterator(this);
