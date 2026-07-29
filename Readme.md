@@ -43,7 +43,7 @@ It's my fault, i should have connected all pins. The only way is to place a new 
 
 <p>
 I've got some new chips with all pins connected. The main-menu in my Windows desktop database editor<br />
-is still making problems, i just don't have time to test it at the moment.
+is still not working, i just don't have time to test it at the moment.
 </p>
 
 <img src="https://github.com/user-attachments/assets/5fda08b0-36f2-4e57-9867-fd3b3a7e95d8" width="250" />
