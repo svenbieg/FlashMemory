@@ -42,7 +42,7 @@ It's my fault, i should have connected all pins. The only way is to place a new 
 <h2>19. July 2026</h2>
 
 <p>
-I've got some new chips with all pins connected. The main-menu in my Windows desktop database editor<br />
+I've got two new chips with all pins connected. The main-menu in my Windows desktop database editor<br />
 is still not working, i just don't have time to test it at the moment.
 </p>
 
