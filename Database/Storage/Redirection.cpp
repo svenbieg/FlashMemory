@@ -29,8 +29,7 @@ switch(create)
 	{
 	case FileCreateMode::OpenExisting:
 		{
-		auto page=Page::Create(volume);
-		volume->Read(0, 0, page);
+		auto page=volume->ReadPage(0, 0);
 		m_Size=ReadFromStream(page);
 		break;
 		}

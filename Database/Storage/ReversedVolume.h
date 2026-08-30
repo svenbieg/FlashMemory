@@ -65,7 +65,7 @@ protected:
 	// Con-/Destructors
 	template <class... _args_t> ReversedVolume(_args_t... Arguments):
 		_base_t(Arguments...),
-		m_BlockCount(this->m_Size/this->m_BlockSize) {}
+		m_BlockCount(_base_t::m_Size/_base_t::m_BlockSize) {}
 
 private:
 	// Common

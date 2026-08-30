@@ -12,8 +12,7 @@
 #include "Collections/map.hpp"
 #include "Concurrency/Scheduler.h"
 #include "Concurrency/TaskMonitor.h"
-#include "Devices/Onfi/SpiFlash.h"
-#include "Devices/Pio/SpiEmulator.h"
+#include "Devices/Flash/SpiFlash.h"
 #include "Devices/System/Memory.h"
 #include "Devices/System/StatusLed.h"
 #include "Devices/Timers/SystemTimer.h"
@@ -22,9 +21,8 @@
 
 using namespace Collections;
 using namespace Concurrency;
+using namespace Devices::Flash;
 using namespace Devices::Gpio;
-using namespace Devices::Onfi;
-using namespace Devices::Pio;
 using namespace Devices::System;
 using namespace Devices::Timers;
 using namespace FlashMemory;
@@ -39,9 +37,10 @@ using namespace UI;
 
 VOID Main()
 {
+UINT64 time=SystemTimer::Microseconds();
 auto app=Application::Create();
 auto task=Task::Create(app, [app](){ app->Run(); }, "app");
-task->Then(nullptr, [task]()
+task->Then(nullptr, [task, time]()
 	{
 	auto status=task->GetStatus();
 	if(StatusHelper::Failed(status))
@@ -50,7 +49,8 @@ task->Then(nullptr, [task]()
 		}
 	else
 		{
-		Console::Print("Done\n");
+		UINT64 total=SystemTimer::Microseconds()-time;
+		Console::Print("Done (%uµs)\n", total);
 		}
 	});
 DispatchedQueue::Enter();
@@ -71,20 +71,11 @@ namespace FlashMemory {
 VOID Application::Run()
 {
 Console::Print("Initializing flash-chip...");
-SPI_CONFIG config;
-config.Divisor=2;
-config.Mode=SpiMode::Bits8;
-config.PinChipSelect=GpioPin::Gpio17;
-config.PinClock=GpioPin::Gpio18;
-config.PinRx=GpioPin::Gpio16;
-config.PinTx=GpioPin::Gpio19;
-auto spi_host=SpiEmulator::Create(config);
-auto spi_flash=SpiFlash::Create(spi_host);
-m_Volume=spi_flash;
+m_Volume=SpiFlash::Create();
 Console::Print("OK\n");
 UINT block_id=0;
 auto page=ReadPage(block_id, 0);
-//PrintPage(page, 1);
+PrintPage(page);
 //EraseBlock(block_id);
 //Console::Print("Writing 0xFE...");
 //auto buf=page->Begin();
@@ -109,8 +100,8 @@ TaskInfo();
 
 Application::Application()
 {
-m_StatusLed=StatusLed::Create();
-m_StatusLed->Blink(500);
+//m_StatusLed=StatusLed::Create();
+//m_StatusLed->Blink(500);
 }
 
 
@@ -132,7 +123,7 @@ VOID Application::PrintBuffer(BYTE const* buf, UINT size)
 CHAR hex[3];
 for(UINT pos=0; pos<size; pos++)
 	{
-	StringHelper::Print(hex, 3, "%x", buf[pos]);
+	StringHelper::Print(hex, 3, "%02x", buf[pos]);
 	Console::Print(hex);
 	}
 }
@@ -166,9 +157,8 @@ UINT block_size=m_Volume->GetBlockSize();
 WORD page_size=m_Volume->GetPageSize();
 WORD page_count=block_size/page_size;
 Console::Print("Reading page %u...", block*page_count+page_id);
-auto page=Page::Create(m_Volume);
 UINT64 time=SystemTimer::Microseconds();
-m_Volume->Read(block, page_id, page);
+auto page=m_Volume->ReadPage(block, page_id);
 UINT64 time_read=SystemTimer::Microseconds()-time;
 Console::Print("OK (%u µs)\n\n", time_read);
 return page;

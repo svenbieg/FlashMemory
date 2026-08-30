@@ -45,8 +45,7 @@ assert(FlagHelper::Get(m_Flags, BlockFlags::SkipBits));
 FlagHelper::Set(m_Flags, BlockFlags::SkipPage);
 if(m_PageId==-1)
 	{
-	m_Page=Page::Create(m_Volume);
-	m_Volume->Read(m_Id, 0, m_Page);
+	m_Page=m_Volume->ReadPage(m_Id, 0);
 	m_PageId=0;
 	WORD skip_min=0;
 	skip_min+=m_SkipBlock.ReadFromPage(m_Page);
@@ -57,8 +56,7 @@ if(m_PageId==-1)
 WORD page_id=m_SkipBlock.m_SkipCount;
 if(m_PageId!=page_id)
 	{
-	m_Page=Page::Create(m_Volume);
-	m_Volume->Read(m_Id, page_id, m_Page);
+	m_Page=m_Volume->ReadPage(m_Id, page_id);
 	m_PageId=page_id;
 	m_SkipPage.ReadFromPage(m_Page);
 	m_Available=0;
@@ -96,8 +94,7 @@ while(read<size)
 			throw OutOfRangeException();
 		if(m_PageId!=page_id)
 			{
-			m_Page=Page::Create(m_Volume);
-			m_Volume->Read(m_Id, page_id, m_Page);
+			m_Page=m_Volume->ReadPage(m_Id, page_id);
 			m_PageId=page_id;
 			}
 		if(FlagHelper::Get(m_Flags, BlockFlags::SkipBits))
