@@ -12,7 +12,8 @@
 #include "Collections/map.hpp"
 #include "Concurrency/Scheduler.h"
 #include "Concurrency/TaskMonitor.h"
-#include "Devices/Flash/SpiFlash.h"
+#include "Devices/Flash/MT29Flash.h"
+#include "Devices/Pio/SpiEmulator.h"
 #include "Devices/System/Memory.h"
 #include "Devices/System/StatusLed.h"
 #include "Devices/Timers/SystemTimer.h"
@@ -23,6 +24,7 @@ using namespace Collections;
 using namespace Concurrency;
 using namespace Devices::Flash;
 using namespace Devices::Gpio;
+using namespace Devices::Pio;
 using namespace Devices::System;
 using namespace Devices::Timers;
 using namespace FlashMemory;
@@ -37,7 +39,7 @@ using namespace UI;
 
 VOID Main()
 {
-UINT64 time=SystemTimer::Microseconds();
+UINT64 time=SystemTimer::GetTickCount();
 auto app=Application::Create();
 auto task=Task::Create(app, [app](){ app->Run(); }, "app");
 task->Then(nullptr, [task, time]()
@@ -49,8 +51,8 @@ task->Then(nullptr, [task, time]()
 		}
 	else
 		{
-		UINT64 total=SystemTimer::Microseconds()-time;
-		Console::Print("Done (%uµs)\n", total);
+		UINT64 total=SystemTimer::GetTickCount()-time;
+		Console::Print("Done (%ums)\n", total);
 		}
 	});
 DispatchedQueue::Enter();
@@ -71,11 +73,24 @@ namespace FlashMemory {
 VOID Application::Run()
 {
 Console::Print("Initializing flash-chip...");
-m_Volume=SpiFlash::Create();
+GpioHelper::SetPinMode(GpioPin::Gpio20, GpioPinMode::Output, GpioPullMode::PullUp);
+GpioHelper::SetPinMode(GpioPin::Gpio21, GpioPinMode::Output, GpioPullMode::PullUp);
+GpioHelper::DigitalWrite(GpioPin::Gpio20, true);
+GpioHelper::DigitalWrite(GpioPin::Gpio21, true);
+SPI_CONFIG config;
+config.Divisor=2;
+config.Mode=SpiMode::Bits8;
+config.PinChipSelect=GpioPin::Gpio17;
+config.PinClock=GpioPin::Gpio18;
+config.PinRx=GpioPin::Gpio16;
+config.PinTx=GpioPin::Gpio19;
+auto spi_host=SpiEmulator::Create(config);
+auto spi_flash=MT29Flash::Create(spi_host);
+m_Volume=spi_flash;
 Console::Print("OK\n");
-UINT block_id=0;
+UINT block_id=255;
 auto page=ReadPage(block_id, 0);
-PrintPage(page);
+PrintPage(page, 1);
 //EraseBlock(block_id);
 //Console::Print("Writing 0xFE...");
 //auto buf=page->Begin();
@@ -166,8 +181,8 @@ return page;
 
 VOID Application::TaskInfo()
 {
-TASK_INFO info[10];
-UINT count=TaskMonitor::GetTaskInfo(info, 10);
+TASK_INFO info[16];
+UINT count=TaskMonitor::GetTaskInfo(info, 16);
 map<Handle<String>, TASK_INFO*> info_map;
 UINT64 total_time=0;
 for(UINT u=0; u<count; u++)
