@@ -5,3 +5,5 @@ This is the construction-site of my <a href="https://github.com/svenbieg/Databas
 </p>
 
 <img src="https://github.com/user-attachments/assets/b48e402e-5c09-4d0f-a77f-38048699f40d" width="500" /><br />
+<br />
+You can find detailed information in the <a href="https://github.com/svenbieg/FlashMemory/wiki">Wiki</a>.
