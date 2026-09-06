@@ -4,18 +4,18 @@
     <Filter Include="Devices">
       <UniqueIdentifier>{75028083-8d02-461c-a8a9-d9cdc62a5367}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Devices\Onfi">
-      <UniqueIdentifier>{56aa29c2-277c-49ec-9809-a63a62d42a26}</UniqueIdentifier>
+    <Filter Include="Devices\Flash">
+      <UniqueIdentifier>{1f0d8bc9-d1e2-4fb1-959c-47545b32fe53}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Onfi\SpiFlash.h">
-      <Filter>Devices\Onfi</Filter>
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Flash\MT29Flash.h">
+      <Filter>Devices\Flash</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Onfi\SpiFlash.cpp">
-      <Filter>Devices\Onfi</Filter>
+    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Flash\MT29Flash.cpp">
+      <Filter>Devices\Flash</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -1,6 +1,6 @@
-//============
-// SpiFlash.h
-//============
+//=============
+// MT29Flash.h
+//=============
 
 #pragma once
 
@@ -18,24 +18,25 @@
 //===========
 
 namespace Devices {
-	namespace Onfi {
+	namespace Flash {
 
 
-//===========
-// SPI-Flash
-//===========
+//============
+// MT29-Flash
+//============
 
-class SpiFlash: public Storage::Volume
+class MT29Flash: public Storage::Volume
 {
 public:
 	// Using
+	using Page=Storage::Page;
 	using SpiHost=Devices::Spi::SpiHost;
 
 	// Friends
 	friend Object;
 
 	// Con-/Destructors
-	static inline Handle<SpiFlash> Create(SpiHost* Host) { return Object::Create<SpiFlash>(Host); }
+	static inline Handle<MT29Flash> Create(SpiHost* Host) { return Object::Create<MT29Flash>(Host); }
 
 	// Common
 	inline WORD GetId()const { return m_Id; }
@@ -45,12 +46,12 @@ public:
 	UINT GetBlockSize()override;
 	WORD GetPageSize(WORD* Spare=nullptr)override;
 	UINT64 GetSize()override;
-	VOID Read(UINT Block, WORD Page, Storage::Page* Buffer)override;
+	Handle<Page> ReadPage(UINT Block, WORD Page)override;
 	VOID Write(UINT Block, WORD Page, WORD Position, VOID const* Buffer, WORD Size)override;
 
 protected:
 	// Con-/Destructors
-	SpiFlash(SpiHost* Host);
+	MT29Flash(SpiHost* Host);
 
 	// Common
 	BYTE GetFeature(BYTE Feature);

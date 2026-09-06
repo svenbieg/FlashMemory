@@ -1,8 +1,8 @@
-//==============
-// SpiFlash.cpp
-//==============
+//===============
+// MT29Flash.cpp
+//===============
 
-#include "SpiFlash.h"
+#include "MT29Flash.h"
 
 
 //=======
@@ -23,7 +23,7 @@ using namespace Storage;
 //===========
 
 namespace Devices {
-	namespace Onfi {
+	namespace Flash {
 
 
 //===========
@@ -82,7 +82,7 @@ const BYTE STATUS_OIP		=(1<<0);
 // Volume
 //========
 
-VOID SpiFlash::Erase(UINT block)
+VOID MT29Flash::Erase(UINT block)
 {
 WriteEnable();
 BYTE tx[4];
@@ -100,26 +100,26 @@ if(BitHelper::Get(status, STATUS_EFAIL))
 	throw ErrorException();
 }
 
-UINT SpiFlash::GetBlockSize()
+UINT MT29Flash::GetBlockSize()
 {
 return m_BlockSize;
 }
 
-WORD SpiFlash::GetPageSize(WORD* spare_ptr)
+WORD MT29Flash::GetPageSize(WORD* spare_ptr)
 {
 if(spare_ptr)
 	*spare_ptr=m_PageSpare;
 return m_PageSize;
 }
 
-UINT64 SpiFlash::GetSize()
+UINT64 MT29Flash::GetSize()
 {
 return m_Size;
 }
 
-VOID SpiFlash::Read(UINT block, WORD page, Page* buf)
+Handle<Page> MT29Flash::ReadPage(UINT block_id, WORD page_id)
 {
-UINT addr=block*m_PageCount+page;
+UINT addr=block_id*m_PageCount+page_id;
 BYTE tx[4];
 tx[0]=CMD_READ_PAGE;
 tx[1]=(addr>>16)&0xFF;
@@ -128,24 +128,26 @@ tx[3]=addr&0xFF;
 m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
+auto page=Page::Create(this);
+auto buf=page->Begin();
 Wait(STATUS_OIP, 0);
-auto dst=buf->Begin();
 tx[0]=CMD_READ_CACHE;
 tx[1]=0;
 tx[2]=0;
 tx[3]=0;
 m_SpiHost->SpiBegin(4, m_PageTotal);
 m_SpiHost->SpiWrite(tx, 4);
-m_SpiHost->SpiRead(dst, m_PageTotal);
+m_SpiHost->SpiRead(buf, m_PageTotal);
 m_SpiHost->SpiEnd();
-if(page==0)
+if(page_id==0)
 	{
-	if(dst[m_PageSize]==0)
+	if(buf[m_PageSize]==0)
 		throw ErrorException();
 	}
+return page;
 }
 
-VOID SpiFlash::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)
+VOID MT29Flash::Write(UINT block, WORD page, WORD pos, VOID const* buf, WORD size)
 {
 WriteEnable();
 BYTE tx[4];
@@ -164,7 +166,7 @@ tx[3]=addr&0xFF;
 m_SpiHost->SpiBegin(4, 0);
 m_SpiHost->SpiWrite(tx, 4);
 m_SpiHost->SpiEnd();
-assert(BitHelper::Get(GetFeature(FEAT_STATUS), STATUS_OIP));
+//assert(BitHelper::Get(GetFeature(FEAT_STATUS), STATUS_OIP));
 BYTE status=Wait(STATUS_OIP, 0);
 WriteDisable();
 if(BitHelper::Get(status, STATUS_PFAIL))
@@ -176,7 +178,7 @@ if(BitHelper::Get(status, STATUS_PFAIL))
 // Con-/Destructors Protected
 //============================
 
-SpiFlash::SpiFlash(SpiHost* spi_host):
+MT29Flash::MT29Flash(SpiHost* spi_host):
 m_BlockSize(0),
 m_Id(0),
 m_PageCount(0),
@@ -208,6 +210,9 @@ switch(model)
 	}
 SetFeature(FEAT_LOCK, 0);
 SetFeature(FEAT_CONFIG, 0);
+//BYTE lock=GetFeature(FEAT_LOCK);
+//BYTE config=GetFeature(FEAT_CONFIG);
+//return;
 }
 
 
@@ -215,7 +220,7 @@ SetFeature(FEAT_CONFIG, 0);
 // Common Private
 //================
 
-BYTE SpiFlash::GetFeature(BYTE feature)
+BYTE MT29Flash::GetFeature(BYTE feature)
 {
 BYTE tx[2]={ CMD_GET_FEATURE, feature };
 BYTE rx[1];
@@ -226,7 +231,7 @@ m_SpiHost->SpiEnd();
 return rx[0];
 }
 
-WORD SpiFlash::ReadId()
+WORD MT29Flash::ReadId()
 {
 BYTE tx[2]={ CMD_READ_ID, 0 };
 WORD id=0;
@@ -237,7 +242,7 @@ m_SpiHost->SpiEnd();
 return id;
 }
 
-VOID SpiFlash::Reset()
+VOID MT29Flash::Reset()
 {
 BYTE tx[1]={ CMD_RESET };
 m_SpiHost->SpiBegin(1, 0);
@@ -245,7 +250,7 @@ m_SpiHost->SpiWrite(tx, 1);
 m_SpiHost->SpiEnd();
 }
 
-VOID SpiFlash::SetFeature(BYTE feature, BYTE value)
+VOID MT29Flash::SetFeature(BYTE feature, BYTE value)
 {
 BYTE tx[3]={ CMD_SET_FEATURE, feature, value };
 m_SpiHost->SpiBegin(3, 0);
@@ -253,23 +258,7 @@ m_SpiHost->SpiWrite(tx, 3);
 m_SpiHost->SpiEnd();
 }
 
-VOID SpiFlash::WriteDisable()
-{
-BYTE tx[1]={ CMD_WRITE_DISABLE };
-m_SpiHost->SpiBegin(1, 0);
-m_SpiHost->SpiWrite(tx, 1);
-m_SpiHost->SpiEnd();
-}
-
-VOID SpiFlash::WriteEnable()
-{
-BYTE tx[1]={ CMD_WRITE_ENABLE };
-m_SpiHost->SpiBegin(1, 0);
-m_SpiHost->SpiWrite(tx, 1);
-m_SpiHost->SpiEnd();
-}
-
-BYTE SpiFlash::Wait(BYTE mask, BYTE value, UINT ms)
+BYTE MT29Flash::Wait(BYTE mask, BYTE value, UINT ms)
 {
 UINT64 timeout=SystemTimer::GetTickCount()+ms;
 BYTE status=0;
@@ -282,6 +271,22 @@ while(1)
 		throw TimeoutException();
 	}
 return status;
+}
+
+VOID MT29Flash::WriteDisable()
+{
+BYTE tx[1]={ CMD_WRITE_DISABLE };
+m_SpiHost->SpiBegin(1, 0);
+m_SpiHost->SpiWrite(tx, 1);
+m_SpiHost->SpiEnd();
+}
+
+VOID MT29Flash::WriteEnable()
+{
+BYTE tx[1]={ CMD_WRITE_ENABLE };
+m_SpiHost->SpiBegin(1, 0);
+m_SpiHost->SpiWrite(tx, 1);
+m_SpiHost->SpiEnd();
 }
 
 }}

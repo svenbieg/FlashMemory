@@ -10,9 +10,9 @@
     <ProjectCapability Include="SourceItemsFromImports" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Onfi\SpiFlash.h" />
+    <ClInclude Include="$(MSBuildThisFileDirectory)Devices\Flash\MT29Flash.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Onfi\SpiFlash.cpp" />
+    <ClCompile Include="$(MSBuildThisFileDirectory)Devices\Flash\MT29Flash.cpp" />
   </ItemGroup>
 </Project>
