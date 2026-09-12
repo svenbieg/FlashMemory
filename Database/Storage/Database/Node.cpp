@@ -86,7 +86,7 @@ return m_Attributes.try_get(key, value_ptr);
 
 Handle<XmlAttributeIterator> Node::GetAttributes()
 {
-return new NodeAttributeIterator(this);
+return NodeAttributeIterator::Create(this);
 }
 
 Handle<Node> Node::GetChild(Handle<String> tag)
@@ -115,7 +115,7 @@ return m_Children.get_count();
 
 Handle<XmlChildIterator> Node::GetChildren()
 {
-return new NodeChildIterator(this);
+return NodeChildIterator::Create(this);
 }
 
 Handle<String> Node::GetTag()

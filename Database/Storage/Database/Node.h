@@ -135,6 +135,7 @@ public:
 
 	// Friends
 	friend Node;
+	friend Object;
 
 	// Access
 	Handle<String> GetKey()const override { return m_It.get_key(); }
@@ -159,6 +160,10 @@ private:
 		{
 		m_Node->m_Mutex.Unlock(AccessMode::ReadOnly);
 		}
+	static inline Handle<NodeAttributeIterator> Create(Node* Node)
+		{
+		return Object::Create<NodeAttributeIterator>(Node);
+		}
 
 	// Common
 	typename Collections::map<Handle<String>, Handle<String>, UINT>::iterator m_It;
@@ -179,6 +184,7 @@ public:
 
 	// Friends
 	friend Node;
+	friend Object;
 
 	// Access
 	Handle<Xml> GetCurrent()const override { return m_It.get_current(); }
@@ -201,6 +207,10 @@ protected:
 	~NodeChildIterator()
 		{
 		m_Node->m_Mutex.Unlock(AccessMode::ReadOnly);
+		}
+	static inline Handle<NodeChildIterator> Create(Node* Node)
+		{
+		return Object::Create<NodeChildIterator>(Node);
 		}
 
 	// Common
