@@ -44,7 +44,7 @@ BOOL Node::Clear()
 auto editor=m_Database->Edit();
 BOOL cleared=Clear(editor);
 if(cleared)
-	editor->Flush();
+	editor->Save();
 return cleared;
 }
 
@@ -147,7 +147,7 @@ BOOL Node::RemoveAttribute(Handle<String> key)
 auto editor=m_Database->Edit();
 BOOL removed=RemoveAttribute(editor, key);
 if(removed)
-	editor->Flush();
+	editor->Save();
 return removed;
 }
 
@@ -166,7 +166,7 @@ VOID Node::RemoveChild(Handle<Node> child)
 {
 auto editor=m_Database->Edit();
 RemoveChild(editor, child);
-editor->Flush();
+editor->Save();
 }
 
 VOID Node::RemoveChild(Editor* editor, Handle<Node> child)
@@ -184,7 +184,7 @@ BOOL Node::SetAttribute(Handle<String> key, Handle<String> value)
 auto editor=m_Database->Edit();
 BOOL set=SetAttribute(editor, key, value);
 if(set)
-	editor->Flush();
+	editor->Save();
 return set;
 }
 
@@ -204,7 +204,7 @@ BOOL Node::SetTag(Handle<String> tag)
 auto editor=m_Database->Edit();
 BOOL set=SetTag(editor, tag);
 if(set)
-	editor->Flush();
+	editor->Save();
 return set;
 }
 
@@ -225,7 +225,7 @@ BOOL Node::SetValue(Handle<String> value)
 auto editor=m_Database->Edit();
 BOOL set=SetValue(editor, value);
 if(set)
-	editor->Flush();
+	editor->Save();
 return set;
 }
 

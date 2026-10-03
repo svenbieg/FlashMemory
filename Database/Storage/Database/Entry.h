@@ -100,7 +100,6 @@ protected:
 	virtual SIZE_T WriteEntry(OutputStream* Stream);
 	SIZE_T WriteUpdates(OutputStream* Stream);
 	Handle<Database> m_Database;
-	UINT m_EraseCount;
 	UINT m_Id;
 	Mutex m_Mutex;
 	UINT m_Parent;

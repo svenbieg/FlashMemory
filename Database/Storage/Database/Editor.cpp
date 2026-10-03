@@ -44,12 +44,12 @@ throw NotImplementedException();
 return 0;
 }
 
-VOID Editor::Flush()
+VOID Editor::Free(UINT block, UINT count)
 {
 throw NotImplementedException();
 }
 
-VOID Editor::Free(UINT block, UINT count)
+VOID Editor::Save()
 {
 throw NotImplementedException();
 }

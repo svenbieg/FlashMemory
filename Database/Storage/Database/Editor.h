@@ -51,8 +51,8 @@ public:
 
 	// Common
 	UINT Allocate(UINT Count=1);
-	VOID Flush();
 	VOID Free(UINT Block, UINT Count=1);
+	VOID Save();
 
 private:
 	// Con-/Destructors

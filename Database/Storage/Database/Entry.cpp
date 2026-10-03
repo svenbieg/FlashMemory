@@ -75,7 +75,6 @@ UINT type=0;
 size+=stream->Read(&type, sizeof(UINT));
 if(m_Type!=type)
 	throw NotFoundException();
-size+=Dwarf::Read(stream, &m_EraseCount);
 size+=Dwarf::Read(stream, &m_Parent);
 return size;
 }
@@ -96,7 +95,6 @@ SIZE_T Entry::WriteEntry(OutputStream* stream)
 {
 SIZE_T size=0;
 size+=stream->Write(&m_Type, sizeof(UINT));
-size+=Dwarf::Write(stream, m_EraseCount);
 size+=Dwarf::Write(stream, m_Parent);
 return size;
 }
